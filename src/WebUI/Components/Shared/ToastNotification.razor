@@ -1,0 +1,66 @@
+@using Domain.Enums
+@rendermode InteractiveServer
+
+<!-- Toast notification -->
+<div class="toast-container position-fixed top-0 end-0 p-3">
+    <div class="toast @ToastClass" role="alert" aria-live="assertive" aria-atomic="true" style="min-width: 250px; display: @(showToast ? "block" : "none")">
+        <div class="toast-header">
+            <strong class="me-auto">@ToastTitle</strong>
+            <button type="button" class="btn-close" @onclick="HideToast"></button>
+        </div>
+        <div class="toast-body">
+            @toastMessage
+        </div>
+    </div>
+</div>
+
+
+@code {
+    private bool showToast = false;
+    private string toastMessage = string.Empty;
+    private TimeSpan toastTimeout = TimeSpan.FromSeconds(3);
+    private ToastType toastType;
+    
+    private string ToastClass
+    {
+        get
+        {
+            return toastType switch
+            {
+                ToastType.Info => "bg-primary text-white",
+                ToastType.Warning => "bg-warning text-dark",
+                ToastType.Error => "bg-danger text-white",
+                _ => "bg-info text-white"
+            };
+        }
+    }
+
+    private string ToastTitle => toastType.ToString();
+
+    
+    public async Task ShowToast(string message) 
+        => await ShowToast(message, ToastType.Info, toastTimeout);
+    
+    public async Task ShowToast(string message, ToastType notificationType)
+        => await ShowToast(message, notificationType, toastTimeout);
+    
+    public async Task ShowToast(string message, ToastType notificationType, TimeSpan timeout)
+    {
+        toastMessage = message;
+        toastType = notificationType;
+        
+        showToast = true;
+        StateHasChanged();
+        
+        // hide Toast after {timeout} seconds
+        await Task.Delay(timeout);
+        showToast = false;
+        StateHasChanged();
+    }
+    
+    private void HideToast()
+    {
+        showToast = false;
+        StateHasChanged();
+    }
+}

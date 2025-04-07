@@ -1,0 +1,7 @@
+﻿services:
+
+  eventhubexplorer:
+    image: eventhubexplorer
+    build:
+      context: .
+      dockerfile: src/WebUI/Dockerfile

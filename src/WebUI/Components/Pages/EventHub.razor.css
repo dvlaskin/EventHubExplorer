@@ -1,0 +1,13 @@
+.scrollable-list {
+    max-height: calc(2.0rem * 8);
+    overflow-y: auto;
+}
+
+.list-group-item {
+    font-size: small;
+}
+
+.list-group-item:hover {
+    background-color: grey;
+    color: white;
+}

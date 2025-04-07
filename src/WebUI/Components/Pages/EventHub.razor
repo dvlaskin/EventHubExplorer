@@ -1,0 +1,225 @@
+@page "/eventhub/{id:guid}"
+@using Domain.Entities
+@using Domain.Enums
+@using Domain.Interfaces.Factories
+@using Domain.Interfaces.Providers
+@using Microsoft.Extensions.Options
+@rendermode InteractiveServer
+@inject IJSRuntime JsRuntime
+@implements IDisposable
+@implements IAsyncDisposable
+
+<PageTitle>EventHub - @title</PageTitle>
+
+<h3>@title</h3>
+
+
+<!-- Send and Receive messages -->
+<div class="row">
+    <div class="col-6">
+        <div class="mb-3">
+            <label for="message" class="form-label">Send Event</label>
+            <textarea class="form-control" id="message" rows="10" style="resize: none;" @bind="eventToSend"></textarea>
+        </div>
+    </div>
+    <div class="col-6">
+        <div class="mb-3">
+            <label for="events-list" class="form-label">@($"Received Events - {receivedMessages.Count}")</label>
+            @if (receivedMessages.Count == 0)
+            {
+                <textarea class="form-control" rows="10" readonly style="resize: none;">No messages received yet.</textarea>
+            }
+            else
+            {
+                <!-- Events List -->
+                <ul id="events-list" class="list-group scrollable-list" @ref="listElement">
+                    @foreach (var message in receivedMessages.Index())
+                    {
+                        var activeClass = selectedIndex.HasValue && selectedIndex.Value == message.Index ? "active" : "";
+                        var messageString = message.Item.Length > 20 ? message.Item.Substring(0, 20) + "..." : message.Item;
+                        <li class=@($"list-group-item { activeClass }") @onclick="() => OnEventSelected(message.Index)">
+                            @($"{message.Index + 1} -> {messageString}")
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Send and Receive controls -->
+<div class="row">
+    <div class="col-6">
+        <div class="mb-2">
+            <button class="btn btn-primary" @onclick="SendMessage">Send</button>
+        </div>
+    </div>    
+    <div class="col-6">
+        @if (isProcessing)
+        {
+            <button class="btn btn-primary" @onclick="StopReceiveMessages">Stop Receive</button>
+        }
+        else
+        {
+            <div class="mb-1">
+                <row>
+                    <button class="me-2 btn btn-primary" type="button" @onclick="StartReceiveMessages">Start Receive</button>
+                    @if (receivedMessages.Count > 0)
+                    {
+                        <button class="btn btn-outline-secondary" type="button" @onclick="ClearMessages">Clear Messages</button>
+                    }
+                </row>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Event Body -->
+<div class="row">
+    <div class="col-md-12">
+        <textarea class="form-control" rows="10" readonly style="resize: none;" @bind="receivedEvent"></textarea>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<ToastNotification @ref="toast"/>
+
+
+@code {
+    [Inject] private ILogger<EventHub>? Logger { get; set; }
+    [Inject] private IOptionsMonitor<AppConfiguration>? Config { get; set; }
+    [Inject] private IMessageProducerFactory? MessageProducerFactory { get; set; }
+    [Inject] private IMessageConsumerFactory? MessageConsumerFactory { get; set; }
+    
+    [Parameter] public Guid Id { get; set; }
+    private ElementReference listElement;
+    private ToastNotification? toast;
+    private IMessageProducerProvider? messageProducer;
+    private IMessageConsumerProvider? messageConsumer;
+
+    private string? title;
+    private string? eventToSend;
+    private string? receivedEvent;
+    private bool isProcessing;
+    private readonly List<string> receivedMessages = new(10);
+    private int? selectedIndex;
+    private CancellationTokenSource? cts;
+
+
+    protected override void OnInitialized()
+    {
+        var ehConfig = Config?.CurrentValue.EventHubsConfigs.First(w => w.Id == Id);
+        title = ehConfig?.Title;
+    }
+
+    
+    private async Task SendMessage()
+    {
+        InitializeMessageProducer();
+        if (string.IsNullOrWhiteSpace(eventToSend) || messageProducer is null)
+            return;
+        
+        try
+        {
+            await messageProducer.SendMessagesAsync(eventToSend, CancellationToken.None);
+            _ = toast?.ShowToast("Message sent successfully");
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogError(ex, "Error sending message: {Message}", ex.Message);
+            _ = toast?.ShowToast($"Error sending message: {ex.Message}", ToastType.Error, TimeSpan.FromSeconds(10));
+        }
+    }
+    
+    private async Task StartReceiveMessages()
+    {
+        InitializeMessageConsumer();
+        if (messageConsumer is null)
+        {
+            Logger?.LogWarning("Message Consumer is null, cannot start receive messages");
+            return;
+        }
+        
+        isProcessing = !isProcessing;
+        
+        Logger?.LogInformation("Start Receive Messages");
+        
+        cts?.Cancel();
+        cts?.Dispose();
+        cts = new CancellationTokenSource();
+        var stopToken = cts.Token;
+
+        await messageConsumer.StartReceiveMessageAsync(async message =>
+        {
+            if (!isProcessing)
+                return;
+            
+            receivedMessages.Add(message);
+            receivedEvent = receivedMessages[^1];
+            
+            await InvokeAsync(StateHasChanged);
+            
+            await ScrollToBottom();
+        }, stopToken);
+    }
+    
+    private async Task StopReceiveMessages()
+    {
+        cts?.Cancel();
+        isProcessing = !isProcessing;
+        
+        Logger?.LogInformation("Stop Receive Messages");
+        
+        if (messageConsumer is not null)
+            await messageConsumer.StopReceiveMessageAsync();
+    }
+    
+    private void ClearMessages()
+    {
+        receivedMessages.Clear();
+    }
+
+    private void InitializeMessageProducer()
+    {
+        messageProducer ??= MessageProducerFactory?.CreateProducer(Id);
+    }
+    
+    private void InitializeMessageConsumer()
+    {
+        messageConsumer ??= MessageConsumerFactory?.CreateConsumer(Id);
+    }
+    
+    private async Task ScrollToBottom()
+    {
+        await JsRuntime.InvokeVoidAsync("scrollToBottom", listElement);
+    }
+
+    private void OnEventSelected(int index)
+    {
+        selectedIndex = index;
+        receivedEvent = receivedMessages[index];
+    }
+
+    public void Dispose()
+    {
+        messageProducer?.DisposeAsync().GetAwaiter().GetResult();
+        messageConsumer?.StopReceiveMessageAsync().GetAwaiter().GetResult();
+        
+        cts?.Cancel();
+        cts?.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (messageProducer is not null)
+            await messageProducer.DisposeAsync();
+        
+        if (messageConsumer is not null)
+            await messageConsumer.StopReceiveMessageAsync();
+        
+        cts?.Cancel();
+        cts?.Dispose();
+        GC.SuppressFinalize(this);
+    }
+}

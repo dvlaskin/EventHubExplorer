@@ -1,0 +1,161 @@
+@page "/Configuration"
+@using Domain.Entities
+@using Domain.Interfaces.Providers
+
+@inject IConfigProvider ConfigurationProvider
+
+@rendermode InteractiveServer
+
+<PageTitle>Configuration</PageTitle>
+
+<h1>Configuration</h1>
+
+
+<!-- Add New Config -->
+<button class="btn btn-primary mb-3" @onclick="AddNewConfig">Add Event Hub</button>
+
+<!-- Save All Config -->
+<button class="btn btn-success mb-3" @onclick="SaveConfiguration">Save Configuration</button>
+
+
+@if (appConfiguration is null)
+{
+    <p>Loading...</p>
+}
+else if (appConfiguration.EventHubsConfigs.Count == 0)
+{
+    <p>No Event Hubs configured</p>
+    
+    <!-- Save All Config -->
+    <button class="btn btn-success mt-3" @onclick="SaveConfiguration">Save</button>
+}
+else
+{
+    <!-- Event Hubs configs -->
+    <div class="accordion" id="eventHubAccordion">
+        @for (var i = 0; i < appConfiguration.EventHubsConfigs.Count; i++)
+        {
+            var index = i;
+            var eventHub = appConfiguration.EventHubsConfigs[i];
+            var isEmpty = string.IsNullOrWhiteSpace(eventHub.ConnectionString) || string.IsNullOrWhiteSpace(eventHub.Name);
+
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading-@i">
+                    <button class="accordion-button @(isEmpty ? "" : "collapsed") bg-primary text-white" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapse-@i" aria-expanded="@(isEmpty ? "true" : "false")" aria-controls="collapse-@i">
+                        @eventHub.Title
+                    </button>
+                </h2>
+                <div id="collapse-@i" class="accordion-collapse collapse @(isEmpty ? "show" : "")" aria-labelledby="heading-@i"
+                     data-bs-parent="#eventHubAccordion">
+                    <div class="accordion-body">
+                        <div class="mb-3">
+                            <label class="form-label">Title</label>
+                            <input class="form-control" @bind="eventHub.Title">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Connection String</label>
+                            <input class="form-control" @bind="eventHub.ConnectionString">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <input class="form-control" @bind="eventHub.Name">
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" @bind="eventHub.UseCheckpoints">
+                            <label class="form-check-label">Use Checkpoints</label>
+                        </div>
+
+                        @if (eventHub.UseCheckpoints)
+                        {
+                            eventHub.StorageConfig ??= new BlobConfig { ConnectionString = "", BlobContainerName = "" };
+
+                            <h5>Blob Storage</h5>
+                            <div class="mb-3">
+                                <label class="form-label">Connection String</label>
+                                <input class="form-control" @bind="eventHub.StorageConfig.ConnectionString">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Container Name</label>
+                                <input class="form-control" @bind="eventHub.StorageConfig.BlobContainerName">
+                            </div>
+                        }
+
+                        <button class="btn btn-danger" @onclick="() => RemoveConfig(index)">Remove</button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<!-- Toast notification -->
+<div class="toast-container position-fixed top-0 end-0 p-3">
+    <div class="toast @ToastClass" role="alert" aria-live="assertive" aria-atomic="true" style="min-width: 250px; display: @(showToast ? "block" : "none")">
+        <div class="toast-header">
+            <strong class="me-auto">Notification</strong>
+            <button type="button" class="btn-close" @onclick="HideToast"></button>
+        </div>
+        <div class="toast-body">
+            Configuration saved
+        </div>
+    </div>
+</div>
+
+
+
+@code {
+    private AppConfiguration? appConfiguration;
+    
+    private bool showToast = false;
+    private const string ToastClass = "bg-success text-white";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadConfiguration();
+    }
+
+    private async Task LoadConfiguration()
+    {
+        appConfiguration = await ConfigurationProvider.LoadConfigAsync();
+    }
+    
+    private async Task SaveConfiguration()
+    {
+        if (appConfiguration is null) return;
+        await ConfigurationProvider.SaveConfigAsync(appConfiguration);
+
+        // show toast
+        showToast = true;
+        StateHasChanged();
+
+        // hide Toast after 3 seconds
+        await Task.Delay(3000);
+        showToast = false;
+        StateHasChanged();
+    }
+    
+    private void AddNewConfig()
+    {
+        appConfiguration?.EventHubsConfigs.Add(new EventHubConfig
+        {
+            Title = "New Event Hub",
+            ConnectionString = "",
+            Name = "",
+            UseCheckpoints = false,
+            StorageConfig = new BlobConfig { ConnectionString = "", BlobContainerName = "" }
+        });
+    }
+    
+    private void RemoveConfig(int index)
+    {
+        appConfiguration?.EventHubsConfigs.RemoveAt(index);
+    }
+    
+    private void HideToast()
+    {
+        showToast = false;
+        StateHasChanged();
+    }
+    
+}
