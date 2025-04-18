@@ -1,7 +1,7 @@
+using Application.Services;
 using Domain.Entities;
-using Domain.Interfaces;
 using Domain.Interfaces.Factories;
-using Domain.Interfaces.Providers;
+using Domain.Interfaces.Services;
 using Infrastructure.Providers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -9,28 +9,30 @@ using Microsoft.Extensions.Options;
 
 namespace Infrastructure.Factories;
 
-public class EvenHubProducerFactory : IMessageProducerFactory
+public class MessageProducerFactory : IMessageProducerFactory
 {
-    private readonly ILogger<EvenHubProducerFactory> logger;
-    private readonly IServiceProvider serviceProvider;
+    private readonly ILogger<MessageProducerFactory> logger;
     private readonly AppConfiguration config;
+    private readonly IServiceProvider serviceProvider;
 
-    public EvenHubProducerFactory(
-        ILogger<EvenHubProducerFactory> logger, 
+    public MessageProducerFactory(
+        ILogger<MessageProducerFactory> logger, 
         IOptionsMonitor<AppConfiguration> config,
         IServiceProvider serviceProvider
     )
     {
         this.logger = logger;
-        this.serviceProvider = serviceProvider;
         this.config = config.CurrentValue;
+        this.serviceProvider = serviceProvider;
     }
-    
-    public IMessageProducerProvider CreateProducer(Guid configId)
+
+    public IMessageProducerService CreateProducerService(Guid configId)
     {
         logger.LogInformation("Creating producer for configId: {ConfigId}", configId);
         var eventHubConfig = config.EventHubsConfigs.First(x => x.Id == configId);
         var ehProducerLogger = serviceProvider.GetRequiredService<ILogger<EventHubProducerProvider>>();
-        return new EventHubProducerProvider(ehProducerLogger, eventHubConfig);
+        var ehProducerProvider = new EventHubProducerProvider(ehProducerLogger, eventHubConfig);
+        var msgProducerLogger = serviceProvider.GetRequiredService<ILogger<MessageProducerService>>();
+        return new MessageProducerService(msgProducerLogger, ehProducerProvider);
     }
 }

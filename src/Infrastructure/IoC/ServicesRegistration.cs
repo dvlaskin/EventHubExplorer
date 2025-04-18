@@ -17,7 +17,7 @@ public static class ServicesRegistration
         services.AddSingleton<ICacheProvider, InMemoryCacheProvider>();
         services.AddSingleton<IConfigProvider, ConfigProvider>();
         
-        services.AddSingleton<IMessageProducerFactory, EvenHubProducerFactory>();
+        services.AddSingleton<IMessageProducerFactory, MessageProducerFactory>();
         services.AddSingleton<IMessageConsumerFactory, EvenHubConsumerFactory>();
         services.AddSingleton<IStorageClientFactory<BlobConfig, BlobContainerClient>, BlobStorageFactory>();
         

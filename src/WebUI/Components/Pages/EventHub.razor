@@ -3,6 +3,7 @@
 @using Domain.Enums
 @using Domain.Interfaces.Factories
 @using Domain.Interfaces.Providers
+@using Domain.Interfaces.Services
 @using Microsoft.Extensions.Options
 @rendermode InteractiveServer
 @inject IJSRuntime JsRuntime
@@ -19,7 +20,7 @@
     <div class="col-6">
         <div class="mb-3">
             <label for="message" class="form-label">Send Event</label>
-            <textarea class="form-control" id="message" rows="10" style="resize: none;" @bind="eventToSend"></textarea>
+            <textarea class="form-control" id="message" rows="10" style="resize: none;" @bind="messageToSend"></textarea>
         </div>
     </div>
     <div class="col-6">
@@ -50,8 +51,16 @@
 <!-- Send and Receive controls -->
 <div class="row">
     <div class="col-6">
-        <div class="mb-2">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
             <button class="btn btn-primary" @onclick="SendMessage">Send</button>
+            <div class="d-flex align-items-center gap-2">
+                <label for="message-count" class="form-label mb-0">Number of messages</label>
+                <input class="form-control form-control-sm" type="number" id="message-count" @bind="numberMessagesToSend" min="1" style="width: 5rem;" />
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <label for="message-delay" class="form-label mb-0">Delay, seconds</label>
+                <input class="form-control form-control-sm" type="number" id="message-delay" @bind="delayToSend" min="0" style="width: 5rem;" />
+            </div>
         </div>
     </div>    
     <div class="col-6">
@@ -77,7 +86,7 @@
 <!-- Event Body -->
 <div class="row">
     <div class="col-md-12">
-        <textarea class="form-control" rows="10" readonly style="resize: none;" @bind="receivedEvent"></textarea>
+        <textarea class="form-control" rows="10" readonly style="resize: none;" @bind="receivedMessage"></textarea>
     </div>
 </div>
 
@@ -92,16 +101,19 @@
     [Inject] private IMessageConsumerFactory? MessageConsumerFactory { get; set; }
     
     [Parameter] public Guid Id { get; set; }
+    
     private ElementReference listElement;
     private ToastNotification? toast;
-    private IMessageProducerProvider? messageProducer;
+    private IMessageProducerService? messageProducer;
     private IMessageConsumerProvider? messageConsumer;
 
     private string? title;
-    private string? eventToSend;
-    private string? receivedEvent;
+    private string? messageToSend;
+    private int numberMessagesToSend = 1;
+    private int delayToSend = 0;
+    private string? receivedMessage;
     private bool isProcessing;
-    private readonly List<string> receivedMessages = new(10);
+    private readonly List<string> receivedMessages = new(100);
     private int? selectedIndex;
     private CancellationTokenSource? cts;
 
@@ -116,12 +128,16 @@
     private async Task SendMessage()
     {
         InitializeMessageProducer();
-        if (string.IsNullOrWhiteSpace(eventToSend) || messageProducer is null)
-            return;
-        
+
         try
         {
-            await messageProducer.SendMessagesAsync(eventToSend, CancellationToken.None);
+            if (numberMessagesToSend <= 1)
+                await SendSingleMessageAsync();
+            else if (delayToSend <= 0)
+                await SendBatchMessagesAsync();
+            else
+                await SendDelayedMessagesAsync();
+            
             _ = toast?.ShowToast("Message sent successfully");
         }
         catch (Exception ex)
@@ -129,7 +145,34 @@
             Logger?.LogError(ex, "Error sending message: {Message}", ex.Message);
             _ = toast?.ShowToast($"Error sending message: {ex.Message}", ToastType.Error, TimeSpan.FromSeconds(10));
         }
+        
+        numberMessagesToSend = 1;
+        delayToSend = 0;
     }
+    
+    private async Task SendSingleMessageAsync()
+    {
+        await messageProducer!.SendMessagesAsync(messageToSend, CancellationToken.None);
+    }
+
+    private async Task SendBatchMessagesAsync()
+    {
+        await messageProducer!.SendMessagesAsync(messageToSend, numberMessagesToSend, CancellationToken.None);
+    }
+    
+    private async Task SendDelayedMessagesAsync()
+    {
+        await foreach (var msgNumber in messageProducer!.SendMessagesWithDelayAsync(
+            messageToSend,
+            numberMessagesToSend,
+            TimeSpan.FromSeconds(delayToSend),
+            CancellationToken.None
+        ))
+        {
+            Logger?.LogInformation("Message number {MessageNumber} is sent", msgNumber);
+        }
+    }
+    
     
     private async Task StartReceiveMessages()
     {
@@ -155,7 +198,7 @@
                 return;
             
             receivedMessages.Add(message);
-            receivedEvent = receivedMessages[^1];
+            receivedMessage = receivedMessages[^1];
             
             await InvokeAsync(StateHasChanged);
             
@@ -174,6 +217,7 @@
             await messageConsumer.StopReceiveMessageAsync();
     }
     
+    
     private void ClearMessages()
     {
         receivedMessages.Clear();
@@ -181,7 +225,7 @@
 
     private void InitializeMessageProducer()
     {
-        messageProducer ??= MessageProducerFactory?.CreateProducer(Id);
+        messageProducer ??= MessageProducerFactory?.CreateProducerService(Id);
     }
     
     private void InitializeMessageConsumer()
@@ -197,7 +241,7 @@
     private void OnEventSelected(int index)
     {
         selectedIndex = index;
-        receivedEvent = receivedMessages[index];
+        receivedMessage = receivedMessages[index];
     }
 
     public void Dispose()

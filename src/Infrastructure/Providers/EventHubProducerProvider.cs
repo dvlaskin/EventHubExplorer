@@ -33,6 +33,23 @@ public sealed class EventHubProducerProvider : IMessageProducerProvider
         await producerClient.SendAsync(eventBatch, cancellationToken);
         logger.LogInformation("Sent message: {Message}", messageText);
     }
+    
+    public async Task SendMessagesAsync(ICollection<string> messagesText, CancellationToken cancellationToken)
+    {
+        CreateProducerIfNotExist();
+        using var eventBatch = await producerClient!.CreateBatchAsync(cancellationToken);
+
+        foreach (var msg in messagesText)
+        {
+            if (!eventBatch.TryAdd(new EventData(msg)))
+            {
+                throw new Exception("The message is too large to fit in the batch.");
+            }
+        }
+        
+        await producerClient.SendAsync(eventBatch, cancellationToken);
+        logger.LogInformation("Sent {MsgCount} messages", messagesText.Count);
+    }
 
     private void CreateProducerIfNotExist()
     {

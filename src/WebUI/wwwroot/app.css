@@ -22,7 +22,7 @@ a, .btn-link {
     border-color: white;
 }
 
-.btn-success {background-image: linear-gradient(to right, #047e00 0%, #047e00 51%, #0d6efd 100%)}
+.btn-success {background-image: linear-gradient(to right, #8c139e 0%, #8c139e 51%, #0d6efd 100%)}
 .btn-success {
     text-align: center;
     transition: 0.8s;

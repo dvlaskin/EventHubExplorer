@@ -1,8 +1,8 @@
-using Domain.Interfaces.Providers;
+using Domain.Interfaces.Services;
 
 namespace Domain.Interfaces.Factories;
 
 public interface IMessageProducerFactory
 {
-    IMessageProducerProvider CreateProducer(Guid configId);
+    IMessageProducerService CreateProducerService(Guid configId);
 }
