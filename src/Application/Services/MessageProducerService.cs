@@ -19,8 +19,27 @@ public class MessageProducerService : IMessageProducerService
         this.messageProducerProvider = messageProducerProvider;
     }
     
+    
+    
+    public async Task SendMessagesAsync(
+        string? messageText, 
+        int numberOfMessages = 1, 
+        TimeSpan? delayToSend = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        if (numberOfMessages <= 1)
+            await SendSingleMessageAsync(messageText, cancellationToken);
+        else if (delayToSend is null || delayToSend.Value == TimeSpan.Zero)
+            await SendBatchMessagesAsync(messageText, numberOfMessages, cancellationToken);
+        else
+            await SendMessagesWithDelayAsync(
+                messageText, numberOfMessages, delayToSend.Value, cancellationToken
+            );
+    }
+    
 
-    public async Task SendMessagesAsync(string? messageText, CancellationToken cancellationToken = default)
+    private async Task SendSingleMessageAsync(string? messageText, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(messageText))
             return;
@@ -28,7 +47,7 @@ public class MessageProducerService : IMessageProducerService
         await messageProducerProvider.SendMessagesAsync(messageText, cancellationToken);
     }
 
-    public async Task SendMessagesAsync(string? messageText, int numberOfMessages, CancellationToken cancellationToken = default)
+    private async Task SendBatchMessagesAsync(string? messageText, int numberOfMessages, CancellationToken cancellationToken = default)
     {
         if (numberOfMessages <= 0 || string.IsNullOrWhiteSpace(messageText))
             return;
@@ -37,18 +56,16 @@ public class MessageProducerService : IMessageProducerService
         await messageProducerProvider.SendMessagesAsync(messages, cancellationToken);
     }
 
-    public async IAsyncEnumerable<int> SendMessagesWithDelayAsync(string? messageText, int numberOfMessages, TimeSpan timeDelay, CancellationToken cancellationToken = default)
+    private async Task SendMessagesWithDelayAsync(string? messageText, int numberOfMessages, TimeSpan timeDelay, CancellationToken cancellationToken = default)
     {
         if (numberOfMessages <= 0 || timeDelay <= TimeSpan.Zero || string.IsNullOrWhiteSpace(messageText))
-            yield break;
+            return;
         
         for (var i = 0; i < numberOfMessages; i++)
         {
-            await SendMessagesAsync(messageText, cancellationToken);
-            logger.LogInformation("Message number {MessageNumber} is sending", i + 1);
+            await SendSingleMessageAsync(messageText, cancellationToken);
+            logger.LogInformation("Message number {MessageNumber} for {TotalMessages} is sent", i + 1, numberOfMessages);
             await Task.Delay(timeDelay, cancellationToken);
-            
-            yield return i + 1;
         }
     }
     

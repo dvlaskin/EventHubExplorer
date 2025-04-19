@@ -1,4 +1,3 @@
-using Domain.Interfaces;
 using Domain.Interfaces.Providers;
 using Microsoft.Extensions.Caching.Memory;
 

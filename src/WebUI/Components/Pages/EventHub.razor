@@ -121,7 +121,7 @@
     protected override void OnInitialized()
     {
         var ehConfig = Config?.CurrentValue.EventHubsConfigs.First(w => w.Id == Id);
-        title = ehConfig?.Title;
+        title = ehConfig?.Title ?? "unknown event hub";
     }
 
     
@@ -131,14 +131,10 @@
 
         try
         {
-            if (numberMessagesToSend <= 1)
-                await SendSingleMessageAsync();
-            else if (delayToSend <= 0)
-                await SendBatchMessagesAsync();
-            else
-                await SendDelayedMessagesAsync();
+            await messageProducer!
+                .SendMessagesAsync(messageToSend, numberMessagesToSend, TimeSpan.FromSeconds(delayToSend)); 
             
-            _ = toast?.ShowToast("Message sent successfully");
+            _ = toast?.ShowToast("Messages sent successfully");
         }
         catch (Exception ex)
         {
@@ -148,29 +144,6 @@
         
         numberMessagesToSend = 1;
         delayToSend = 0;
-    }
-    
-    private async Task SendSingleMessageAsync()
-    {
-        await messageProducer!.SendMessagesAsync(messageToSend, CancellationToken.None);
-    }
-
-    private async Task SendBatchMessagesAsync()
-    {
-        await messageProducer!.SendMessagesAsync(messageToSend, numberMessagesToSend, CancellationToken.None);
-    }
-    
-    private async Task SendDelayedMessagesAsync()
-    {
-        await foreach (var msgNumber in messageProducer!.SendMessagesWithDelayAsync(
-            messageToSend,
-            numberMessagesToSend,
-            TimeSpan.FromSeconds(delayToSend),
-            CancellationToken.None
-        ))
-        {
-            Logger?.LogInformation("Message number {MessageNumber} is sent", msgNumber);
-        }
     }
     
     

@@ -1,7 +1,6 @@
 using Azure.Messaging.EventHubs;
 using Azure.Messaging.EventHubs.Producer;
 using Domain.Entities;
-using Domain.Interfaces;
 using Domain.Interfaces.Providers;
 using Microsoft.Extensions.Logging;
 
