@@ -1,4 +1,5 @@
 @page "/eventhub/{id:guid}"
+@using Application.Utils
 @using Domain.Entities
 @using Domain.Enums
 @using Domain.Interfaces.Factories
@@ -113,15 +114,26 @@
     private int delayToSend = 0;
     private string? receivedMessage;
     private bool isProcessing;
-    private readonly List<string> receivedMessages = new(100);
     private int? selectedIndex;
-    private CancellationTokenSource? cts;
+    private readonly List<string> receivedMessages = new(100);
+    private readonly ResettableCts receiverCts = new();
+    private readonly ResettableCts delayedSenderCts = new();
 
 
     protected override void OnInitialized()
     {
         var ehConfig = Config?.CurrentValue.EventHubsConfigs.First(w => w.Id == Id);
         title = ehConfig?.Title ?? "unknown event hub";
+    }
+
+    private void InitializeMessageProducer()
+    {
+        messageProducer ??= MessageProducerFactory?.CreateProducerService(Id);
+    }
+    
+    private void InitializeMessageConsumer()
+    {
+        messageConsumer ??= MessageConsumerFactory?.CreateConsumer(Id);
     }
 
     
@@ -132,7 +144,12 @@
         try
         {
             await messageProducer!
-                .SendMessagesAsync(messageToSend, numberMessagesToSend, TimeSpan.FromSeconds(delayToSend)); 
+                .SendMessagesAsync(
+                    messageToSend, 
+                    numberMessagesToSend, 
+                    TimeSpan.FromSeconds(delayToSend),
+                    delayedSenderCts.Token
+                ); 
             
             _ = toast?.ShowToast("Messages sent successfully");
         }
@@ -160,10 +177,7 @@
         
         Logger?.LogInformation("Start Receive Messages");
         
-        cts?.Cancel();
-        cts?.Dispose();
-        cts = new CancellationTokenSource();
-        var stopToken = cts.Token;
+        receiverCts.Reset();
 
         await messageConsumer.StartReceiveMessageAsync(async message =>
         {
@@ -176,12 +190,12 @@
             await InvokeAsync(StateHasChanged);
             
             await ScrollToBottom();
-        }, stopToken);
+        }, receiverCts.Token);
     }
     
     private async Task StopReceiveMessages()
     {
-        cts?.Cancel();
+        receiverCts.Cancel();
         isProcessing = !isProcessing;
         
         Logger?.LogInformation("Stop Receive Messages");
@@ -195,16 +209,6 @@
     {
         receivedMessages.Clear();
     }
-
-    private void InitializeMessageProducer()
-    {
-        messageProducer ??= MessageProducerFactory?.CreateProducerService(Id);
-    }
-    
-    private void InitializeMessageConsumer()
-    {
-        messageConsumer ??= MessageConsumerFactory?.CreateConsumer(Id);
-    }
     
     private async Task ScrollToBottom()
     {
@@ -217,13 +221,15 @@
         receivedMessage = receivedMessages[index];
     }
 
+    
     public void Dispose()
     {
         messageProducer?.DisposeAsync().GetAwaiter().GetResult();
         messageConsumer?.StopReceiveMessageAsync().GetAwaiter().GetResult();
         
-        cts?.Cancel();
-        cts?.Dispose();
+        receiverCts.Dispose();
+        delayedSenderCts.Dispose();
+        
         GC.SuppressFinalize(this);
     }
 
@@ -235,8 +241,9 @@
         if (messageConsumer is not null)
             await messageConsumer.StopReceiveMessageAsync();
         
-        cts?.Cancel();
-        cts?.Dispose();
+        receiverCts.Dispose();
+        delayedSenderCts.Dispose();
+        
         GC.SuppressFinalize(this);
     }
 }

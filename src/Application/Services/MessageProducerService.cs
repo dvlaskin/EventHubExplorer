@@ -60,12 +60,22 @@ public class MessageProducerService : IMessageProducerService
     {
         if (numberOfMessages <= 0 || timeDelay <= TimeSpan.Zero || string.IsNullOrWhiteSpace(messageText))
             return;
-        
-        for (var i = 0; i < numberOfMessages; i++)
+
+        try
         {
-            await SendSingleMessageAsync(messageText, cancellationToken);
-            logger.LogInformation("Message number {MessageNumber} for {TotalMessages} is sent", i + 1, numberOfMessages);
-            await Task.Delay(timeDelay, cancellationToken);
+            for (var i = 0; i < numberOfMessages; i++)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                    break;
+                
+                await SendSingleMessageAsync(messageText, cancellationToken);
+                logger.LogInformation("Message number {MessageNumber} for {TotalMessages} is sent", i + 1, numberOfMessages);
+                await Task.Delay(timeDelay, cancellationToken);
+            }
+        }
+        catch (TaskCanceledException)
+        {
+            logger.LogWarning("Task SendMessagesWithDelayAsync was canceled");
         }
     }
     
