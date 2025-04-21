@@ -1,7 +1,9 @@
+using Application.Services;
 using Azure.Storage.Blobs;
 using Domain.Entities;
 using Domain.Interfaces.Factories;
 using Domain.Interfaces.Providers;
+using Domain.Interfaces.Services;
 using Infrastructure.Providers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -9,14 +11,14 @@ using Microsoft.Extensions.Options;
 
 namespace Infrastructure.Factories;
 
-public class EvenHubConsumerFactory : IMessageConsumerFactory
+public class MessageConsumerFactory : IMessageConsumerFactory
 {
-    private readonly ILogger<EvenHubConsumerFactory> logger;
+    private readonly ILogger<MessageConsumerFactory> logger;
     private readonly AppConfiguration config;
     private readonly IServiceProvider serviceProvider;
 
-    public EvenHubConsumerFactory(
-        ILogger<EvenHubConsumerFactory> logger, 
+    public MessageConsumerFactory(
+        ILogger<MessageConsumerFactory> logger, 
         IOptionsMonitor<AppConfiguration> config,
         IServiceProvider serviceProvider
     )
@@ -26,17 +28,17 @@ public class EvenHubConsumerFactory : IMessageConsumerFactory
         this.serviceProvider = serviceProvider;
     }
     
-    public IMessageConsumerProvider CreateConsumer(Guid configId)
+    public IMessageConsumerService CreateConsumer(Guid configId)
     {
         logger.LogInformation("Creating producer for configId: {ConfigId}", configId);
         var eventHubConfig = config.EventHubsConfigs.First(x => x.Id == configId);
 
-        if (eventHubConfig.UseCheckpoints)
-        {
-            return CreateConsumerWithStorage(eventHubConfig);
-        }
-
-        return CreateConsumerWithoutStorage(eventHubConfig);
+        IMessageConsumerProvider ehConsumerProvider = eventHubConfig.UseCheckpoints 
+            ? CreateConsumerWithStorage(eventHubConfig) 
+            : CreateConsumerWithoutStorage(eventHubConfig);
+        
+        var ehConsumerLogger = serviceProvider.GetRequiredService<ILogger<EventHubConsumerService>>();
+        return new EventHubConsumerService(ehConsumerLogger, ehConsumerProvider);
     }
     
     private EventHubConsumerProviderWithStorage CreateConsumerWithStorage(EventHubConfig eventHubConfig)

@@ -3,7 +3,6 @@
 @using Domain.Entities
 @using Domain.Enums
 @using Domain.Interfaces.Factories
-@using Domain.Interfaces.Providers
 @using Domain.Interfaces.Services
 @using Microsoft.Extensions.Options
 @rendermode InteractiveServer
@@ -106,7 +105,7 @@
     private ElementReference listElement;
     private ToastNotification? toast;
     private IMessageProducerService? messageProducer;
-    private IMessageConsumerProvider? messageConsumer;
+    private IMessageConsumerService? messageConsumer;
 
     private string? title;
     private string? messageToSend;
@@ -179,7 +178,7 @@
         
         receiverCts.Reset();
 
-        await messageConsumer.StartReceiveMessageAsync(async message =>
+        await foreach (var message in  messageConsumer.StartReceiveMessageAsync(receiverCts.Token))
         {
             if (!isProcessing)
                 return;
@@ -190,7 +189,7 @@
             await InvokeAsync(StateHasChanged);
             
             await ScrollToBottom();
-        }, receiverCts.Token);
+        }
     }
     
     private async Task StopReceiveMessages()
@@ -225,7 +224,7 @@
     public void Dispose()
     {
         messageProducer?.DisposeAsync().GetAwaiter().GetResult();
-        messageConsumer?.StopReceiveMessageAsync().GetAwaiter().GetResult();
+        messageConsumer?.DisposeAsync().GetAwaiter().GetResult();
         
         receiverCts.Dispose();
         delayedSenderCts.Dispose();
@@ -239,7 +238,7 @@
             await messageProducer.DisposeAsync();
         
         if (messageConsumer is not null)
-            await messageConsumer.StopReceiveMessageAsync();
+            await messageConsumer.DisposeAsync();
         
         receiverCts.Dispose();
         delayedSenderCts.Dispose();

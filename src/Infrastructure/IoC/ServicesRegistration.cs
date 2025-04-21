@@ -18,7 +18,7 @@ public static class ServicesRegistration
         services.AddSingleton<IConfigProvider, ConfigProvider>();
         
         services.AddSingleton<IMessageProducerFactory, MessageProducerFactory>();
-        services.AddSingleton<IMessageConsumerFactory, EvenHubConsumerFactory>();
+        services.AddSingleton<IMessageConsumerFactory, MessageConsumerFactory>();
         services.AddSingleton<IStorageClientFactory<BlobConfig, BlobContainerClient>, BlobStorageFactory>();
         
         return services;
