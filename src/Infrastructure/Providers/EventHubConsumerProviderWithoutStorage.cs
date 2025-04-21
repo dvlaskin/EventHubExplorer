@@ -2,6 +2,7 @@ using System.Text;
 using Azure.Messaging.EventHubs.Consumer;
 using Domain.Entities;
 using Domain.Interfaces.Providers;
+using Domain.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Providers;
@@ -20,7 +21,7 @@ public class EventHubConsumerProviderWithoutStorage : IMessageConsumerProvider
         this.config = config;
     }
     
-    public async Task StartReceiveMessageAsync(Func<string, Task> onMessageReceived, CancellationToken cancellationToken)
+    public async Task StartReceiveMessageAsync(Func<EventHubMessage, Task> onMessageReceived, CancellationToken cancellationToken)
     {
         needToStop = false;
         await using var consumer = new EventHubConsumerClient(ConsumerGroup, config.ConnectionString, config.Name);
@@ -29,15 +30,15 @@ public class EventHubConsumerProviderWithoutStorage : IMessageConsumerProvider
             if (needToStop)
                 break;
             
-            logger.LogInformation(
-                "Received message from Partition {Partition}, SequenceNumber {SequenceNumber}, EnqueuedTime {EnqueuedTime}\r\n{Message}", 
-                partitionEvent.Partition.PartitionId, 
-                partitionEvent.Data.SequenceNumber,
-                partitionEvent.Data.EnqueuedTime,
-                Encoding.UTF8.GetString(partitionEvent.Data.Body.ToArray())
-            );
+            var msgData = new EventHubMessage
+            {
+                Message = Encoding.UTF8.GetString(partitionEvent.Data.Body.ToArray()),
+                PartitionId = partitionEvent.Partition.PartitionId,
+                SequenceNumber = partitionEvent.Data.SequenceNumber,
+                EnqueuedTime = partitionEvent.Data.EnqueuedTime
+            };
             
-            await onMessageReceived(Encoding.UTF8.GetString(partitionEvent.Data.Body.ToArray()));
+            await onMessageReceived(msgData);
         }
     }
 

@@ -5,6 +5,7 @@ using Azure.Storage.Blobs;
 using Domain.Entities;
 using Domain.Interfaces.Factories;
 using Domain.Interfaces.Providers;
+using Domain.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Providers;
@@ -17,7 +18,7 @@ public class EventHubConsumerProviderWithStorage : IMessageConsumerProvider
     
     private BlobContainerClient? storageClient;
     private EventProcessorClient? eventProcessorClient;
-    private Func<string, Task>? messageProcessor;
+    private Func<EventHubMessage, Task>? messageProcessor;
 
     
     public EventHubConsumerProviderWithStorage(        
@@ -32,7 +33,7 @@ public class EventHubConsumerProviderWithStorage : IMessageConsumerProvider
     }
     
     
-    public async Task StartReceiveMessageAsync(Func<string, Task> onMessageReceived, CancellationToken cancellationToken)
+    public async Task StartReceiveMessageAsync(Func<EventHubMessage, Task> onMessageReceived, CancellationToken cancellationToken)
     {
         CreateBlobStorageClientIfNotExist();
         CreateEventProcessorClientIfNotExist();
@@ -96,17 +97,17 @@ public class EventHubConsumerProviderWithStorage : IMessageConsumerProvider
     
     protected virtual async Task OnProcessEventAsync(ProcessEventArgs eventArgs)
     {
-        logger.LogInformation(
-            "Received message from Partition {Partition}, SequenceNumber {SequenceNumber}, EnqueuedTime {EnqueuedTime}\r\n{Message}", 
-            eventArgs.Partition.PartitionId, 
-            eventArgs.Data.SequenceNumber,
-            eventArgs.Data.EnqueuedTime,
-            Encoding.UTF8.GetString(eventArgs.Data.Body.ToArray())
-        );
+        var msgData = new EventHubMessage
+        {
+            Message = Encoding.UTF8.GetString(eventArgs.Data.Body.ToArray()),
+            PartitionId = eventArgs.Partition.PartitionId,
+            SequenceNumber = eventArgs.Data.SequenceNumber,
+            EnqueuedTime = eventArgs.Data.EnqueuedTime
+        };
         
         if (messageProcessor is not null)
         {
-            await messageProcessor(Encoding.UTF8.GetString(eventArgs.Data.Body.ToArray()));
+            await messageProcessor(msgData);
         }
 
         await eventArgs.UpdateCheckpointAsync(eventArgs.CancellationToken);

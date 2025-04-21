@@ -4,6 +4,7 @@
 @using Domain.Enums
 @using Domain.Interfaces.Factories
 @using Domain.Interfaces.Services
+@using Domain.Models
 @using Microsoft.Extensions.Options
 @rendermode InteractiveServer
 @inject IJSRuntime JsRuntime
@@ -36,10 +37,12 @@
                 <ul id="events-list" class="list-group scrollable-list" @ref="listElement">
                     @foreach (var message in receivedMessages.Index())
                     {
-                        var activeClass = selectedIndex.HasValue && selectedIndex.Value == message.Index ? "active" : "";
-                        var messageString = message.Item.Length > 20 ? message.Item.Substring(0, 20) + "..." : message.Item;
-                        <li class=@($"list-group-item { activeClass }") @onclick="() => OnEventSelected(message.Index)">
-                            @($"{message.Index + 1} -> {messageString}")
+                        var activeClass = selectedIndex.HasValue && selectedIndex.Value == message.Index ? " active" : "";
+                        var messageString = message.Item.Message?.Length > 20 
+                            ? message.Item.Message.Substring(0, 20) + "..." 
+                            : message.Item.Message;
+                        <li class=@($"list-group-item{ activeClass }") @onclick="() => OnEventSelected(message.Index)">
+                            @($"{message.Index + 1} -> partition {message.Item.PartitionId}, sequenceNumber {message.Item.SequenceNumber}, enqueued {message.Item.EnqueuedTime.ToString("yyyyMMdd HH:mm:ss")}, message: {messageString}")
                         </li>
                     }
                 </ul>
@@ -114,7 +117,7 @@
     private string? receivedMessage;
     private bool isProcessing;
     private int? selectedIndex;
-    private readonly List<string> receivedMessages = new(100);
+    private readonly List<EventHubMessage> receivedMessages = new(100);
     private readonly ResettableCts receiverCts = new();
     private readonly ResettableCts delayedSenderCts = new();
 
@@ -184,7 +187,7 @@
                 return;
             
             receivedMessages.Add(message);
-            receivedMessage = receivedMessages[^1];
+            receivedMessage = receivedMessages[^1].Message;
             
             await InvokeAsync(StateHasChanged);
             
@@ -217,7 +220,7 @@
     private void OnEventSelected(int index)
     {
         selectedIndex = index;
-        receivedMessage = receivedMessages[index];
+        receivedMessage = receivedMessages[index].Message;
     }
 
     

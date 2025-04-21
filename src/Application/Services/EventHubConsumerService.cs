@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 using Domain.Interfaces.Providers;
 using Domain.Interfaces.Services;
+using Domain.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Application.Services;
@@ -10,7 +11,7 @@ public class EventHubConsumerService : IMessageConsumerService
 {
     private readonly ILogger<EventHubConsumerService> logger;
     private readonly IMessageConsumerProvider messageConsumerProvider;
-    private readonly Channel<string> channel = Channel.CreateUnbounded<string>();
+    private readonly Channel<EventHubMessage> channel = Channel.CreateUnbounded<EventHubMessage>();
     private readonly object startLock = new();
     private bool isProcessing;
     
@@ -25,7 +26,7 @@ public class EventHubConsumerService : IMessageConsumerService
     }
     
     
-    public async IAsyncEnumerable<string> StartReceiveMessageAsync(
+    public async IAsyncEnumerable<EventHubMessage> StartReceiveMessageAsync(
         [EnumeratorCancellation] CancellationToken cancellationToken = default
     )
     {
@@ -33,6 +34,7 @@ public class EventHubConsumerService : IMessageConsumerService
 
         await foreach (var message in channel.Reader.ReadAllAsync(cancellationToken))
         {
+            logger.LogInformation("Received message {MsgData}", message);
             yield return message;
         }
     }
@@ -46,7 +48,6 @@ public class EventHubConsumerService : IMessageConsumerService
         await messageConsumerProvider.StopReceiveMessageAsync();
     }
         
-    
     
     private async Task ReadMessageAsync(CancellationToken cancellationToken)
     {

@@ -1,7 +1,9 @@
+using Domain.Models;
+
 namespace Domain.Interfaces.Providers;
 
 public interface IMessageConsumerProvider
 {
-    Task StartReceiveMessageAsync(Func<string, Task> onMessageReceived, CancellationToken cancellationToken);
+    Task StartReceiveMessageAsync(Func<EventHubMessage, Task> onMessageReceived, CancellationToken cancellationToken);
     Task StopReceiveMessageAsync();
 }
