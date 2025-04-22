@@ -1,5 +1,4 @@
 using Application.Services;
-using Azure.Storage.Blobs;
 using Domain.Entities;
 using Domain.Interfaces.Factories;
 using Domain.Interfaces.Providers;
