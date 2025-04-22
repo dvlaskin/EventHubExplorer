@@ -43,14 +43,17 @@ public class MessageConsumerFactory : IMessageConsumerFactory
     
     private EventHubConsumerProviderWithStorage CreateConsumerWithStorage(EventHubConfig eventHubConfig)
     {
-        var ehProducerLogger = serviceProvider.GetRequiredService<ILogger<EventHubConsumerProviderWithStorage>>();
-        var storageClientFactory = serviceProvider.GetRequiredService<IStorageClientFactory<BlobConfig, BlobContainerClient>>();
-        return new EventHubConsumerProviderWithStorage(ehProducerLogger, eventHubConfig, storageClientFactory);
+        return ActivatorUtilities.CreateInstance<EventHubConsumerProviderWithStorage>(
+            serviceProvider,
+            eventHubConfig
+        );
     }
     
     private EventHubConsumerProviderWithoutStorage CreateConsumerWithoutStorage(EventHubConfig eventHubConfig)
     {
-        var ehProducerLogger = serviceProvider.GetRequiredService<ILogger<EventHubConsumerProviderWithoutStorage>>();
-        return new EventHubConsumerProviderWithoutStorage(ehProducerLogger, eventHubConfig);
+        return ActivatorUtilities.CreateInstance<EventHubConsumerProviderWithoutStorage>(
+            serviceProvider,
+            eventHubConfig
+        );
     }
 }
