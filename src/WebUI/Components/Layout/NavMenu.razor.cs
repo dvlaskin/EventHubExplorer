@@ -1,4 +1,4 @@
-using Domain.Entities;
+using Domain.Configs;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Options;
 

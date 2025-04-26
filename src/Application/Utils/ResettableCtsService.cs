@@ -11,6 +11,7 @@ public class ResettableCts : IDisposable
     {
         EnsureNotDisposed();
         
+        cts.Cancel();
         cts.Dispose();
         cts = new CancellationTokenSource();
     }

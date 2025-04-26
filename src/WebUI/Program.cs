@@ -1,11 +1,10 @@
-using Domain.Entities;
+using Domain.Configs;
 using Infrastructure.IoC;
 using Microsoft.Extensions.Options;
 using WebUI.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents(opt =>
     {

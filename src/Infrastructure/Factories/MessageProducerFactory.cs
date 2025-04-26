@@ -1,5 +1,5 @@
 using Application.Services;
-using Domain.Entities;
+using Domain.Configs;
 using Domain.Interfaces.Factories;
 using Domain.Interfaces.Services;
 using Infrastructure.Providers;
@@ -30,9 +30,10 @@ public class MessageProducerFactory : IMessageProducerFactory
     {
         logger.LogInformation("Creating producer for configId: {ConfigId}", configId);
         var eventHubConfig = config.EventHubsConfigs.First(x => x.Id == configId);
-        var ehProducerLogger = serviceProvider.GetRequiredService<ILogger<EventHubProducerProvider>>();
-        var ehProducerProvider = new EventHubProducerProvider(ehProducerLogger, eventHubConfig);
-        var msgProducerLogger = serviceProvider.GetRequiredService<ILogger<MessageProducerService>>();
-        return new MessageProducerService(msgProducerLogger, ehProducerProvider);
+        var ehProducerProvider = ActivatorUtilities.CreateInstance<EventHubProducerProvider>(
+            serviceProvider, eventHubConfig);
+        
+        return ActivatorUtilities.CreateInstance<MessageProducerService>(
+            serviceProvider, ehProducerProvider);
     }
 }

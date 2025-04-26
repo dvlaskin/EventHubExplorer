@@ -1,5 +1,5 @@
 using Application.Services;
-using Domain.Entities;
+using Domain.Configs;
 using Domain.Interfaces.Factories;
 using Domain.Interfaces.Providers;
 using Domain.Interfaces.Services;

@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Domain.Entities;
+using Domain.Configs;
 using Domain.Interfaces.Providers;
 
 namespace Infrastructure.Providers;

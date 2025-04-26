@@ -1,5 +1,5 @@
 using Azure.Storage.Blobs;
-using Domain.Entities;
+using Domain.Configs;
 using Domain.Interfaces.Factories;
 using Microsoft.Extensions.Logging;
 

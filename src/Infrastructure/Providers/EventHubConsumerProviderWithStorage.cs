@@ -2,7 +2,7 @@ using System.Text;
 using Azure.Messaging.EventHubs;
 using Azure.Messaging.EventHubs.Processor;
 using Azure.Storage.Blobs;
-using Domain.Entities;
+using Domain.Configs;
 using Domain.Interfaces.Factories;
 using Domain.Interfaces.Providers;
 using Domain.Models;
@@ -18,7 +18,7 @@ public class EventHubConsumerProviderWithStorage : IMessageConsumerProvider
     
     private BlobContainerClient? storageClient;
     private EventProcessorClient? eventProcessorClient;
-    private Func<EventHubMessage, Task>? messageProcessor;
+    private Func<EventHubMessage, Task>? runMessageProcessing;
 
     
     public EventHubConsumerProviderWithStorage(        
@@ -41,14 +41,13 @@ public class EventHubConsumerProviderWithStorage : IMessageConsumerProvider
         if (eventProcessorClient is null)
             throw new ApplicationException("EventProcessorClient is not initialized");
         
-        messageProcessor = onMessageReceived;
+        runMessageProcessing = onMessageReceived;
         eventProcessorClient.ProcessEventAsync += OnProcessEventAsync;
         eventProcessorClient.ProcessErrorAsync += OnProcessErrorAsync;
         
         await eventProcessorClient.StartProcessingAsync(cancellationToken);
     }
     
-
     public async Task StopReceiveMessageAsync()
     {
         if (eventProcessorClient is null)
@@ -95,7 +94,7 @@ public class EventHubConsumerProviderWithStorage : IMessageConsumerProvider
         );
     }
     
-    protected virtual async Task OnProcessEventAsync(ProcessEventArgs eventArgs)
+    private async Task OnProcessEventAsync(ProcessEventArgs eventArgs)
     {
         var msgData = new EventHubMessage
         {
@@ -105,9 +104,9 @@ public class EventHubConsumerProviderWithStorage : IMessageConsumerProvider
             EnqueuedTime = eventArgs.Data.EnqueuedTime
         };
         
-        if (messageProcessor is not null)
+        if (runMessageProcessing is not null)
         {
-            await messageProcessor(msgData);
+            await runMessageProcessing(msgData);
         }
 
         await eventArgs.UpdateCheckpointAsync(eventArgs.CancellationToken);

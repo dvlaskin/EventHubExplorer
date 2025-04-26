@@ -1,4 +1,4 @@
-using Domain.Entities;
+using Domain.Configs;
 
 namespace Domain.Interfaces.Providers;
 

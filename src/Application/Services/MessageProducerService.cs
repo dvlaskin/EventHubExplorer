@@ -20,7 +20,6 @@ public class MessageProducerService : IMessageProducerService
     }
     
     
-    
     public async Task SendMessagesAsync(
         string? messageText, 
         int numberOfMessages = 1, 

@@ -1,6 +1,6 @@
 using Azure.Messaging.EventHubs;
 using Azure.Messaging.EventHubs.Producer;
-using Domain.Entities;
+using Domain.Configs;
 using Domain.Interfaces.Providers;
 using Microsoft.Extensions.Logging;
 
@@ -49,7 +49,7 @@ public sealed class EventHubProducerProvider : IMessageProducerProvider
         await producerClient.SendAsync(eventBatch, cancellationToken);
         logger.LogInformation("Sent {MsgCount} messages", messagesText.Count);
     }
-
+    
     private void CreateProducerIfNotExist()
     {
         producerClient ??= new EventHubProducerClient(

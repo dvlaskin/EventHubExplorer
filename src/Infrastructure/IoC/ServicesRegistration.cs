@@ -1,5 +1,5 @@
 using Azure.Storage.Blobs;
-using Domain.Entities;
+using Domain.Configs;
 using Domain.Interfaces.Factories;
 using Domain.Interfaces.Providers;
 using Infrastructure.Factories;
@@ -12,9 +12,6 @@ public static class ServicesRegistration
 {
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services)
     {
-        services.AddMemoryCache();
-
-        services.AddSingleton<ICacheProvider, InMemoryCacheProvider>();
         services.AddSingleton<IConfigProvider, ConfigProvider>();
         
         services.AddSingleton<IMessageProducerFactory, MessageProducerFactory>();
