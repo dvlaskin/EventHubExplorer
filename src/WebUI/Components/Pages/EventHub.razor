@@ -130,12 +130,26 @@
 
     private void InitializeMessageProducer()
     {
-        messageProducer ??= MessageProducerFactory?.CreateProducerService(Id);
+        try
+        {
+            messageProducer ??= MessageProducerFactory?.CreateProducerService(Id);
+        }
+        catch (Exception ex)
+        {
+            DisplayErrorMessage(ex, "Error creating message producer");
+        }
     }
     
     private void InitializeMessageConsumer()
     {
-        messageConsumer ??= MessageConsumerFactory?.CreateConsumer(Id);
+        try
+        {
+            messageConsumer ??= MessageConsumerFactory?.CreateConsumer(Id);
+        }
+        catch (Exception ex)
+        {
+            DisplayErrorMessage(ex, "Error creating message consumer");
+        }
     }
 
     
@@ -157,8 +171,7 @@
         }
         catch (Exception ex)
         {
-            Logger?.LogError(ex, "Error sending message: {Message}", ex.Message);
-            _ = toast?.ShowToast($"Error sending message: {ex.Message}", ToastType.Error, TimeSpan.FromSeconds(10));
+            DisplayErrorMessage(ex, "Error sending message");
         }
         
         numberMessagesToSend = 1;
@@ -221,6 +234,12 @@
     {
         selectedIndex = index;
         receivedMessage = receivedMessages[index].Message;
+    }
+
+    private void DisplayErrorMessage(Exception ex, string infoMessage)
+    {
+        Logger?.LogError(ex, "{InfoMessage}: {Message}", infoMessage, ex.Message);
+        _ = toast?.ShowToast($"{infoMessage}: {ex.Message}", ToastType.Error, TimeSpan.FromSeconds(10));
     }
 
     

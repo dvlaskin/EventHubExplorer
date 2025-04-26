@@ -59,8 +59,16 @@ public sealed class EventHubProducerProvider : IMessageProducerProvider
             {
                 ConnectionOptions = new EventHubConnectionOptions
                 {
-                    TransportType = EventHubsTransportType.AmqpTcp
-                }
+                    TransportType = config.ConnectionString.Contains("UseDevelopmentEmulator=true")
+                        ? EventHubsTransportType.AmqpTcp
+                        : EventHubsTransportType.AmqpWebSockets,
+                },
+                RetryOptions = new EventHubsRetryOptions
+                {
+                    MaximumRetries = 3,
+                    Delay = TimeSpan.FromSeconds(1),
+                    TryTimeout = TimeSpan.FromSeconds(3)
+                },
             });
     }
 
