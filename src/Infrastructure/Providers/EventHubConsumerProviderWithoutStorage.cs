@@ -25,6 +25,8 @@ public class EventHubConsumerProviderWithoutStorage : IMessageConsumerProvider
     {
         needToStop = false;
         await using var consumer = new EventHubConsumerClient(ConsumerGroup, config.ConnectionString, config.Name);
+        var partitions = await consumer.GetPartitionIdsAsync(cancellationToken);
+        logger.LogInformation("Start reading from partitions {Partitions}", string.Join(", ", partitions));
         await foreach (var partitionEvent in consumer.ReadEventsAsync(startReadingAtEarliestEvent: false, cancellationToken: cancellationToken))
         {
             if (needToStop)

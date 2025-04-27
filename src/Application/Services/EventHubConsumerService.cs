@@ -59,10 +59,13 @@ public class EventHubConsumerService : IMessageConsumerService
             isProcessing = true;
         }
 
-        _ = messageConsumerProvider.StartReceiveMessageAsync(async message =>
+        var taskResult = messageConsumerProvider.StartReceiveMessageAsync(async message =>
         {
             await channel.Writer.WriteAsync(message, cancellationToken);
         }, cancellationToken);
+        
+        if (taskResult.Exception is not null)
+            throw taskResult.Exception;
 
         await Task.CompletedTask;
     }

@@ -194,17 +194,24 @@
         
         receiverCts.Reset();
 
-        await foreach (var message in  messageConsumer.StartReceiveMessageAsync(receiverCts.Token))
+        try
         {
-            if (!isProcessing)
-                return;
-            
-            receivedMessages.Add(message);
-            receivedMessage = receivedMessages[^1].Message;
-            
-            await InvokeAsync(StateHasChanged);
-            
-            await ScrollToBottom();
+            await foreach (var message in  messageConsumer.StartReceiveMessageAsync(receiverCts.Token))
+            {
+                if (!isProcessing)
+                    return;
+                
+                receivedMessages.Add(message);
+                receivedMessage = receivedMessages[^1].Message;
+                
+                await InvokeAsync(StateHasChanged);
+                
+                await ScrollToBottom();
+            }
+        }
+        catch (Exception ex) when(ex is not (TaskCanceledException or OperationCanceledException))
+        {
+            DisplayErrorMessage(ex, "Error while receiving messages");
         }
     }
     
