@@ -7,6 +7,8 @@ namespace Infrastructure.Providers;
 public class ConfigProvider : IConfigProvider
 {
     private const string ConfigPath = "Data/appConfig.json";
+    private static readonly string ConfigDirectory = Path.GetDirectoryName(ConfigPath) ?? string.Empty;
+    private static readonly JsonSerializerOptions JsSerializerOptions = new JsonSerializerOptions { WriteIndented = true };
 
     public async Task<AppConfiguration?> LoadConfigAsync()
     {
@@ -19,7 +21,13 @@ public class ConfigProvider : IConfigProvider
 
     public async Task SaveConfigAsync(AppConfiguration newConfig)
     {
-        var json = JsonSerializer.Serialize(newConfig, new JsonSerializerOptions { WriteIndented = true });
+        var json = JsonSerializer.Serialize(newConfig, JsSerializerOptions);
+        
+        if (!Directory.Exists(ConfigDirectory))
+        {
+            Directory.CreateDirectory(ConfigDirectory);
+        }
+        
         await File.WriteAllTextAsync(ConfigPath, json);
     } 
 }

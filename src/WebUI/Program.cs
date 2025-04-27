@@ -13,7 +13,7 @@ builder.Services.AddRazorComponents()
     });
 
 // add app configuration
-builder.Configuration.AddJsonFile("Data/appConfig.json", optional: false, reloadOnChange: true);
+builder.Configuration.AddJsonFile("Data/appConfig.json", optional: true, reloadOnChange: true);
 builder.Services.Configure<AppConfiguration>(builder.Configuration);
 builder.Services.AddSingleton<IOptionsMonitor<AppConfiguration>, OptionsMonitor<AppConfiguration>>();
 
@@ -32,7 +32,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 app.UseAntiforgery();
 app.MapStaticAssets();
 

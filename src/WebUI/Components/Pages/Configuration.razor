@@ -18,22 +18,15 @@
 <button class="btn btn-success mb-3" @onclick="SaveConfiguration">Save Configuration</button>
 
 
-@if (appConfiguration is null)
-{
-    <p>Loading...</p>
-}
-else if (appConfiguration.EventHubsConfigs.Count == 0)
+@if (appConfiguration?.EventHubsConfigs.Count == 0)
 {
     <p>No Event Hubs configured</p>
-    
-    <!-- Save All Config -->
-    <button class="btn btn-success mt-3" @onclick="SaveConfiguration">Save</button>
 }
 else
 {
     <!-- Event Hubs configs -->
     <div class="accordion" id="eventHubAccordion">
-        @for (var i = 0; i < appConfiguration.EventHubsConfigs.Count; i++)
+        @for (var i = 0; i < appConfiguration?.EventHubsConfigs.Count; i++)
         {
             var index = i;
             var eventHub = appConfiguration.EventHubsConfigs[i];
@@ -117,7 +110,7 @@ else
 
     private async Task LoadConfiguration()
     {
-        appConfiguration = await ConfigurationProvider.LoadConfigAsync();
+        appConfiguration = await ConfigurationProvider.LoadConfigAsync() ?? new AppConfiguration();
     }
     
     private async Task SaveConfiguration()
