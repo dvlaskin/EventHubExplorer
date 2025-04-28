@@ -1,7 +1,10 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
-USER $APP_UID
+ARG APP_UID=1000
+RUN adduser --disabled-password --uid $APP_UID appuser
 WORKDIR /app
-EXPOSE 5235
+
+RUN mkdir -p /app/Data && chown -R appuser:appuser /app/Data
+USER appuser
 
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release

@@ -7,3 +7,10 @@
       dockerfile: src/WebUI/Dockerfile
     ports:
       - "5235:8080"
+    volumes:
+      - data-volume:/app/Data
+        
+volumes:
+  data-volume:
+        
+  
