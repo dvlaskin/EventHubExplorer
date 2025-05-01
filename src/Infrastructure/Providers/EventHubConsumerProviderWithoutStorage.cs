@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Providers;
 
-public class EventHubConsumerProviderWithoutStorage : IMessageConsumerProvider
+public sealed class EventHubConsumerProviderWithoutStorage : IMessageConsumerProvider
 {
     private readonly ILogger<EventHubConsumerProviderWithoutStorage> logger;
     private readonly EventHubConfig config;

@@ -22,4 +22,6 @@ RUN dotnet publish "WebUI.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:Use
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+
+EXPOSE 8080
 ENTRYPOINT ["dotnet", "WebUI.dll"]

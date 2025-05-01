@@ -157,9 +157,15 @@
     {
         InitializeMessageProducer();
 
+        if (messageProducer is null)
+        {
+            Logger?.LogWarning("Message Producer is null, cannot send message");
+            return;
+        }
+        
         try
         {
-            await messageProducer!
+            await messageProducer
                 .SendMessagesAsync(
                     messageToSend, 
                     numberMessagesToSend, 

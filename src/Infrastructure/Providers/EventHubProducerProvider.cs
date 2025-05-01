@@ -52,6 +52,10 @@ public sealed class EventHubProducerProvider : IMessageProducerProvider
     
     private void CreateProducerIfNotExist()
     {
+        logger.LogInformation("Creating producer, EventHubName: {EventHubName}, ConnectionString: {ConnectionString}", 
+            config.Name,
+            config.ConnectionString
+        );
         producerClient ??= new EventHubProducerClient(
             config.ConnectionString, 
             config.Name,

@@ -9,8 +9,14 @@
       - "5235:8080"
     volumes:
       - data-volume:/app/Data
+    networks:
+      - docker-network
         
 volumes:
   data-volume:
+    
+networks:
+  docker-network:
+    external: true
         
   

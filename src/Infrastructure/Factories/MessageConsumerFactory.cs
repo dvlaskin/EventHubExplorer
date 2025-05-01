@@ -13,7 +13,7 @@ namespace Infrastructure.Factories;
 public class MessageConsumerFactory : IMessageConsumerFactory
 {
     private readonly ILogger<MessageConsumerFactory> logger;
-    private readonly AppConfiguration config;
+    private readonly IOptionsMonitor<AppConfiguration> config;
     private readonly IServiceProvider serviceProvider;
 
     public MessageConsumerFactory(
@@ -23,14 +23,14 @@ public class MessageConsumerFactory : IMessageConsumerFactory
     )
     {
         this.logger = logger;
-        this.config = config.CurrentValue;
+        this.config = config;
         this.serviceProvider = serviceProvider;
     }
     
     public IMessageConsumerService CreateConsumer(Guid configId)
     {
         logger.LogInformation("Creating producer for configId: {ConfigId}", configId);
-        var eventHubConfig = config.EventHubsConfigs.First(x => x.Id == configId);
+        var eventHubConfig = config.CurrentValue.EventHubsConfigs.First(x => x.Id == configId);
 
         IMessageConsumerProvider ehConsumerProvider = eventHubConfig.UseCheckpoints 
             ? CreateConsumerWithStorage(eventHubConfig) 

@@ -12,7 +12,7 @@ namespace Infrastructure.Factories;
 public class MessageProducerFactory : IMessageProducerFactory
 {
     private readonly ILogger<MessageProducerFactory> logger;
-    private readonly AppConfiguration config;
+    private readonly IOptionsMonitor<AppConfiguration> config;
     private readonly IServiceProvider serviceProvider;
 
     public MessageProducerFactory(
@@ -22,14 +22,14 @@ public class MessageProducerFactory : IMessageProducerFactory
     )
     {
         this.logger = logger;
-        this.config = config.CurrentValue;
+        this.config = config;
         this.serviceProvider = serviceProvider;
     }
 
     public IMessageProducerService CreateProducerService(Guid configId)
     {
         logger.LogInformation("Creating producer for configId: {ConfigId}", configId);
-        var eventHubConfig = config.EventHubsConfigs.First(x => x.Id == configId);
+        var eventHubConfig = config.CurrentValue.EventHubsConfigs.First(x => x.Id == configId);
         var ehProducerProvider = ActivatorUtilities.CreateInstance<EventHubProducerProvider>(
             serviceProvider, eventHubConfig);
         

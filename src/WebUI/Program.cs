@@ -15,7 +15,6 @@ builder.Services.AddRazorComponents()
 // add app configuration
 builder.Configuration.AddJsonFile("Data/appConfig.json", optional: true, reloadOnChange: true);
 builder.Services.Configure<AppConfiguration>(builder.Configuration);
-builder.Services.AddSingleton<IOptionsMonitor<AppConfiguration>, OptionsMonitor<AppConfiguration>>();
 
 // add application services
 builder.Services.AddInfrastructureServices();
