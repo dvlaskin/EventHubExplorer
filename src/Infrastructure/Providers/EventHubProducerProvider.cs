@@ -50,6 +50,24 @@ public sealed class EventHubProducerProvider : IMessageProducerProvider
         logger.LogInformation("Sent {MsgCount} messages", messagesText.Count);
     }
     
+    public async Task SendMessagesAsync(ICollection<string> messagesText, TimeSpan timeDelay, CancellationToken cancellationToken)
+    {
+        CreateProducerIfNotExist();
+
+        foreach (var item in messagesText.Select((msg, indx) => (msg, indx)))
+        {
+            if (cancellationToken.IsCancellationRequested)
+                break;
+            
+            await producerClient!.SendAsync([new EventData(item.msg)], cancellationToken);
+            logger.LogInformation("Message number {MessageNumber} for {TotalMessages} is sent", item.indx + 1, messagesText.Count);
+            await Task.Delay(timeDelay, cancellationToken);
+        }
+        
+        logger.LogInformation("Sent {MsgCount} messages", messagesText.Count);
+    }
+    
+    
     private void CreateProducerIfNotExist()
     {
         logger.LogInformation("Creating producer, EventHubName: {EventHubName}, ConnectionString: {ConnectionString}", 

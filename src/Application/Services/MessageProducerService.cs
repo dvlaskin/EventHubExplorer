@@ -62,15 +62,8 @@ public class MessageProducerService : IMessageProducerService
 
         try
         {
-            for (var i = 0; i < numberOfMessages; i++)
-            {
-                if (cancellationToken.IsCancellationRequested)
-                    break;
-                
-                await SendSingleMessageAsync(messageText, cancellationToken);
-                logger.LogInformation("Message number {MessageNumber} for {TotalMessages} is sent", i + 1, numberOfMessages);
-                await Task.Delay(timeDelay, cancellationToken);
-            }
+            var messages = Enumerable.Repeat(messageText, numberOfMessages).ToArray();
+            await messageProducerProvider.SendMessagesAsync(messages, timeDelay, cancellationToken);
         }
         catch (TaskCanceledException)
         {
