@@ -1,4 +1,5 @@
 using System.Text;
+using Azure.Messaging.EventHubs;
 using Azure.Messaging.EventHubs.Consumer;
 using Domain.Configs;
 using Domain.Interfaces.Providers;
@@ -24,7 +25,23 @@ public sealed class EventHubConsumerProviderWithoutStorage : IMessageConsumerPro
     public async Task StartReceiveMessageAsync(Func<EventHubMessage, Task> onMessageReceived, CancellationToken cancellationToken)
     {
         needToStop = false;
-        await using var consumer = new EventHubConsumerClient(ConsumerGroup, config.ConnectionString, config.Name);
+        var options = new EventHubConsumerClientOptions
+        {
+            ConnectionOptions = new EventHubConnectionOptions
+            {
+                TransportType = config.ConnectionString.Contains("UseDevelopmentEmulator=true")
+                    ? EventHubsTransportType.AmqpTcp
+                    : EventHubsTransportType.AmqpWebSockets,
+            },
+            RetryOptions = new EventHubsRetryOptions
+            {
+                MaximumRetries = 3,
+                Delay = TimeSpan.FromSeconds(1),
+                TryTimeout = TimeSpan.FromSeconds(3)
+            },
+        };
+        
+        await using var consumer = new EventHubConsumerClient(ConsumerGroup, config.ConnectionString, config.Name, options);
         var partitions = await consumer.GetPartitionIdsAsync(cancellationToken);
         logger.LogInformation("Start reading from partitions {Partitions}", string.Join(", ", partitions));
         await foreach (var partitionEvent in consumer.ReadEventsAsync(startReadingAtEarliestEvent: false, cancellationToken: cancellationToken))
