@@ -1,7 +1,8 @@
-using Application.Services;
+using Application.Services.MessageProducers;
 using Domain.Configs;
 using Domain.Interfaces.Factories;
 using Domain.Interfaces.Services;
+using Domain.Models;
 using Infrastructure.Providers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -31,9 +32,21 @@ public class MessageProducerFactory : IMessageProducerFactory
         logger.LogInformation("Creating producer for configId: {ConfigId}", configId);
         var eventHubConfig = config.CurrentValue.EventHubsConfigs.First(x => x.Id == configId);
         var ehProducerProvider = ActivatorUtilities.CreateInstance<EventHubProducerProvider>(
-            serviceProvider, eventHubConfig);
+            serviceProvider, eventHubConfig
+        );
+        var msgOptions = new MessageOptions
+        {
+            UseGzipCompression = eventHubConfig.UseGzipCompression,
+            UseBase64Coding = eventHubConfig.UseBase64Coding
+        };
         
-        return ActivatorUtilities.CreateInstance<MessageProducerService>(
-            serviceProvider, ehProducerProvider);
+        if (msgOptions is { UseGzipCompression: true, UseBase64Coding: false })
+            return ActivatorUtilities.CreateInstance<BytesMessageProducer>(
+                serviceProvider, ehProducerProvider, msgOptions
+            );
+        
+        return ActivatorUtilities.CreateInstance<StringMessageProducer>(
+            serviceProvider, ehProducerProvider, msgOptions
+        );
     }
 }

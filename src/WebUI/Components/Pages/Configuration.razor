@@ -54,6 +54,20 @@ else
                             <label class="form-label">EventHub Name</label>
                             <input class="form-control" @bind="eventHub.Name">
                         </div>
+                        <div class="mb-3">
+                            <div class="form-check d-inline-block me-3">
+                                <input class="form-check-input" type="checkbox" @bind="eventHub.UseGzipCompression"
+                                        @bind:after="@(() => OnGzipCompressionChanged(eventHub))"
+                                       >
+                                <label class="form-check-label">Use Gzip Compression</label>
+                            </div>
+                            <div class="form-check d-inline-block">
+                                <input class="form-check-input" type="checkbox" @bind="eventHub.UseBase64Coding"
+                                       disabled="@(!eventHub.UseGzipCompression)"
+                                       >
+                                <label class="form-check-label">Use Base64 Coding</label>
+                            </div>
+                        </div>
                         <div class="form-check mb-3">
                             <input class="form-check-input" type="checkbox" @bind="eventHub.UseCheckpoints">
                             <label class="form-check-label">Use Checkpoints</label>
@@ -150,5 +164,12 @@ else
         showToast = false;
         StateHasChanged();
     }
-    
+  
+    private static void OnGzipCompressionChanged(EventHubConfig eventHub)
+    {
+        if (eventHub is { UseGzipCompression: false, UseBase64Coding: true })
+        {
+            eventHub.UseBase64Coding = false;
+        }
+    }
 }
