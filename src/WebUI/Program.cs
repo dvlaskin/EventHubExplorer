@@ -1,6 +1,5 @@
 using Domain.Configs;
 using Infrastructure.IoC;
-using Microsoft.Extensions.Options;
 using WebUI.Components;
 
 var builder = WebApplication.CreateBuilder(args);
