@@ -40,7 +40,6 @@ public static class CompressingEncoding
         using var compressedStream = new MemoryStream(bytes);
         using var zipStream = new GZipStream(compressedStream, CompressionMode.Decompress);
         
-        // Используем буферизованное чтение вместо CopyTo в MemoryStream
         using var reader = new StreamReader(zipStream, Encoding.UTF8);
         return reader.ReadToEnd();
     }
