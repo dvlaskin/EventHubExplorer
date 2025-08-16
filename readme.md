@@ -11,12 +11,14 @@
 
 ### Sending Messages to Event Hub
 
+* Ability to compress and encode a message before sending
 * Send a **single message**
 * Send a **batch of identical messages**
 * Send a **batch of identical messages** with a **time delay** between each message
 
 ### Receiving Messages from Event Hub
 
+* Ability to decompress and decode a message after receiving
 * Receive messages **without checkpoints** (always fetch the newest messages)
 * Receive messages **with checkpoints** (using external storage to track received message IDs)
 
