@@ -14,13 +14,13 @@ public class StringMessageProducer : MessageProducerBase<string>
         ILogger<StringMessageProducer> logger,
         IMessageProducerProvider messageProducerProvider,
         MessageOptions? messageOptions = null
-    ) : base(messageProducerProvider)
+    ) : base(messageProducerProvider, messageOptions)
     {
         this.logger = logger;
         this.messageOptions = messageOptions;
     }
 
-    protected override string ApplyOptions(string message)
+    protected override string ApplyEncodingOptions(string message)
     {
         if (messageOptions is null || messageOptions.UseGzipCompression is false)
             return message;

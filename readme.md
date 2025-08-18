@@ -11,6 +11,7 @@
 
 ### Sending Messages to Event Hub
 
+* Override GUID, DateTime values in a message before sending
 * Ability to compress and encode a message before sending
 * Send a **single message**
 * Send a **batch of identical messages**
@@ -18,6 +19,7 @@
 
 ### Receiving Messages from Event Hub
 
+* Format a message to JSON if it is a JSON string
 * Ability to decompress and decode a message after receiving
 * Receive messages **without checkpoints** (always fetch the newest messages)
 * Receive messages **with checkpoints** (using external storage to track received message IDs)

@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Threading.Channels;
+using Domain.Configs;
 using Domain.Interfaces.Providers;
 using Domain.Interfaces.Services;
 using Domain.Models;
@@ -11,6 +12,8 @@ public class EventHubConsumerService : IMessageConsumerService
 {
     private readonly ILogger<EventHubConsumerService> logger;
     private readonly IMessageConsumerProvider messageConsumerProvider;
+    private readonly ITextProcessingPipeline textProcessingPipeline;
+    
     private readonly Channel<EventHubMessage> channel = Channel.CreateUnbounded<EventHubMessage>();
     private readonly object startLock = new();
     private bool isProcessing;
@@ -18,11 +21,13 @@ public class EventHubConsumerService : IMessageConsumerService
 
     public EventHubConsumerService(
         ILogger<EventHubConsumerService> logger,
-        IMessageConsumerProvider messageConsumerProvider
+        IMessageConsumerProvider messageConsumerProvider,
+        ITextProcessingPipeline textProcessingPipeline
     )
     {
         this.logger = logger;
         this.messageConsumerProvider = messageConsumerProvider;
+        this.textProcessingPipeline = textProcessingPipeline;
     }
     
     
@@ -35,6 +40,8 @@ public class EventHubConsumerService : IMessageConsumerService
         await foreach (var message in channel.Reader.ReadAllAsync(cancellationToken))
         {
             logger.LogInformation("Received message {MsgData}", message);
+            message.Message = textProcessingPipeline.Process(message.Message);
+            
             yield return message;
         }
     }

@@ -1,3 +1,4 @@
+using Application.IoC;
 using Domain.Configs;
 using Infrastructure.IoC;
 using WebUI.Components;
@@ -15,7 +16,8 @@ builder.Services.AddRazorComponents()
 builder.Configuration.AddJsonFile("Data/appConfig.json", optional: true, reloadOnChange: true);
 builder.Services.Configure<AppConfiguration>(builder.Configuration);
 
-// add application services
+// add applications services
+builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices();
 
 builder.Services.Configure<HostOptions>(opt => opt.ShutdownTimeout = TimeSpan.FromSeconds(5));

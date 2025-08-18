@@ -14,13 +14,13 @@ public class BytesMessageProducer : MessageProducerBase<byte[]>
         ILogger<BytesMessageProducer> logger,
         IMessageProducerProvider messageProducerProvider,
         MessageOptions? messageOptions = null
-    ) : base(messageProducerProvider)
+    ) : base(messageProducerProvider, messageOptions)
     {
         this.logger = logger;
         this.messageOptions = messageOptions;
     }
 
-    protected override byte[] ApplyOptions(string message)
+    protected override byte[] ApplyEncodingOptions(string message)
     {
         if (messageOptions is null || messageOptions.UseGzipCompression is false)
             throw new InvalidOperationException("Compression is disabled, incorrect MessageProducer is used");
