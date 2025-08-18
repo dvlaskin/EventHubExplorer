@@ -19,9 +19,9 @@ public class TextProcessingPipeline : ITextProcessingPipeline
         formatters.AddRange(messageFormatters);
     }
     
-    public string Process(string input)
+    public string? Process(string? input)
     {
-        if (string.IsNullOrEmpty(input))
+        if (string.IsNullOrWhiteSpace(input))
             return input;
             
         var result = input;

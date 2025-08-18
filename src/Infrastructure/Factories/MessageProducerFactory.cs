@@ -53,9 +53,7 @@ public class MessageProducerFactory : IMessageProducerFactory
             serviceProvider, ehProducerProvider, msgOptions
         );
     }
-
     
-
 
     private ITextProcessingPipeline GetTextProcessingPipeline(EventHubConfig eventHubConfig)
     {

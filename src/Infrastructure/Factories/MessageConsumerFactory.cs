@@ -1,5 +1,6 @@
 using Application.Services;
 using Domain.Configs;
+using Domain.Enums;
 using Domain.Interfaces.Factories;
 using Domain.Interfaces.Providers;
 using Domain.Interfaces.Services;
@@ -35,9 +36,12 @@ public class MessageConsumerFactory : IMessageConsumerFactory
         IMessageConsumerProvider ehConsumerProvider = eventHubConfig.UseCheckpoints 
             ? CreateConsumerWithStorage(eventHubConfig) 
             : CreateConsumerWithoutStorage(eventHubConfig);
-        
-        var ehConsumerLogger = serviceProvider.GetRequiredService<ILogger<EventHubConsumerService>>();
-        return new EventHubConsumerService(ehConsumerLogger, ehConsumerProvider);
+
+        var textProcessingPipeline = GetTextProcessingPipeline(eventHubConfig);
+
+        return ActivatorUtilities.CreateInstance<EventHubConsumerService>(
+                serviceProvider, ehConsumerProvider, textProcessingPipeline
+        );
     }
     
     private EventHubConsumerProviderWithStorage CreateConsumerWithStorage(EventHubConfig eventHubConfig)
@@ -54,5 +58,33 @@ public class MessageConsumerFactory : IMessageConsumerFactory
             serviceProvider,
             eventHubConfig
         );
+    }
+    
+    
+    private ITextProcessingPipeline GetTextProcessingPipeline(EventHubConfig eventHubConfig)
+    {
+        var activeMessageFormatters = GetActiveMessageFormatters(eventHubConfig);
+        var textProcessingPipeline = serviceProvider.GetRequiredService<ITextProcessingPipeline>();
+        textProcessingPipeline.AddFormatters(activeMessageFormatters);
+        
+        return textProcessingPipeline;
+    }
+    
+    private IMessageFormatter[] GetActiveMessageFormatters(EventHubConfig eventHubConfig)
+    {
+        var ehMessageFormattersNames = eventHubConfig
+            .MessageFormatters
+            .Where(x => x.Value)
+            .Select(s => s.Key)
+            .ToArray();
+
+        var messageFormattersList = serviceProvider
+            .GetServices<IMessageFormatter>()
+            .Where(w => 
+                w.Type == MessageFormatterType.AfterReceive
+                && ehMessageFormattersNames.Contains(w.Name)
+            ).ToArray();
+        
+        return messageFormattersList;
     }
 }
