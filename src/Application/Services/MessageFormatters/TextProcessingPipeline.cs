@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Application.Services.MessageFormatters;
 
-public class TextProcessingPipeline
+public class TextProcessingPipeline : ITextProcessingPipeline
 {
     private readonly ILogger<TextProcessingPipeline> logger;
     private readonly List<IMessageFormatter> formatters = [];
@@ -14,10 +14,9 @@ public class TextProcessingPipeline
     }
     
     
-    public TextProcessingPipeline AddFormatter(IMessageFormatter formatter)
+    public void AddFormatters(IReadOnlyList<IMessageFormatter> messageFormatters)
     {
-        formatters.Add(formatter);
-        return this;
+        formatters.AddRange(messageFormatters);
     }
     
     public string Process(string input)

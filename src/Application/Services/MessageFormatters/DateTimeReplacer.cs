@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Domain.Enums;
 using Domain.Interfaces.Services;
 
 namespace Application.Services.MessageFormatters;
@@ -7,7 +8,8 @@ public partial class DateTimeReplacer : IMessageFormatter
 {
     private const string FormatterName = "Datetime replacer";
     private readonly List<Regex> dateTimeRegexes;
-    
+
+    public MessageFormatterType Type => MessageFormatterType.BeforeSend;
     public string Name => FormatterName;
     
     

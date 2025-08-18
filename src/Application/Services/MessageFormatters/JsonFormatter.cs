@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Domain.Enums;
 using Domain.Interfaces.Services;
 
 namespace Application.Services.MessageFormatters;
@@ -11,7 +12,8 @@ public class JsonFormatter : IMessageFormatter
         WriteIndented = true,
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
-    
+
+    public MessageFormatterType Type => MessageFormatterType.AfterReceive;
     public string Name => FormatterName;
 
     public string Transform(string inputText)

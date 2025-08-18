@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Domain.Enums;
 using Domain.Interfaces.Services;
 
 namespace Application.Services.MessageFormatters;
@@ -8,6 +9,7 @@ public partial class GuidReplacer : IMessageFormatter
     private const string FormatterName = "Guid replacer";
     private readonly Regex guidRegex = GuidTextRegex();
 
+    public MessageFormatterType Type => MessageFormatterType.BeforeSend;
     public string Name => FormatterName;
     
     public string Transform(string inputText)

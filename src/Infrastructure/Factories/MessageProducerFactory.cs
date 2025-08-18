@@ -1,5 +1,6 @@
 using Application.Services.MessageProducers;
 using Domain.Configs;
+using Domain.Enums;
 using Domain.Interfaces.Factories;
 using Domain.Interfaces.Services;
 using Domain.Models;
@@ -34,10 +35,13 @@ public class MessageProducerFactory : IMessageProducerFactory
         var ehProducerProvider = ActivatorUtilities.CreateInstance<EventHubProducerProvider>(
             serviceProvider, eventHubConfig
         );
+        var textProcessingPipeline = GetTextProcessingPipeline(eventHubConfig);
+
         var msgOptions = new MessageOptions
         {
             UseGzipCompression = eventHubConfig.UseGzipCompression,
-            UseBase64Coding = eventHubConfig.UseBase64Coding
+            UseBase64Coding = eventHubConfig.UseBase64Coding,
+            TextProcessingPipeline = textProcessingPipeline
         };
         
         if (msgOptions is { UseGzipCompression: true, UseBase64Coding: false })
@@ -48,5 +52,35 @@ public class MessageProducerFactory : IMessageProducerFactory
         return ActivatorUtilities.CreateInstance<StringMessageProducer>(
             serviceProvider, ehProducerProvider, msgOptions
         );
+    }
+
+    
+
+
+    private ITextProcessingPipeline GetTextProcessingPipeline(EventHubConfig eventHubConfig)
+    {
+        var activeMessageFormatters = GetActiveMessageFormatters(eventHubConfig);
+        var textProcessingPipeline = serviceProvider.GetRequiredService<ITextProcessingPipeline>();
+        textProcessingPipeline.AddFormatters(activeMessageFormatters);
+        
+        return textProcessingPipeline;
+    }
+    
+    private IMessageFormatter[] GetActiveMessageFormatters(EventHubConfig eventHubConfig)
+    {
+        var ehMessageFormattersNames = eventHubConfig
+            .MessageFormatters
+            .Where(x => x.Value)
+            .Select(s => s.Key)
+            .ToArray();
+
+        var messageFormattersList = serviceProvider
+            .GetServices<IMessageFormatter>()
+            .Where(w => 
+                w.Type == MessageFormatterType.BeforeSend
+                && ehMessageFormattersNames.Contains(w.Name)
+            ).ToArray();
+        
+        return messageFormattersList;
     }
 }

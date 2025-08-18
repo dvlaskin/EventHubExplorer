@@ -1,15 +1,22 @@
 using Domain.Interfaces.Providers;
 using Domain.Interfaces.Services;
+using Domain.Models;
 
 namespace Application.Services.MessageProducers;
 
 public abstract class MessageProducerBase<T> : IMessageProducerService
 {
     protected readonly IMessageProducerProvider MessageProducerProvider;
+    private readonly MessageOptions? messageOptions;
 
-    protected MessageProducerBase(IMessageProducerProvider messageProducerProvider)
+
+    protected MessageProducerBase(
+        IMessageProducerProvider messageProducerProvider, 
+        MessageOptions? messageOptions = null
+    )
     {
         this.MessageProducerProvider = messageProducerProvider;
+        this.messageOptions = messageOptions;
     }
     
 
@@ -20,7 +27,8 @@ public abstract class MessageProducerBase<T> : IMessageProducerService
         if (string.IsNullOrWhiteSpace(messageText))
             return;
         
-        var messageToSend = ApplyOptions(messageText);
+        var formatterMessage = ApplyFormattingOptions(messageText);
+        var messageToSend = ApplyEncodingOptions(formatterMessage);
         
         if (numberOfMessages <= 1)
             await SendSingleMessageAsync(messageToSend, cancellationToken);
@@ -31,9 +39,13 @@ public abstract class MessageProducerBase<T> : IMessageProducerService
                 messageToSend, numberOfMessages, delayToSend.Value, cancellationToken
             );
     }
+
+    protected virtual string ApplyFormattingOptions(string messageText)
+    {
+        return messageOptions?.TextProcessingPipeline?.Process(messageText) ?? messageText;
+    }
     
-    
-    protected abstract T ApplyOptions(string message);
+    protected abstract T ApplyEncodingOptions(string message);
     protected abstract Task SendSingleMessageAsync(T message, CancellationToken cancellationToken);
     protected abstract Task SendBatchMessagesAsync(T message, int numberOfMessages, CancellationToken cancellationToken);
     protected abstract Task SendMessagesWithDelayAsync(T message, int numberOfMessages, TimeSpan timeDelay, CancellationToken cancellationToken);

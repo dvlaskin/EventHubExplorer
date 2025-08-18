@@ -12,6 +12,8 @@ public static class ApplicationRegistration
         services.AddSingleton<IMessageFormatter, GuidReplacer>();
         services.AddSingleton<IMessageFormatter, DateReplacer>();
         services.AddSingleton<IMessageFormatter, DateTimeReplacer>();
+
+        services.AddTransient<ITextProcessingPipeline, TextProcessingPipeline>();
         
         
         return services;
