@@ -1,6 +1,6 @@
 # EventHub Explorer
 
-**EventHub Explorer** is a .Net Blazor application for interacting with the Azure Event Hub service. It supports both real Azure Event Hubs and the [eventhubs-emulator](https://learn.microsoft.com/en-us/azure/event-hubs/overview-emulator).
+**EventHub Explorer** is a .Net Blazor application for interacting with the Azure Event Hubs service. It supports both real Azure Event Hubs and the [eventhubs-emulator](https://learn.microsoft.com/en-us/azure/event-hubs/overview-emulator).
 
 <img src="./assets/Screenshot_01.png" alt="HomePage" width="50%"/>
 <img src="./assets/Screenshot_02.png" alt="ConfigurationPage" width="50%"/>
@@ -9,7 +9,7 @@
 
 ## Features
 
-### Sending Messages to Event Hub
+### Sending Messages to Event Hubs
 
 * Override GUID, DateTime values in a message before sending
 * Ability to compress and encode a message before sending
@@ -17,7 +17,7 @@
 * Send a **batch of identical messages**
 * Send a **batch of identical messages** with a **time delay** between each message
 
-### Receiving Messages from Event Hub
+### Receiving Messages from Event Hubs
 
 * Format a message to JSON if it is a JSON string
 * Ability to decompress and decode a message after receiving
@@ -28,13 +28,13 @@
 
 ## Example Connection Strings
 
-### EventHub Emulator
+### EventHubs Emulator
 
 ```
 Endpoint=sb://eventhub-docker;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;
 ```
 
-> `eventhub-docker` is the Docker service name of the Event Hub emulator running in the same Docker network.
+> `eventhub-docker` is the Docker service name of the Event Hubs emulator running in the same Docker network.
 
 ### Azurite Blob Storage
 
@@ -47,9 +47,9 @@ DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02x
 ## Requirements
 
 * Docker (for emulator and Azurite usage)
-* Azure Event Hub and Blob Storage credentials (for real Azure usage)
+* Azure Event Hubs and Blob Storage credentials (for real Azure usage)
 
-## Install
+## Install options
 
 * Clone solution in the repo
 * Use docker image ```docker pull dvlaskin/eventhubexplorer```
