@@ -1,7 +1,7 @@
 ﻿services:
 
   eventhubexplorer:
-    image: dvlaskin/eventhubexplorer:0.1.0
+    image: dvlaskin/eventhubexplorer:0.2.0
     build:
       context: .
       dockerfile: src/WebUI/Dockerfile
