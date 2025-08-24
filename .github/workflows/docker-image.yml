@@ -5,11 +5,13 @@ on:
     branches:
       - main
     tags:
-      - 'v*'   # reacing to tags like v1.2.3
+      - 'v*'   # reacting to tags like v1.2.3
 
 env:
   APP_NAME: eventhubexplorer   # the app name
   DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+  DOCKERFILE_PATH: src/WebUI/Dockerfile
+  DOTNET_VERSION: '9.0.x'
 
 jobs:
   build:
@@ -22,7 +24,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -45,8 +47,8 @@ jobs:
           IMAGE=$DOCKER_USER/$APP_NAME
           VERSION=${{ steps.vars.outputs.version }}
 
-          echo "Building $IMAGE:$VERSION"
-          docker build -t $IMAGE:$VERSION .
+          echo "Building $IMAGE:$VERSION" from $DOCKERFILE_PATH
+          docker build -t $IMAGE:$VERSION -f $DOCKERFILE_PATH .
 
           # if this is a tag → push latest version as well
           if [ "$VERSION" != "latest" ]; then
