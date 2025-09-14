@@ -59,7 +59,7 @@ Example of a docker compose file
 services:
 
   eventhubexplorer:
-    image: dvlaskin/eventhubexplorer:0.1.0
+    image: dvlaskin/eventhubexplorer:latest
     container_name: eventhubexplorer
     ports:
       - "5235:8080"
