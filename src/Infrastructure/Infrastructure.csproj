@@ -7,8 +7,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Azure.Messaging.EventHubs" Version="5.12.2" />
-      <PackageReference Include="Azure.Messaging.EventHubs.Processor" Version="5.12.2" /><PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.8" />
+        <PackageReference Include="Azure.Messaging.EventHubs" Version="5.12.2" />
+        <PackageReference Include="Azure.Messaging.EventHubs.Processor" Version="5.12.2" />
+        <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.9" />
     </ItemGroup>
 
     <ItemGroup>
