@@ -9,126 +9,103 @@ namespace Infrastructure.Providers;
 public sealed class EventHubProducerProvider : IMessageProducerProvider
 {
     private readonly ILogger<EventHubProducerProvider> logger;
-    private readonly EventHubConfig config;
-    private EventHubProducerClient? producerClient;
+    private readonly Lazy<EventHubProducerClient> producerClient;
+    private bool disposed;
 
     
     public EventHubProducerProvider(ILogger<EventHubProducerProvider> logger, EventHubConfig config)
     {
         this.logger = logger;
-        this.config = config;
+        producerClient = new Lazy<EventHubProducerClient>(CreateProducerExist(config));
     }
     
     
     public async Task SendMessageAsync(string message, CancellationToken cancellationToken)
     {
-        CreateProducerIfNotExist();
-        using var eventBatch = await producerClient!.CreateBatchAsync(cancellationToken);
-
-        var msg = new EventData(message);
-        if (!eventBatch.TryAdd(msg))
-        {
-            throw new Exception("The message is too large to fit in the batch.");
-        }
-        
-        await producerClient.SendAsync(eventBatch, cancellationToken);
-        logger.LogInformation("Sent message: {Message}", message);
+        await producerClient.Value.SendAsync([new EventData(message)], cancellationToken);
+        logger.LogInformation("Sent string message: {Message}", message);
     }
     
     public async Task SendMessageAsync(byte[] message, CancellationToken cancellationToken)
     {
-        CreateProducerIfNotExist();
-        using var eventBatch = await producerClient!.CreateBatchAsync(cancellationToken);
-
-        var msg = new EventData(message);
-        if (!eventBatch.TryAdd(msg))
-        {
-            throw new Exception("The message is too large to fit in the batch.");
-        }
-        
-        await producerClient.SendAsync(eventBatch, cancellationToken);
-        logger.LogInformation("Sent binary message of length: {MessageLength}", message.Length);
+        await producerClient.Value.SendAsync([new EventData(message)], cancellationToken);
+        logger.LogInformation("Sent binary message: {MessageLength}", message.Length);
     }
     
     
     public async Task SendMessagesAsync(IReadOnlyList<string> messages, CancellationToken cancellationToken)
     {
-        CreateProducerIfNotExist();
-        using var eventBatch = await producerClient!.CreateBatchAsync(cancellationToken);
+        using var eventBatch = await producerClient.Value.CreateBatchAsync(cancellationToken);
 
         foreach (var msg in messages)
         {
-            if (!eventBatch.TryAdd(new EventData(msg)))
-            {
-                throw new Exception("The message is too large to fit in the batch.");
-            }
+            if (eventBatch.TryAdd(new EventData(msg))) 
+                continue;
+            
+            logger.LogWarning("The message is too large or too many messages to fit in the batch.");
+            break;
         }
         
-        await producerClient.SendAsync(eventBatch, cancellationToken);
-        logger.LogInformation("Sent {MsgCount} messages", messages.Count);
+        await producerClient.Value.SendAsync(eventBatch, cancellationToken);
+        logger.LogInformation("Sent {MsgCount} string messages", eventBatch.Count);
     }
     
     public async Task SendMessagesAsync(IReadOnlyList<byte[]> messages, CancellationToken cancellationToken)
     {
-        CreateProducerIfNotExist();
-        using var eventBatch = await producerClient!.CreateBatchAsync(cancellationToken);
+        using var eventBatch = await producerClient.Value.CreateBatchAsync(cancellationToken);
 
         foreach (var msg in messages)
         {
-            if (!eventBatch.TryAdd(new EventData(msg)))
-            {
-                throw new Exception("The message is too large to fit in the batch.");
-            }
+            if (eventBatch.TryAdd(new EventData(msg))) 
+                continue;
+            
+            logger.LogWarning("The message is too large or too many messages to fit in the batch.");
+            break;
         }
         
-        await producerClient.SendAsync(eventBatch, cancellationToken);
-        logger.LogInformation("Sent {MsgCount} messages", messages.Count);
+        await producerClient.Value.SendAsync(eventBatch, cancellationToken);
+        logger.LogInformation("Sent {MsgCount} binary messages", messages.Count);
     }
     
     
     public async Task SendMessagesAsync(IReadOnlyList<string> messages, TimeSpan timeDelay, CancellationToken cancellationToken)
     {
-        CreateProducerIfNotExist();
-
         foreach (var item in messages.Select((msg, indx) => (msg, indx)))
         {
             if (cancellationToken.IsCancellationRequested)
                 break;
             
-            await producerClient!.SendAsync([new EventData(item.msg)], cancellationToken);
-            logger.LogInformation("Message number {MessageNumber} for {TotalMessages} is sent", item.indx + 1, messages.Count);
+            await producerClient.Value.SendAsync([new EventData(item.msg)], cancellationToken);
+            
+            logger.LogInformation("Message number {MessageNumber} from {TotalMessages} total is sent", item.indx + 1, messages.Count);
             await Task.Delay(timeDelay, cancellationToken);
         }
         
-        logger.LogInformation("Sent {MsgCount} messages", messages.Count);
+        logger.LogInformation("Sent all {MsgCount} string messages", messages.Count);
     }
     
     public async Task SendMessagesAsync(IReadOnlyList<byte[]> messages, TimeSpan timeDelay, CancellationToken cancellationToken)
     {
-        CreateProducerIfNotExist();
-
         foreach (var item in messages.Select((msg, indx) => (msg, indx)))
         {
             if (cancellationToken.IsCancellationRequested)
                 break;
             
-            await producerClient!.SendAsync([new EventData(item.msg)], cancellationToken);
-            logger.LogInformation("Message number {MessageNumber} for {TotalMessages} is sent", item.indx + 1, messages.Count);
+            await producerClient.Value.SendAsync([new EventData(item.msg)], cancellationToken);
+            
+            logger.LogInformation("Message number {MessageNumber} from {TotalMessages} total is sent", item.indx + 1, messages.Count);
             await Task.Delay(timeDelay, cancellationToken);
         }
         
-        logger.LogInformation("Sent {MsgCount} messages", messages.Count);
+        logger.LogInformation("Sent all {MsgCount} messages", messages.Count);
     }
     
     
-    private void CreateProducerIfNotExist()
+    private EventHubProducerClient CreateProducerExist(EventHubConfig config)
     {
-        if (producerClient is null)
-            logger.LogInformation("Creating producer, EventHubName: {EventHubName}", 
-                config.Name
-            );
+        logger.LogInformation("Creating producer, EventHubName: {EventHubName}", config.Name);
         
-        producerClient ??= new EventHubProducerClient(
+        return new EventHubProducerClient(
             config.ConnectionString, 
             config.Name,
             new EventHubProducerClientOptions
@@ -150,10 +127,18 @@ public sealed class EventHubProducerProvider : IMessageProducerProvider
 
     public async ValueTask DisposeAsync()
     {
-        if (producerClient is not null)
+        if (disposed)
+            return;
+        
+        if (producerClient.IsValueCreated)
         {
-            await producerClient.DisposeAsync();
+            await producerClient.Value.DisposeAsync();
             logger.LogInformation("EventHubProducer is Disposed");
         }
+        
+        GC.SuppressFinalize(this);
+        disposed = true;
     }
+    
+    ~EventHubProducerProvider() => DisposeAsync().AsTask().GetAwaiter().GetResult();
 }

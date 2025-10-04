@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Application.Services.MessageProducers;
 
-public class BytesMessageProducer : MessageProducerBase<byte[]>
+public class BytesMessageProducer : BaseMessageProducer<byte[]>
 {
     private readonly ILogger<BytesMessageProducer> logger;
     private readonly MessageOptions? messageOptions;

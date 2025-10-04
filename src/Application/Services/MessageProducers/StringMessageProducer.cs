@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Application.Services.MessageProducers;
 
-public class StringMessageProducer : MessageProducerBase<string>
+public class StringMessageProducer : BaseMessageProducer<string>
 {
     private readonly ILogger<StringMessageProducer> logger;
     private readonly MessageOptions? messageOptions;

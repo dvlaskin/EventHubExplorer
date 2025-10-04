@@ -4,13 +4,14 @@ using Domain.Models;
 
 namespace Application.Services.MessageProducers;
 
-public abstract class MessageProducerBase<T> : IMessageProducerService
+public abstract class BaseMessageProducer<T> : IMessageProducerService
 {
     protected readonly IMessageProducerProvider MessageProducerProvider;
     private readonly MessageOptions? messageOptions;
+    private bool disposed;
 
 
-    protected MessageProducerBase(
+    protected BaseMessageProducer(
         IMessageProducerProvider messageProducerProvider, 
         MessageOptions? messageOptions = null
     )
@@ -31,13 +32,13 @@ public abstract class MessageProducerBase<T> : IMessageProducerService
         var messageToSend = ApplyEncodingOptions(formatterMessage);
         
         if (numberOfMessages <= 1)
-            await SendSingleMessageAsync(messageToSend, cancellationToken);
+            await SendSingleMessageAsync(messageToSend, cancellationToken).ConfigureAwait(false);
         else if (delayToSend is null || delayToSend.Value <= TimeSpan.Zero)
-            await SendBatchMessagesAsync(messageToSend, numberOfMessages, cancellationToken);
+            await SendBatchMessagesAsync(messageToSend, numberOfMessages, cancellationToken).ConfigureAwait(false);
         else
             await SendMessagesWithDelayAsync(
                 messageToSend, numberOfMessages, delayToSend.Value, cancellationToken
-            );
+            ).ConfigureAwait(false);
     }
 
     protected virtual string ApplyFormattingOptions(string messageText)
@@ -59,7 +60,13 @@ public abstract class MessageProducerBase<T> : IMessageProducerService
         
     public async ValueTask DisposeAsync()
     {
-        await MessageProducerProvider.DisposeAsync();
+        if (disposed)
+            return;
+        
+        await MessageProducerProvider.DisposeAsync().ConfigureAwait(false);
         GC.SuppressFinalize(this);
+        disposed = true;
     }
+    
+    ~BaseMessageProducer() => DisposeAsync().AsTask().GetAwaiter().GetResult();
 }
