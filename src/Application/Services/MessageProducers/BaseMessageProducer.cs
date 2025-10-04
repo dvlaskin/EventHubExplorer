@@ -6,7 +6,7 @@ namespace Application.Services.MessageProducers;
 
 public abstract class BaseMessageProducer<T> : IMessageProducerService
 {
-    protected readonly IMessageProducerProvider MessageProducerProvider;
+    private readonly IMessageProducerProvider messageProducerProvider;
     private readonly MessageOptions? messageOptions;
     private bool disposed;
 
@@ -16,29 +16,49 @@ public abstract class BaseMessageProducer<T> : IMessageProducerService
         MessageOptions? messageOptions = null
     )
     {
-        this.MessageProducerProvider = messageProducerProvider;
+        this.messageProducerProvider = messageProducerProvider;
         this.messageOptions = messageOptions;
     }
     
 
     public async Task SendMessagesAsync(
-        string? messageText, int numberOfMessages = 1, TimeSpan? delayToSend = null, CancellationToken cancellationToken = default
+        string? messageText, uint numberOfMessages = 1, TimeSpan? delayToSend = null, CancellationToken cancellationToken = default
     )
     {
         if (string.IsNullOrWhiteSpace(messageText))
             return;
-        
-        var formatterMessage = ApplyFormattingOptions(messageText);
-        var messageToSend = ApplyEncodingOptions(formatterMessage);
+
+        var messageModifier = CreateMessageModifier();
         
         if (numberOfMessages <= 1)
-            await SendSingleMessageAsync(messageToSend, cancellationToken).ConfigureAwait(false);
+        {
+            await messageProducerProvider
+                .SendMessageAsync(messageText, messageModifier, cancellationToken)
+                .ConfigureAwait(false);
+        }
         else if (delayToSend is null || delayToSend.Value <= TimeSpan.Zero)
-            await SendBatchMessagesAsync(messageToSend, numberOfMessages, cancellationToken).ConfigureAwait(false);
+        {
+            await messageProducerProvider
+                .SendMessagesAsync(messageText, messageModifier, numberOfMessages, cancellationToken)
+                .ConfigureAwait(false);
+        }
         else
-            await SendMessagesWithDelayAsync(
-                messageToSend, numberOfMessages, delayToSend.Value, cancellationToken
+        {
+            await messageProducerProvider.SendMessagesWithDelayAsync(
+                messageText, messageModifier, numberOfMessages, delayToSend.Value, cancellationToken
             ).ConfigureAwait(false);
+        }
+    }
+
+    
+    private Func<string, BinaryData> CreateMessageModifier()
+    {
+        return messageInput =>
+        {
+            var formatterMessage = ApplyFormattingOptions(messageInput);
+            var messageToSend = ApplyEncodingOptions(formatterMessage);
+            return EncodeToBinaryData(messageToSend);
+        };
     }
 
     protected virtual string ApplyFormattingOptions(string messageText)
@@ -47,23 +67,15 @@ public abstract class BaseMessageProducer<T> : IMessageProducerService
     }
     
     protected abstract T ApplyEncodingOptions(string message);
-    protected abstract Task SendSingleMessageAsync(T message, CancellationToken cancellationToken);
-    protected abstract Task SendBatchMessagesAsync(T message, int numberOfMessages, CancellationToken cancellationToken);
-    protected abstract Task SendMessagesWithDelayAsync(T message, int numberOfMessages, TimeSpan timeDelay, CancellationToken cancellationToken);
+    protected abstract BinaryData EncodeToBinaryData(T message);
     
     
-    protected static IReadOnlyList<T> MultipleMessages(T message, int numberOfMessages)
-    {
-        return Enumerable.Repeat(message, numberOfMessages).ToArray();
-    }
-    
-        
     public async ValueTask DisposeAsync()
     {
         if (disposed)
             return;
         
-        await MessageProducerProvider.DisposeAsync().ConfigureAwait(false);
+        await messageProducerProvider.DisposeAsync().ConfigureAwait(false);
         GC.SuppressFinalize(this);
         disposed = true;
     }

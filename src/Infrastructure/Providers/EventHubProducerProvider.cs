@@ -20,84 +20,79 @@ public sealed class EventHubProducerProvider : IMessageProducerProvider
     }
     
     
-    public async Task SendMessageAsync(string message, CancellationToken cancellationToken)
+    public async Task SendMessageAsync(
+        string message, Func<string, BinaryData>? messageModifier = null, CancellationToken cancellationToken = default
+    )
     {
-        await producerClient.Value.SendAsync([new EventData(message)], cancellationToken);
-        logger.LogInformation("Sent string message: {Message}", message);
-    }
-    
-    public async Task SendMessageAsync(byte[] message, CancellationToken cancellationToken)
-    {
-        await producerClient.Value.SendAsync([new EventData(message)], cancellationToken);
-        logger.LogInformation("Sent binary message: {MessageLength}", message.Length);
-    }
-    
-    
-    public async Task SendMessagesAsync(IReadOnlyList<string> messages, CancellationToken cancellationToken)
-    {
-        using var eventBatch = await producerClient.Value.CreateBatchAsync(cancellationToken);
+        var eventData = messageModifier is null
+            ? new EventData(message)
+            : new EventData(messageModifier(message));
 
-        foreach (var msg in messages)
-        {
-            if (eventBatch.TryAdd(new EventData(msg))) 
-                continue;
-            
-            logger.LogWarning("The message is too large or too many messages to fit in the batch.");
-            break;
-        }
-        
-        await producerClient.Value.SendAsync(eventBatch, cancellationToken);
-        logger.LogInformation("Sent {MsgCount} string messages", eventBatch.Count);
+        await producerClient.Value.SendAsync([eventData], cancellationToken);
+        logger.LogInformation("The single message sent");
     }
-    
-    public async Task SendMessagesAsync(IReadOnlyList<byte[]> messages, CancellationToken cancellationToken)
-    {
-        using var eventBatch = await producerClient.Value.CreateBatchAsync(cancellationToken);
 
-        foreach (var msg in messages)
+    public async Task SendMessagesAsync(
+        string message, 
+        Func<string, BinaryData>? messageModifier = null, 
+        uint numberOfMessages = 1, 
+        CancellationToken cancellationToken = default
+    )
+    {
+        var eventBatch = await producerClient.Value.CreateBatchAsync(cancellationToken);
+        try
         {
-            if (eventBatch.TryAdd(new EventData(msg))) 
-                continue;
+            for (var num = 0; num < numberOfMessages; num++)
+            {
+                var eventData = messageModifier is null 
+                    ? new EventData(message)
+                    : new EventData(messageModifier(message));
+
+                if (eventBatch.TryAdd(eventData)) 
+                    continue;
+                
+                await producerClient.Value.SendAsync(eventBatch, cancellationToken);
+                eventBatch.Dispose();
+                
+                eventBatch = await producerClient.Value.CreateBatchAsync(cancellationToken);
+                if (!eventBatch.TryAdd(eventData))
+                {
+                    throw new InvalidOperationException("The message is too large and cannot be sent");
+                }
+            }
             
-            logger.LogWarning("The message is too large or too many messages to fit in the batch.");
-            break;
+            await producerClient.Value.SendAsync(eventBatch, cancellationToken);
+            logger.LogInformation("Sent all {MsgCount} messages", numberOfMessages);
         }
-        
-        await producerClient.Value.SendAsync(eventBatch, cancellationToken);
-        logger.LogInformation("Sent {MsgCount} binary messages", messages.Count);
+        finally
+        {
+            eventBatch.Dispose();
+        }
     }
     
-    
-    public async Task SendMessagesAsync(IReadOnlyList<string> messages, TimeSpan timeDelay, CancellationToken cancellationToken)
+    public async Task SendMessagesWithDelayAsync(
+        string message, 
+        Func<string, BinaryData>? messageModifier = null, 
+        uint numberOfMessages = 1,
+        TimeSpan sendDelay = default,
+        CancellationToken cancellationToken = default
+    )
     {
-        foreach (var item in messages.Select((msg, indx) => (msg, indx)))
+        for (var num = 0; num < numberOfMessages; num++)
         {
-            if (cancellationToken.IsCancellationRequested)
-                break;
+            var eventData = messageModifier is null 
+                ? new EventData(message)
+                : new EventData(messageModifier(message));
             
-            await producerClient.Value.SendAsync([new EventData(item.msg)], cancellationToken);
+            await producerClient.Value.SendAsync([eventData], cancellationToken);
             
-            logger.LogInformation("Message number {MessageNumber} from {TotalMessages} total is sent", item.indx + 1, messages.Count);
-            await Task.Delay(timeDelay, cancellationToken);
+            logger.LogInformation("Message number {MessageNumber} from {TotalMessages} total is sent", num + 1, numberOfMessages);
+            
+            if (sendDelay != TimeSpan.Zero)
+                await Task.Delay(sendDelay, cancellationToken);
         }
         
-        logger.LogInformation("Sent all {MsgCount} string messages", messages.Count);
-    }
-    
-    public async Task SendMessagesAsync(IReadOnlyList<byte[]> messages, TimeSpan timeDelay, CancellationToken cancellationToken)
-    {
-        foreach (var item in messages.Select((msg, indx) => (msg, indx)))
-        {
-            if (cancellationToken.IsCancellationRequested)
-                break;
-            
-            await producerClient.Value.SendAsync([new EventData(item.msg)], cancellationToken);
-            
-            logger.LogInformation("Message number {MessageNumber} from {TotalMessages} total is sent", item.indx + 1, messages.Count);
-            await Task.Delay(timeDelay, cancellationToken);
-        }
-        
-        logger.LogInformation("Sent all {MsgCount} messages", messages.Count);
+        logger.LogInformation("Sent all {MsgCount} messages", numberOfMessages);
     }
     
     
