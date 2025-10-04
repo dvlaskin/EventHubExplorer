@@ -39,7 +39,7 @@ public class EventHubConsumerService : IMessageConsumerService
 
         await foreach (var message in channel.Reader.ReadAllAsync(cancellationToken))
         {
-            logger.LogInformation("Received message {MsgData}", message);
+            logger.LogInformation("Received message {MsgData}", message.Message);
             message.Message = textProcessingPipeline.Process(message.Message);
             
             yield return message;

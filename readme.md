@@ -14,8 +14,8 @@
 * Override GUID, DateTime values in a message before sending
 * Ability to compress and encode a message before sending
 * Send a **single message**
-* Send a **batch of identical messages**
-* Send a **batch of identical messages** with a **time delay** between each message
+* Send a **batch of messages**
+* Send a **batch of messages** with a **time delay** between each message
 
 ### Receiving Messages from Event Hubs
 
