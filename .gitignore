@@ -485,3 +485,4 @@ $RECYCLE.BIN/
 
 # exclude appConfig.json file with connection strings configs
 *appConfig.json
+Data/
