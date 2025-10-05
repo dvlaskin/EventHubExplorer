@@ -11,3 +11,66 @@
     background-color: grey;
     color: white;
 }
+
+/* Message history icon */
+.history-icon {
+    opacity: 0.5;
+    transition: opacity 0.2s ease-in-out;
+    background: white;
+    border: none;
+}
+
+.history-icon:hover {
+    opacity: 1;
+}
+
+.message-history-dropdown {
+    position: absolute;
+    top: 40px;
+    right: 5%;
+    width: 90%;
+    max-height: 200px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #6610f2;
+    border-radius: 4px;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.message-history-dropdown .list-group-item {
+    padding: 0.5rem 1rem;
+    border-left: none;
+    border-right: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.message-history-dropdown .list-group-item:hover {
+    background-color: rgba(5, 39, 103, 0.3);
+    color: black;
+}
+
+.message-history-dropdown .list-group-item:first-child {
+    border-top: none;
+}
+
+.message-history-dropdown .list-group-item:last-child {
+    border-bottom: none;
+}
+
+.message-text {
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.delete-button {
+    visibility: hidden;
+}
+
+.list-group-item:hover .delete-button {
+    visibility: visible;
+}
