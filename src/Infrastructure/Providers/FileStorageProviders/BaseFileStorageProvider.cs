@@ -3,8 +3,9 @@ using Domain.Interfaces.Providers;
 
 namespace Infrastructure.Providers.FileStorageProviders;
 
-public abstract class BaseFileStorageProvider<T> : IFileStorageProvider<T>
+public abstract class BaseFileStorageProvider<T> : IFileStorageProvider<T>, IDisposable, IAsyncDisposable
 {
+    private bool disposed;
     protected abstract string DataFilePath { get; }
     private readonly JsonSerializerOptions jsSerializerOptions = new() { WriteIndented = true };
     private readonly SemaphoreSlim semaphore = new(1, 1);
@@ -52,5 +53,47 @@ public abstract class BaseFileStorageProvider<T> : IFileStorageProvider<T>
     {
         dataDirectoryPath ??= Path.GetDirectoryName(DataFilePath) ?? string.Empty;
         return dataDirectoryPath;
+    }
+    
+    
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposed)
+            return;
+        
+        if (disposing)
+        {
+            semaphore.Dispose();
+        }
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+        disposed = true;
+    }
+
+    protected virtual async ValueTask DisposeAsyncCore()
+    {
+        if (disposed)
+            return;
+        
+        if (semaphore is IAsyncDisposable semaphoreAsyncDisposable)
+            await semaphoreAsyncDisposable.DisposeAsync();
+        else
+            semaphore.Dispose();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await DisposeAsyncCore();
+        GC.SuppressFinalize(this);
+        disposed = true;
+    }
+
+    ~BaseFileStorageProvider()
+    {
+        Dispose(false);
     }
 }

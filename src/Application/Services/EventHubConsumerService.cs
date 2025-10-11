@@ -14,7 +14,7 @@ public class EventHubConsumerService : IMessageConsumerService
     private readonly ITextProcessingPipeline textProcessingPipeline;
     
     private readonly Channel<EventHubMessage> channel = Channel.CreateUnbounded<EventHubMessage>();
-    private readonly object startLock = new();
+    private readonly Lock startLock = new();
     private bool isProcessing;
     
 
