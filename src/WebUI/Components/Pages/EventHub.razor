@@ -126,7 +126,7 @@
     [Inject] private IOptionsMonitor<AppConfiguration>? Config { get; set; }
     [Inject] private IMessageProducerFactory? MessageProducerFactory { get; set; }
     [Inject] private IMessageConsumerFactory? MessageConsumerFactory { get; set; }
-    [Inject] private IMessageHistory<Guid, HashSet<string>>? MessagesHistoryService { get; set; }
+    [Inject] private IMessageHistory<Guid, List<string>>? MessagesHistoryService { get; set; }
     
     [Parameter] public Guid Id { get; set; }
     
@@ -140,7 +140,8 @@
     private uint numberMessagesToSend = 1;
     private int delayToSend;
     private bool showMessageHistory;
-    private HashSet<string> messagesHistoryList = [];
+    private List<string> messagesHistoryList = [];
+    private const byte MAX_HISTORY_MESSAGES = 10;
     private string? receivedMessage;
     private bool isProcessing;
     private int? selectedIndex;
@@ -200,8 +201,16 @@
                     delayedSenderCts.Token
                 ); 
             
-            if (!string.IsNullOrEmpty(messageToSend) && !messagesHistoryList.Contains(messageToSend))
+            if (!string.IsNullOrWhiteSpace(messageToSend) && !messagesHistoryList.Contains(messageToSend))
             {
+                if (MAX_HISTORY_MESSAGES > 0)
+                {
+                    while (messagesHistoryList.Count >= MAX_HISTORY_MESSAGES)
+                    {
+                        await RemoveFromHistory(messagesHistoryList[0]);
+                    }
+                }
+                
                 messagesHistoryList.Add(messageToSend);
                 if (MessagesHistoryService is not null) 
                     await MessagesHistoryService.AddMessageAsync(Id, messageToSend).ConfigureAwait(false);
@@ -226,7 +235,7 @@
         {
             var history = await MessagesHistoryService.GetHistoryAsync(Id).ConfigureAwait(false);
             messagesHistoryList.Clear();
-            messagesHistoryList = history;
+            messagesHistoryList.AddRange(history);
         }
         
         await InvokeAsync(StateHasChanged);

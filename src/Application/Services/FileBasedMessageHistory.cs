@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Application.Services;
 
-public class FileBasedMessageHistory : IMessageHistory<Guid, HashSet<string>>
+public class FileBasedMessageHistory : IMessageHistory<Guid, List<string>>
 {
     private readonly ILogger<FileBasedMessageHistory> logger;
     private readonly IFileStorageProvider<MessagesHistory> messagesStorageProvider;
@@ -20,7 +20,7 @@ public class FileBasedMessageHistory : IMessageHistory<Guid, HashSet<string>>
     }
     
     
-    public async Task<HashSet<string>> GetHistoryAsync(Guid input)
+    public async Task<List<string>> GetHistoryAsync(Guid input)
     {
         logger.LogInformation("Getting message history for event hub config {Input}", input);
         MessagesHistory? fullHistory = await messagesStorageProvider.GetDataAsync();
@@ -43,7 +43,7 @@ public class FileBasedMessageHistory : IMessageHistory<Guid, HashSet<string>>
         {
             fullHistory = new MessagesHistory
             {
-                Messages = new Dictionary<Guid, HashSet<string>>
+                Messages = new Dictionary<Guid, List<string>>
                 {
                     { input, [message] }
                 }
@@ -51,8 +51,7 @@ public class FileBasedMessageHistory : IMessageHistory<Guid, HashSet<string>>
         }
         else if (fullHistory.Messages.TryGetValue(input, out var history))
         {
-            if (!history.Add(message))
-                return;
+            history.Add(message);
         }
         else
         {

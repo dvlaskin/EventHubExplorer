@@ -9,7 +9,7 @@ public static class ApplicationRegistration
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
-        services.AddSingleton<IMessageHistory<Guid, HashSet<string>>, FileBasedMessageHistory>();
+        services.AddSingleton<IMessageHistory<Guid, List<string>>, FileBasedMessageHistory>();
         
         services.AddSingleton<IMessageFormatter, JsonFormatter>();
         services.AddSingleton<IMessageFormatter, GuidReplacer>();
