@@ -262,37 +262,44 @@
     
     private async Task StartReceiveMessages()
     {
-        InitializeMessageConsumer();
-        if (messageConsumer is null)
-        {
-            Logger?.LogWarning("Message Consumer is null, cannot start receive messages");
-            return;
-        }
-        
-        isProcessing = !isProcessing;
-        
-        Logger?.LogInformation("Start Receive Messages");
-        
-        receiverCts.Reset();
-
         try
         {
-            await foreach (var message in  messageConsumer.StartReceiveMessageAsync(receiverCts.Token))
+            InitializeMessageConsumer();
+            if (messageConsumer is null)
             {
-                if (!isProcessing)
-                    return;
-                
-                receivedMessages.Add(message);
-                receivedMessage = receivedMessages[^1].Message;
-                
-                await InvokeAsync(StateHasChanged);
-                
-                await ScrollToBottom();
+                Logger?.LogWarning("Message Consumer is null, cannot start receive messages");
+                return;
+            }
+            
+            isProcessing = !isProcessing;
+            
+            Logger?.LogInformation("Start Receive Messages");
+            
+            receiverCts.Reset();
+
+            try
+            {
+                await foreach (var message in  messageConsumer.StartReceiveMessageAsync(receiverCts.Token))
+                {
+                    if (!isProcessing)
+                        return;
+                    
+                    receivedMessages.Add(message);
+                    receivedMessage = receivedMessages[^1].Message;
+                    
+                    await InvokeAsync(StateHasChanged);
+                    
+                    await ScrollToBottom();
+                }
+            }
+            catch (Exception ex) when(ex is not (TaskCanceledException or OperationCanceledException))
+            {
+                DisplayErrorMessage(ex, "Error while receiving messages");
             }
         }
-        catch (Exception ex) when(ex is not (TaskCanceledException or OperationCanceledException))
+        finally
         {
-            DisplayErrorMessage(ex, "Error while receiving messages");
+            isProcessing = false;
         }
     }
     
@@ -333,25 +340,45 @@
     
     public void Dispose()
     {
+        // Cancel any pending operations first
+        receiverCts.Cancel();
+        delayedSenderCts.Cancel();
+        
+        // Dispose of services
         messageProducer?.DisposeAsync().GetAwaiter().GetResult();
         messageConsumer?.DisposeAsync().GetAwaiter().GetResult();
         
+        // Dispose of cancellation tokens
         receiverCts.Dispose();
         delayedSenderCts.Dispose();
+        
+        // Clear collections
+        receivedMessages.Clear();
+        messagesHistoryList.Clear();
         
         GC.SuppressFinalize(this);
     }
 
     public async ValueTask DisposeAsync()
     {
+        // Cancel any pending operations first
+        receiverCts.Cancel();
+        delayedSenderCts.Cancel();
+        
+        // Dispose of services
         if (messageProducer is not null)
             await messageProducer.DisposeAsync();
         
         if (messageConsumer is not null)
             await messageConsumer.DisposeAsync();
         
+        // Dispose of cancellation tokens
         receiverCts.Dispose();
         delayedSenderCts.Dispose();
+        
+        // Clear collections
+        receivedMessages.Clear();
+        messagesHistoryList.Clear();
         
         GC.SuppressFinalize(this);
     }

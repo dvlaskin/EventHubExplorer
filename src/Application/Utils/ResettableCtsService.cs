@@ -2,24 +2,41 @@ namespace Application.Utils;
 
 public class ResettableCts : IDisposable
 {
+    private readonly Lock lockObj = new();
     private CancellationTokenSource cts = new();
     private bool disposed;
-    
-    public CancellationToken Token => cts.Token;
+
+    public CancellationToken Token
+    {
+        get
+        {
+            lock (lockObj)
+            {
+                EnsureNotDisposed();
+                return cts.Token;
+            }
+        }
+    }
     
     public void Reset()
     {
-        EnsureNotDisposed();
-        
-        cts.Cancel();
-        cts.Dispose();
-        cts = new CancellationTokenSource();
+        lock (lockObj)
+        {
+            EnsureNotDisposed();
+            
+            cts.Cancel();
+            cts.Dispose();
+            cts = new CancellationTokenSource();
+        }
     }
     
     public void Cancel()
     {
-        EnsureNotDisposed();
-        cts.Cancel();
+        lock (lockObj)
+        {
+            EnsureNotDisposed();
+            cts.Cancel();
+        }
     }
     
     public void Dispose()
