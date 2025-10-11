@@ -22,7 +22,30 @@
     <div class="col-6">
         <div class="mb-3">
             <label for="message" class="form-label">Send Event</label>
-            <textarea class="form-control" id="message" rows="10" style="resize: none;" @bind="messageToSend"></textarea>
+            <div class="position-relative">
+                <textarea class="form-control" id="message" rows="10" style="resize: none;" @bind="messageToSend"></textarea>
+                <button class="btn position-absolute top-0 end-0 m-2 p-1 history-icon" @onclick="ToggleMessageHistory">
+                    <i class="bi bi-clock-history"></i>
+                </button>
+                @if (showMessageHistory && messagesHistoryList.Any())
+                {
+                    <div class="message-history-dropdown">
+                        <div class="list-group">
+                            @foreach (var message in messagesHistoryList)
+                            {
+                                <div class="list-group-item list-group-item-action d-flex align-items-center">
+                                    <div class="flex-grow-1 message-text" @onclick="() => SelectMessage(message)">
+                                        @(message.Length > 50 ? message[..45] + "..." : message)
+                                    </div>
+                                    <button type="button" class="btn btn-link btn-sm text-danger p-0 ms-2 delete-button" @onclick="() => RemoveFromHistory(message)" @onclick:stopPropagation>
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
         </div>
     </div>
     <div class="col-6">
@@ -103,6 +126,7 @@
     [Inject] private IOptionsMonitor<AppConfiguration>? Config { get; set; }
     [Inject] private IMessageProducerFactory? MessageProducerFactory { get; set; }
     [Inject] private IMessageConsumerFactory? MessageConsumerFactory { get; set; }
+    [Inject] private IMessageHistory<Guid, List<string>>? MessagesHistoryService { get; set; }
     
     [Parameter] public Guid Id { get; set; }
     
@@ -114,7 +138,10 @@
     private string? title;
     private string? messageToSend;
     private uint numberMessagesToSend = 1;
-    private int delayToSend = 0;
+    private int delayToSend;
+    private bool showMessageHistory;
+    private List<string> messagesHistoryList = [];
+    private const byte MAX_HISTORY_MESSAGES = 10;
     private string? receivedMessage;
     private bool isProcessing;
     private int? selectedIndex;
@@ -174,6 +201,21 @@
                     delayedSenderCts.Token
                 ); 
             
+            if (!string.IsNullOrWhiteSpace(messageToSend) && !messagesHistoryList.Contains(messageToSend))
+            {
+                if (MAX_HISTORY_MESSAGES > 0)
+                {
+                    while (messagesHistoryList.Count >= MAX_HISTORY_MESSAGES)
+                    {
+                        await RemoveFromHistory(messagesHistoryList[0]);
+                    }
+                }
+                
+                messagesHistoryList.Add(messageToSend);
+                if (MessagesHistoryService is not null) 
+                    await MessagesHistoryService.AddMessageAsync(Id, messageToSend).ConfigureAwait(false);
+            }
+            
             _ = toast?.ShowToast("Messages sent successfully");
         }
         catch (Exception ex)
@@ -183,6 +225,38 @@
         
         numberMessagesToSend = 1;
         delayToSend = 0;
+    }
+
+    private async Task ToggleMessageHistory()
+    {
+        showMessageHistory = !showMessageHistory;
+
+        if (showMessageHistory && messagesHistoryList.Count == 0 && MessagesHistoryService is not null)
+        {
+            var history = await MessagesHistoryService.GetHistoryAsync(Id).ConfigureAwait(false);
+            messagesHistoryList.Clear();
+            messagesHistoryList.AddRange(history);
+        }
+        
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void SelectMessage(string message)
+    {
+        messageToSend = message;
+        showMessageHistory = false;
+    }
+
+    private async Task RemoveFromHistory(string message)
+    {
+        messagesHistoryList.Remove(message);
+        if (MessagesHistoryService is not null)
+            await MessagesHistoryService.RemoveMessageAsync(Id, message);
+        
+        if (!messagesHistoryList.Any())
+        {
+            showMessageHistory = false;
+        }
     }
     
     

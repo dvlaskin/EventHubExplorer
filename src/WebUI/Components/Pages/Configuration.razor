@@ -3,7 +3,7 @@
 @using Domain.Interfaces.Providers
 @using Domain.Interfaces.Services
 
-@inject IConfigProvider ConfigurationProvider
+@inject IFileStorageProvider<AppConfiguration> ConfigurationProvider
 
 @rendermode InteractiveServer
 
@@ -138,7 +138,7 @@ else
 
     private async Task LoadConfiguration()
     {
-        appConfiguration = await ConfigurationProvider.LoadConfigAsync() ?? new AppConfiguration();
+        appConfiguration = await ConfigurationProvider.GetDataAsync() ?? new AppConfiguration();
 
         foreach (var eventHubConfig in appConfiguration.EventHubsConfigs)
         {
@@ -155,7 +155,7 @@ else
     private async Task SaveConfiguration()
     {
         if (appConfiguration is null) return;
-        await ConfigurationProvider.SaveConfigAsync(appConfiguration);
+        await ConfigurationProvider.SaveDataAsync(appConfiguration);
 
         // show toast
         showToast = true;

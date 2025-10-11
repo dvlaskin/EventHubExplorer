@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using System.Threading.Channels;
-using Domain.Configs;
 using Domain.Interfaces.Providers;
 using Domain.Interfaces.Services;
 using Domain.Models;

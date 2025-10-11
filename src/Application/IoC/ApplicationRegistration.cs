@@ -1,3 +1,4 @@
+using Application.Services;
 using Application.Services.MessageFormatters;
 using Domain.Interfaces.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,6 +9,8 @@ public static class ApplicationRegistration
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
+        services.AddSingleton<IMessageHistory<Guid, List<string>>, FileBasedMessageHistory>();
+        
         services.AddSingleton<IMessageFormatter, JsonFormatter>();
         services.AddSingleton<IMessageFormatter, GuidReplacer>();
         services.AddSingleton<IMessageFormatter, DateReplacer>();
