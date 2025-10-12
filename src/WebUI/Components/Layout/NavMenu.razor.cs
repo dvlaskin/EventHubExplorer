@@ -23,7 +23,6 @@ public partial class NavMenu : ComponentBase, IDisposable
     
     public void Dispose()
     {
-        Console.WriteLine($"NavMenu disposed - {Guid.NewGuid()}");
         configSubscription?.Dispose();
         GC.SuppressFinalize(this);
     }
