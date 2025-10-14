@@ -1,6 +1,6 @@
 # EventHub Explorer
 
-**EventHub Explorer** is a .Net Blazor application for interacting with the Azure Event Hubs service. It supports both real Azure Event Hubs and the [eventhubs-emulator](https://learn.microsoft.com/en-us/azure/event-hubs/overview-emulator).
+EventHub Explorer is a developer tool that allows you to interact with the Azure EventHubs service using a graphical user interface. It supports both real Azure Event Hubs and the [eventhubs-emulator](https://learn.microsoft.com/en-us/azure/event-hubs/overview-emulator).
 
 <img src="./assets/Screenshot_01.png" alt="HomePage" width="50%"/>
 <img src="./assets/Screenshot_02.png" alt="ConfigurationPage" width="50%"/>
