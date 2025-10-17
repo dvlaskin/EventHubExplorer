@@ -2,9 +2,9 @@
 
 EventHub Explorer is a developer tool that allows you to interact with the Azure EventHubs service using a graphical user interface. It supports both real Azure Event Hubs and the [eventhubs-emulator](https://learn.microsoft.com/en-us/azure/event-hubs/overview-emulator).
 
-<img src="./assets/Screenshot_01.png" alt="HomePage" width="50%"/>
-<img src="./assets/Screenshot_02.png" alt="ConfigurationPage" width="50%"/>
-<img src="./assets/Screenshot_03.png" alt="EventHubPage" width="50%"/>
+<img src="./docs/assets/Screenshot_01.png" alt="HomePage" width="50%"/>
+<img src="./docs/assets/Screenshot_02.png" alt="ConfigurationPage" width="50%"/>
+<img src="./docs/assets/Screenshot_03.png" alt="EventHubPage" width="50%"/>
 
 
 ## Features
