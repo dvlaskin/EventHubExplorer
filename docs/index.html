@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EventHub Explorer Documentation</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --text-color: #e0e0e0;
+            --header-bg: rgba(26, 26, 26, 0.95);
+            --code-bg: #2d2d2d;
+            --note-bg: #2d2d2d;
+            --accent-color: #0066cc;
+            --border-color: #3d3d3d;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-top: 70px; /* Space for fixed header */
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--header-bg);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+        }
+
+        .header h1 {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #0d6efd;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 40px 0;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease;
+        }
+
+        img:hover {
+            transform: scale(1.02);
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        code {
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+            color: #e0e0e0;
+        }
+
+        .note {
+            background-color: var(--note-bg);
+            border-left: 4px solid var(--accent-color);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        h2 {
+            color: var(--accent-color);
+            margin-top: 40px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        h3 {
+            color: #88ccff;
+        }
+
+        a {
+            color: #66b3ff;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        a:hover {
+            color: #99ccff;
+            text-decoration: underline;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>EventHub Explorer</h1>
+    </div>
+    
+    <div class="container">
+        <p>EventHub Explorer is a developer tool that allows you to interact with the Azure EventHubs service using a graphical user interface. It supports both real Azure Event Hubs and the <a href="https://learn.microsoft.com/en-us/azure/event-hubs/overview-emulator">eventhubs-emulator</a>.</p>
+
+    <img src="../assets/Screenshot_01.png" alt="HomePage" />
+    <img src="../assets/Screenshot_02.png" alt="ConfigurationPage" />
+    <img src="../assets/Screenshot_03.png" alt="EventHubPage" />
+
+    <h2>Features</h2>
+
+    <h3>Sending Messages to Event Hubs</h3>
+    <ul>
+        <li>Override GUID, DateTime values in a message before sending</li>
+        <li>Ability to compress and encode a message before sending</li>
+        <li>Send a <strong>single message</strong></li>
+        <li>Send a <strong>batch of messages</strong></li>
+        <li>Send a <strong>batch of messages</strong> with a <strong>time delay</strong> between each message</li>
+    </ul>
+
+    <h3>Receiving Messages from Event Hubs</h3>
+    <ul>
+        <li>Format a message to JSON if it is a JSON string</li>
+        <li>Ability to decompress and decode a message after receiving</li>
+        <li>Receive messages <strong>without checkpoints</strong> (always fetch the newest messages)</li>
+        <li>Receive messages <strong>with checkpoints</strong> (using external storage to track received message IDs)</li>
+    </ul>
+
+    <div class="note">
+        <p><strong>Note:</strong> The application uses the <code>$Default</code> consumer group by default.</p>
+    </div>
+
+    <h2>Example Connection Strings</h2>
+
+    <h3>EventHubs Emulator</h3>
+    <pre><code>Endpoint=sb://eventhub-docker;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;</code></pre>
+
+    <div class="note">
+        <p><code>eventhub-docker</code> is the Docker service name of the Event Hubs emulator running in the same Docker network.</p>
+    </div>
+
+    <h3>Azurite Blob Storage</h3>
+    <pre><code>DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://eventhub-azurite:10000/devstoreaccount1;</code></pre>
+
+    <div class="note">
+        <p><code>eventhub-azurite</code> is the Docker service name of the Azurite blob storage running in the same Docker network.</p>
+    </div>
+
+    <h2>Requirements</h2>
+    <ul>
+        <li>Docker (for emulator and Azurite usage)</li>
+        <li>Azure Event Hubs and Blob Storage credentials (for real Azure usage)</li>
+    </ul>
+
+    <h2>Install options</h2>
+    <ul>
+        <li>Clone solution in the repo</li>
+        <li>Use docker image <code>docker pull dvlaskin/eventhubexplorer</code></li>
+    </ul>
+
+    <h3>Example of a docker compose file</h3>
+    <pre><code>services:
+
+  eventhubexplorer:
+    image: dvlaskin/eventhubexplorer:latest
+    container_name: eventhubexplorer
+    ports:
+      - "5235:8080"
+    volumes:
+      - data-volume:/app/Data
+    networks:
+      - docker-network
+        
+volumes:
+  data-volume:
+    
+networks:
+  docker-network:
+    external: true</code></pre>
+
+        <h2>License</h2>
+        <p>MIT</p>
+    </div>
+</body>
+</html>
