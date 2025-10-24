@@ -52,7 +52,8 @@ DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02x
 ## Install options
 
 * Clone solution in the repo
-* Use docker image ```docker pull dvlaskin/eventhubexplorer```
+* Or use docker image ```docker pull dvlaskin/eventhubexplorer```
+* Open in browser http://localhost:5235/
 
 Example of a docker compose file
 ```
