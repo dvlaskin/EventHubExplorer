@@ -74,4 +74,15 @@ public class FileBasedMessageHistory : IMessageHistory<Guid, List<string>>
             await messagesStorageProvider.SaveDataAsync(fullHistory);
         }
     }
+    
+    public async Task RemoveAllAsync(Guid input)
+    {
+        MessagesHistory? fullHistory = await messagesStorageProvider.GetDataAsync();
+        
+        if (fullHistory is null)
+            return;
+        
+        if (fullHistory.Messages.Remove(input))
+            await messagesStorageProvider.SaveDataAsync(fullHistory);
+    }
 }
