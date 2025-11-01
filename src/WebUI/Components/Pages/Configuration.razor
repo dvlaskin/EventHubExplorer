@@ -4,6 +4,7 @@
 @using Domain.Interfaces.Services
 
 @inject IFileStorageProvider<AppConfiguration> ConfigurationProvider
+@inject IMessageHistory<Guid, List<string>> MessagesHistoryService
 
 @rendermode InteractiveServer
 
@@ -181,6 +182,10 @@ else
     
     private void RemoveConfig(int index)
     {
+        var configId = appConfiguration?.EventHubsConfigs[index].Id;
+        if (configId is not null)
+            MessagesHistoryService.RemoveAllAsync(configId.Value);
+        
         appConfiguration?.EventHubsConfigs.RemoveAt(index);
     }
     

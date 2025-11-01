@@ -30,10 +30,10 @@ public class MessageConsumerFactory : IMessageConsumerFactory
     
     public IMessageConsumerService CreateConsumer(Guid configId)
     {
-        logger.LogInformation("Creating producer for configId: {ConfigId}", configId);
+        logger.LogInformation("Creating consumer for configId: {ConfigId}", configId);
         var eventHubConfig = config.CurrentValue.EventHubsConfigs.First(x => x.Id == configId);
 
-        IMessageConsumerProvider ehConsumerProvider = eventHubConfig.UseCheckpoints 
+        IMessageConsumerProvider ehConsumerProvider = eventHubConfig.UseCheckpoints
             ? CreateConsumerWithStorage(eventHubConfig) 
             : CreateConsumerWithoutStorage(eventHubConfig);
 
@@ -46,18 +46,12 @@ public class MessageConsumerFactory : IMessageConsumerFactory
     
     private EventHubConsumerProviderWithStorage CreateConsumerWithStorage(EventHubConfig eventHubConfig)
     {
-        return ActivatorUtilities.CreateInstance<EventHubConsumerProviderWithStorage>(
-            serviceProvider,
-            eventHubConfig
-        );
+        return ActivatorUtilities.CreateInstance<EventHubConsumerProviderWithStorage>(serviceProvider, eventHubConfig);
     }
     
     private EventHubConsumerProviderWithoutStorage CreateConsumerWithoutStorage(EventHubConfig eventHubConfig)
     {
-        return ActivatorUtilities.CreateInstance<EventHubConsumerProviderWithoutStorage>(
-            serviceProvider,
-            eventHubConfig
-        );
+        return ActivatorUtilities.CreateInstance<EventHubConsumerProviderWithoutStorage>(serviceProvider, eventHubConfig);
     }
     
     
@@ -76,7 +70,7 @@ public class MessageConsumerFactory : IMessageConsumerFactory
             .MessageFormatters
             .Where(x => x.Value)
             .Select(s => s.Key)
-            .ToArray();
+            .ToHashSet();
 
         var messageFormattersList = serviceProvider
             .GetServices<IMessageFormatter>()

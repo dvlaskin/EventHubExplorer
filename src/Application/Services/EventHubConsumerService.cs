@@ -13,8 +13,11 @@ public class EventHubConsumerService : IMessageConsumerService
     private readonly IMessageConsumerProvider messageConsumerProvider;
     private readonly ITextProcessingPipeline textProcessingPipeline;
     
-    private readonly Channel<EventHubMessage> channel = Channel.CreateUnbounded<EventHubMessage>();
-    private readonly Lock startLock = new();
+    private readonly Channel<EventHubMessage> channel = Channel
+        .CreateBounded<EventHubMessage>(new BoundedChannelOptions(100)
+        {
+            FullMode = BoundedChannelFullMode.Wait
+        });
     private bool isProcessing;
     
 
@@ -47,23 +50,15 @@ public class EventHubConsumerService : IMessageConsumerService
 
     public async Task StopReceiveMessageAsync()
     {
-        lock (startLock)
-        {
-            isProcessing = false;
-        }
+        Interlocked.Exchange(ref isProcessing, false);
         await messageConsumerProvider.StopReceiveMessageAsync();
     }
         
     
     private async Task ReadMessageAsync(CancellationToken cancellationToken)
     {
-        lock (startLock)
-        {
-            if (isProcessing)
-                return;
-            
-            isProcessing = true;
-        }
+        if (Interlocked.CompareExchange(ref isProcessing, true, false))
+            return;
 
         var taskResult = messageConsumerProvider.StartReceiveMessageAsync(async message =>
         {

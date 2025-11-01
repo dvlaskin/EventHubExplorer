@@ -9,7 +9,6 @@
 @using Microsoft.Extensions.Options
 @rendermode InteractiveServer
 @inject IJSRuntime JsRuntime
-@implements IDisposable
 @implements IAsyncDisposable
 
 <PageTitle>EventHub - @title</PageTitle>
@@ -349,27 +348,6 @@
         _ = toast?.ShowToast($"{infoMessage}: {ex.Message}", ToastType.Error, TimeSpan.FromSeconds(10));
     }
     
-    
-    public void Dispose()
-    {
-        // Cancel any pending operations first
-        receiverCts.Cancel();
-        delayedSenderCts.Cancel();
-        
-        // Dispose of services
-        messageProducer?.DisposeAsync().GetAwaiter().GetResult();
-        messageConsumer?.DisposeAsync().GetAwaiter().GetResult();
-        
-        // Dispose of cancellation tokens
-        receiverCts.Dispose();
-        delayedSenderCts.Dispose();
-        
-        // Clear collections
-        receivedMessages.Clear();
-        messagesHistoryList.Clear();
-        
-        GC.SuppressFinalize(this);
-    }
 
     public async ValueTask DisposeAsync()
     {
