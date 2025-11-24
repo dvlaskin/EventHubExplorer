@@ -11,7 +11,7 @@ env:
   APP_NAME: eventhubexplorer   # the app name
   DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
   DOCKERFILE_PATH: src/WebUI/Dockerfile
-  DOTNET_VERSION: '9.0.x'
+  DOTNET_VERSION: '10.0.x'
 
 jobs:
   build:
