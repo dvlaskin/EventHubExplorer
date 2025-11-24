@@ -9,7 +9,7 @@
     <ItemGroup>
         <PackageReference Include="Azure.Messaging.EventHubs" Version="5.12.2" />
         <PackageReference Include="Azure.Messaging.EventHubs.Processor" Version="5.12.2" />
-        <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.10" />
+        <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.0" />
     </ItemGroup>
 
     <ItemGroup>
