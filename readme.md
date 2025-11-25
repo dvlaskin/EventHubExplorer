@@ -1,5 +1,7 @@
 # EventHub Explorer
 
+![.NET Version](https://img.shields.io/badge/.NET%20Version-10.0-blueviolet)
+
 EventHub Explorer is a developer tool that allows you to interact with the Azure EventHubs service using a graphical user interface. It supports both real Azure Event Hubs and the [eventhubs-emulator](https://learn.microsoft.com/en-us/azure/event-hubs/overview-emulator).
 
 <img src="./docs/assets/Screenshot_01.png" alt="HomePage" width="50%"/>
