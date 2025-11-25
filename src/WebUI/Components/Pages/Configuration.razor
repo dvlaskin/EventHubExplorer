@@ -175,6 +175,7 @@ else
             Title = "New Event Hub",
             ConnectionString = "",
             Name = "",
+            MessageFormatters = MessageFormatters?.ToDictionary(k => k.Name, v => false) ?? new Dictionary<string, bool>(),
             UseCheckpoints = false,
             StorageConfig = new BlobConfig { ConnectionString = "", BlobContainerName = "" }
         });
