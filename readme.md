@@ -23,7 +23,7 @@ EventHub Explorer is a developer tool that allows you to interact with the Azure
 
 * Format a message to JSON if it is a JSON string
 * Ability to decompress and decode a message after receiving
-* Receive messages **without checkpoints** (always fetch the newest messages)
+* Receive messages **without checkpoints** (always fetch the newest messages, if is not yet received another consumer)
 * Receive messages **with checkpoints** (using external storage to track received message IDs)
 
 > Note: The application uses the `$Default` consumer group by default.

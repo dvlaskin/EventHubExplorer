@@ -14,19 +14,22 @@
 
 
 <!-- Add New Config -->
-<button class="btn btn-primary mb-3" @onclick="AddNewConfig">Add Event Hub</button>
+<button class="btn btn-primary mb-3 me-2" @onclick="AddNewEventHubConfig">Add EventHub</button>
+<button class="btn btn-primary mb-3" @onclick="AddNewStorageQueueConfig">Add StorageQueue</button>
 
 <!-- Save All Config -->
 <button class="btn btn-success mb-3" @onclick="SaveConfiguration">Save Configuration</button>
 
 
+<!-- Event Hubs -->
+<h2 class="mt-4">EventHubs</h2>
+
 @if (appConfiguration?.EventHubsConfigs.Count == 0)
 {
-    <p>No Event Hubs configured</p>
+    <p>No EventHubs configured</p>
 }
 else
 {
-    <!-- Event Hubs configs -->
     <div class="accordion" id="eventHubAccordion">
         @for (var i = 0; i < appConfiguration?.EventHubsConfigs.Count; i++)
         {
@@ -35,13 +38,13 @@ else
             var isEmpty = string.IsNullOrWhiteSpace(eventHub.ConnectionString) || string.IsNullOrWhiteSpace(eventHub.Name);
 
             <div class="accordion-item">
-                <h2 class="accordion-header" id="heading-@i">
+                <h2 class="accordion-header" id="heading-eh-@i">
                     <button class="accordion-button @(isEmpty ? "" : "collapsed") bg-secondary text-white" type="button" data-bs-toggle="collapse"
-                            data-bs-target="#collapse-@i" aria-expanded="@(isEmpty ? "true" : "false")" aria-controls="collapse-@i">
+                            data-bs-target="#collapse-eh-@i" aria-expanded="@(isEmpty ? "true" : "false")" aria-controls="collapse-eh-@i">
                         @eventHub.Title
                     </button>
                 </h2>
-                <div id="collapse-@i" class="accordion-collapse collapse @(isEmpty ? "show" : "")" aria-labelledby="heading-@i"
+                <div id="collapse-eh-@i" class="accordion-collapse collapse @(isEmpty ? "show" : "")" aria-labelledby="heading-eh-@i"
                      data-bs-parent="#eventHubAccordion">
                     <div class="accordion-body">
                         <div class="mb-3">
@@ -101,13 +104,87 @@ else
                             </div>
                         }
 
-                        <button class="btn btn-danger" @onclick="() => RemoveConfig(index)">Remove</button>
+                        <button class="btn btn-danger" @onclick="() => RemoveEventHubConfig(index)">Remove</button>
                     </div>
                 </div>
             </div>
         }
     </div>
 }
+
+
+<!-- Storage Queues -->
+<h2 class="mt-4">StorageQueues</h2>
+
+@if (appConfiguration?.StorageQueuesConfigs.Count == 0)
+{
+    <p>No StorageQueues configured</p>
+}
+else
+{
+    <div class="accordion" id="storageQueueAccordion">
+        @for (var i = 0; i < appConfiguration?.StorageQueuesConfigs.Count; i++)
+        {
+            var index = i;
+            var queueConfig = appConfiguration.StorageQueuesConfigs[i];
+            var isEmpty = string.IsNullOrWhiteSpace(queueConfig.ConnectionString) || string.IsNullOrWhiteSpace(queueConfig.QueueName);
+
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading-sq-@i">
+                    <button class="accordion-button @(isEmpty ? "" : "collapsed") bg-info text-white" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapse-sq-@i" aria-expanded="@(isEmpty ? "true" : "false")" aria-controls="collapse-sq-@i">
+                        @queueConfig.Title
+                    </button>
+                </h2>
+                <div id="collapse-sq-@i" class="accordion-collapse collapse @(isEmpty ? "show" : "")" aria-labelledby="heading-sq-@i"
+                     data-bs-parent="#storageQueueAccordion">
+                    <div class="accordion-body">
+                        <div class="mb-3">
+                            <label class="form-label">Title</label>
+                            <input class="form-control" @bind="queueConfig.Title">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Connection String</label>
+                            <input class="form-control" @bind="queueConfig.ConnectionString">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Queue Name</label>
+                            <input class="form-control" @bind="queueConfig.QueueName">
+                        </div>
+                        <div class="mb-3">
+                            <h6>Message encoding settings: </h6>
+                            <div class="form-check d-inline-block me-3">
+                                <input class="form-check-input" type="checkbox" @bind="queueConfig.UseGzipCompression"
+                                       @bind:after="@(() => OnGzipCompressionChanged(queueConfig))">
+                                <label class="form-check-label">Use Gzip Compression</label>
+                            </div>
+                            <div class="form-check d-inline-block">
+                                <input class="form-check-input" type="checkbox" @bind="queueConfig.UseBase64Coding"
+                                       disabled>
+                                <label class="form-check-label">Use Base64 Coding</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <h6>Message formatting settings: </h6>
+                            @foreach (var formatter in queueConfig.MessageFormatters)
+                            {
+                                <div class="form-check d-inline-block me-3">
+                                    <label class="form-check-label">@formatter.Key</label>
+                                    <input class="form-check-input" type="checkbox" 
+                                           @bind:get="formatter.Value"
+                                           @bind:set="(value) => queueConfig.MessageFormatters[formatter.Key] = value">
+                                </div>
+                            }
+                        </div>
+
+                        <button class="btn btn-danger" @onclick="() => RemoveStorageQueueConfig(index)">Remove</button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
 
 <!-- Toast notification -->
 <div class="toast-container position-fixed top-0 end-0 p-3">
@@ -151,6 +228,17 @@ else
                 eventHubConfig.MessageFormatters.TryAdd(msgFormatter.Name, false);
             }
         }
+
+        foreach (var queueConfig in appConfiguration.StorageQueuesConfigs)
+        {
+            if (queueConfig.MessageFormatters.Count == MessageFormatters?.Count())
+                continue;
+
+            foreach (var msgFormatter in MessageFormatters ?? Enumerable.Empty<IMessageFormatter>())
+            {
+                queueConfig.MessageFormatters.TryAdd(msgFormatter.Name, false);
+            }
+        }
     }
     
     private async Task SaveConfiguration()
@@ -158,17 +246,15 @@ else
         if (appConfiguration is null) return;
         await ConfigurationProvider.SaveDataAsync(appConfiguration);
 
-        // show toast
         showToast = true;
         StateHasChanged();
 
-        // hide Toast after 3 seconds
         await Task.Delay(3000);
         showToast = false;
         StateHasChanged();
     }
     
-    private void AddNewConfig()
+    private void AddNewEventHubConfig()
     {
         appConfiguration?.EventHubsConfigs.Add(new EventHubConfig
         {
@@ -180,8 +266,19 @@ else
             StorageConfig = new BlobConfig { ConnectionString = "", BlobContainerName = "" }
         });
     }
+
+    private void AddNewStorageQueueConfig()
+    {
+        appConfiguration?.StorageQueuesConfigs.Add(new StorageQueueConfig
+        {
+            Title = "New Storage Queue",
+            ConnectionString = "",
+            QueueName = "",
+            MessageFormatters = MessageFormatters?.ToDictionary(k => k.Name, v => false) ?? new Dictionary<string, bool>()
+        });
+    }
     
-    private void RemoveConfig(int index)
+    private void RemoveEventHubConfig(int index)
     {
         var configId = appConfiguration?.EventHubsConfigs[index].Id;
         if (configId is not null)
@@ -189,18 +286,32 @@ else
         
         appConfiguration?.EventHubsConfigs.RemoveAt(index);
     }
+
+    private void RemoveStorageQueueConfig(int index)
+    {
+        var configId = appConfiguration?.StorageQueuesConfigs[index].Id;
+        if (configId is not null)
+            MessagesHistoryService.RemoveAllAsync(configId.Value);
+        
+        appConfiguration?.StorageQueuesConfigs.RemoveAt(index);
+    }
     
     private void HideToast()
     {
         showToast = false;
         StateHasChanged();
     }
-  
+   
     private static void OnGzipCompressionChanged(EventHubConfig eventHub)
     {
         if (eventHub is { UseGzipCompression: false, UseBase64Coding: true })
         {
             eventHub.UseBase64Coding = false;
         }
+    }
+
+    private static void OnGzipCompressionChanged(StorageQueueConfig queueConfig)
+    {
+        queueConfig.UseBase64Coding = queueConfig.UseGzipCompression;
     }
 }

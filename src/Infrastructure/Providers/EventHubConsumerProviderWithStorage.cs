@@ -129,6 +129,7 @@ public sealed class EventHubConsumerProviderWithStorage : IMessageConsumerProvid
     
     private string DecodeMessage(ReadOnlyMemory<byte> messageBody)
     {
+        // TODO: extract decoding logic to a separate method for all consumers
         return config switch
         {
             { UseGzipCompression: false } => Encoding.UTF8.GetString(messageBody.ToArray()),

@@ -10,13 +10,16 @@ public partial class NavMenu : ComponentBase, IDisposable
     
     private IDisposable? configSubscription;
     private List<EventHubConfig>? EventHubsConfigs { get; set; }
+    private List<StorageQueueConfig>? StorageQueuesConfigs { get; set; }
 
     protected override void OnInitialized()
     {
         EventHubsConfigs = Config?.CurrentValue.EventHubsConfigs ?? [];
+        StorageQueuesConfigs = Config?.CurrentValue.StorageQueuesConfigs ?? [];
         configSubscription = Config?.OnChange(x =>
         {
             EventHubsConfigs = x.EventHubsConfigs;
+            StorageQueuesConfigs = x.StorageQueuesConfigs;
             InvokeAsync(StateHasChanged).ConfigureAwait(false);
         });
     }

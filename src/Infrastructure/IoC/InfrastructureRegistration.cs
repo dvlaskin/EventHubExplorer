@@ -1,5 +1,6 @@
 using Azure.Storage.Blobs;
 using Domain.Configs;
+using Domain.Enums;
 using Domain.Interfaces.Factories;
 using Domain.Interfaces.Providers;
 using Domain.Models;
@@ -16,8 +17,14 @@ public static class InfrastructureRegistration
         services.AddSingleton<IFileStorageProvider<AppConfiguration>, AppConfigurationProvider>();
         services.AddSingleton<IFileStorageProvider<MessagesHistory>, MessageHistoryProvider>();
         
-        services.AddSingleton<IMessageProducerFactory, MessageProducerFactory>();
-        services.AddSingleton<IMessageConsumerFactory, MessageConsumerFactory>();
+        // event hub
+        services.AddKeyedSingleton<IMessageProducerFactory, MessageProducerFactory>(MessageBusType.EventHub);
+        services.AddKeyedSingleton<IMessageConsumerFactory, MessageConsumerFactory>(MessageBusType.EventHub);
+        
+        // storage queue
+        services.AddKeyedSingleton<IMessageProducerFactory, StorageQueueProducerFactory>(MessageBusType.StorageQueue);
+        services.AddKeyedSingleton<IMessageConsumerFactory, StorageQueueConsumerFactory>(MessageBusType.StorageQueue);
+        
         services.AddSingleton<IStorageClientFactory<BlobConfig, BlobContainerClient>, BlobStorageFactory>();
         
         return services;

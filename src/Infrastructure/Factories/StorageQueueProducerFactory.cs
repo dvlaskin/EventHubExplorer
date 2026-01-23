@@ -11,14 +11,14 @@ using Microsoft.Extensions.Options;
 
 namespace Infrastructure.Factories;
 
-public class MessageProducerFactory : IMessageProducerFactory
+public class StorageQueueProducerFactory : IMessageProducerFactory
 {
-    private readonly ILogger<MessageProducerFactory> logger;
+    private readonly ILogger<StorageQueueProducerFactory> logger;
     private readonly IOptionsMonitor<AppConfiguration> config;
     private readonly IServiceProvider serviceProvider;
 
-    public MessageProducerFactory(
-        ILogger<MessageProducerFactory> logger, 
+    public StorageQueueProducerFactory(
+        ILogger<StorageQueueProducerFactory> logger,
         IOptionsMonitor<AppConfiguration> config,
         IServiceProvider serviceProvider
     )
@@ -30,43 +30,42 @@ public class MessageProducerFactory : IMessageProducerFactory
 
     public IMessageProducerService CreateProducer(Guid configId)
     {
-        logger.LogInformation("Creating producer for configId: {ConfigId}", configId);
-        var eventHubConfig = config.CurrentValue.EventHubsConfigs.First(x => x.Id == configId);
-        var ehProducerProvider = ActivatorUtilities.CreateInstance<EventHubProducerProvider>(
-            serviceProvider, eventHubConfig
+        logger.LogInformation("Creating producer for StorageQueue configId: {ConfigId}", configId);
+        var queueConfig = config.CurrentValue.StorageQueuesConfigs.First(x => x.Id == configId);
+        var queueProducerProvider = ActivatorUtilities.CreateInstance<StorageQueueProducerProvider>(
+            serviceProvider, queueConfig
         );
-        var textProcessingPipeline = GetTextProcessingPipeline(eventHubConfig);
+        var textProcessingPipeline = GetTextProcessingPipeline(queueConfig);
 
         var msgOptions = new MessageOptions
         {
-            UseGzipCompression = eventHubConfig.UseGzipCompression,
-            UseBase64Coding = eventHubConfig.UseBase64Coding,
+            UseGzipCompression = queueConfig.UseGzipCompression,
+            UseBase64Coding = queueConfig.UseBase64Coding,
             TextProcessingPipeline = textProcessingPipeline
         };
-        
+
         if (msgOptions is { UseGzipCompression: true, UseBase64Coding: false })
             return ActivatorUtilities.CreateInstance<BytesMessageProducer>(
-                serviceProvider, ehProducerProvider, msgOptions
+                serviceProvider, queueProducerProvider, msgOptions
             );
-        
+
         return ActivatorUtilities.CreateInstance<StringMessageProducer>(
-            serviceProvider, ehProducerProvider, msgOptions
+            serviceProvider, queueProducerProvider, msgOptions
         );
     }
-    
 
-    private ITextProcessingPipeline GetTextProcessingPipeline(EventHubConfig eventHubConfig)
+    private ITextProcessingPipeline GetTextProcessingPipeline(StorageQueueConfig queueConfig)
     {
-        var activeMessageFormatters = GetActiveMessageFormatters(eventHubConfig);
+        var activeMessageFormatters = GetActiveMessageFormatters(queueConfig);
         var textProcessingPipeline = serviceProvider.GetRequiredService<ITextProcessingPipeline>();
         textProcessingPipeline.AddFormatters(activeMessageFormatters);
-        
+
         return textProcessingPipeline;
     }
-    
-    private IMessageFormatter[] GetActiveMessageFormatters(EventHubConfig eventHubConfig)
+
+    private IMessageFormatter[] GetActiveMessageFormatters(StorageQueueConfig queueConfig)
     {
-        var ehMessageFormattersNames = eventHubConfig
+        var messageFormattersNames = queueConfig
             .MessageFormatters
             .Where(x => x.Value)
             .Select(s => s.Key)
@@ -74,11 +73,11 @@ public class MessageProducerFactory : IMessageProducerFactory
 
         var messageFormattersList = serviceProvider
             .GetServices<IMessageFormatter>()
-            .Where(w => 
+            .Where(w =>
                 w.Type == MessageFormatterType.BeforeSend
-                && ehMessageFormattersNames.Contains(w.Name)
+                && messageFormattersNames.Contains(w.Name)
             ).ToArray();
-        
+
         return messageFormattersList;
     }
 }
