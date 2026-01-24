@@ -1,4 +1,3 @@
-using System.Text;
 using Application.Utils;
 using Azure.Messaging.EventHubs;
 using Azure.Messaging.EventHubs.Processor;
@@ -107,7 +106,7 @@ public sealed class EventHubConsumerProviderWithStorage : IMessageConsumerProvid
     {
         var msgData = new EventHubMessage
         {
-            Message = DecodeMessage(eventArgs.Data.Body),
+            Message = CompressingEncoding.DecodeMessage(eventArgs.Data.Body, config),
             PartitionId = eventArgs.Partition.PartitionId,
             SequenceNumber = eventArgs.Data.SequenceNumber,
             EnqueuedTime = eventArgs.Data.EnqueuedTime
@@ -125,16 +124,5 @@ public sealed class EventHubConsumerProviderWithStorage : IMessageConsumerProvid
     {
         logger.LogError(arg.Exception, "Error while processing event: {Message}", arg.Exception.Message);
         return Task.CompletedTask;
-    }
-    
-    private string DecodeMessage(ReadOnlyMemory<byte> messageBody)
-    {
-        // TODO: extract decoding logic to a separate method for all consumers
-        return config switch
-        {
-            { UseGzipCompression: false } => Encoding.UTF8.GetString(messageBody.ToArray()),
-            { UseGzipCompression: true, UseBase64Coding: false } => messageBody.ToArray().Decompress(),
-            _ => Encoding.UTF8.GetString(messageBody.ToArray()).DecodeBase64().Decompress()
-        };
     }
 }

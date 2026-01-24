@@ -1,4 +1,3 @@
-using System.Text;
 using Application.Utils;
 using Azure.Storage.Queues;
 using Domain.Configs;
@@ -63,7 +62,7 @@ public sealed class StorageQueueConsumerProvider : IMessageConsumerProvider
 
                     var msgData = new EventHubMessage
                     {
-                        Message = DecodeMessage(message.Body),
+                        Message = CompressingEncoding.DecodeMessage(message.Body, config),
                         EnqueuedTime = message.InsertedOn ?? DateTimeOffset.UtcNow
                     };
 
@@ -105,17 +104,7 @@ public sealed class StorageQueueConsumerProvider : IMessageConsumerProvider
         }
     }
     
-    private string DecodeMessage(ReadOnlyMemory<byte> messageBody)
-    {
-        // TODO: extract decoding logic to a separate method for all consumers
-        return config switch
-        {
-            { UseGzipCompression: false } => Encoding.UTF8.GetString(messageBody.ToArray()),
-            { UseGzipCompression: true, UseBase64Coding: false } => messageBody.ToArray().Decompress(),
-            _ => Encoding.UTF8.GetString(messageBody.ToArray()).DecodeBase64().Decompress()
-        };
-    }
-
+    
     public ValueTask DisposeAsync()
     {
         isProcessing = false;
