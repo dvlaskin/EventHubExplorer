@@ -1,3 +1,4 @@
+using Azure.Core;
 using Azure.Storage.Queues;
 using Domain.Configs;
 using Domain.Interfaces.Providers;
@@ -77,7 +78,17 @@ public sealed class StorageQueueProducerProvider : IMessageProducerProvider
     {
         logger.LogInformation("Creating QueueClient for queue: {QueueName}", config.QueueName);
 
-        var queueServiceClient = new QueueServiceClient(config.ConnectionString);
+        var opt = new QueueClientOptions()
+        {
+            Retry = 
+            {
+                MaxRetries = 3,
+                Delay = TimeSpan.FromSeconds(1),
+                MaxDelay =  TimeSpan.FromSeconds(1),
+                Mode = RetryMode.Fixed,
+            }
+        };
+        var queueServiceClient = new QueueServiceClient(config.ConnectionString, opt);
         var client = queueServiceClient.GetQueueClient(config.QueueName);
         
         return client.Exists() ? client : throw new InvalidOperationException($"Queue {config.QueueName} does not exist");
