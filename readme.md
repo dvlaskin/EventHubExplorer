@@ -1,6 +1,6 @@
 # EventHub Explorer
 
-![.NET Version](https://img.shields.io/badge/.NET%20Version-8.0-blueviolet)
+![.NET Version](https://img.shields.io/badge/.NET%20Version-10.0-blueviolet)
 
 EventHub Explorer is a developer tool that allows you to interact with Azure Event Hubs 
 and Azure Storage Queues using a graphical user interface. 
