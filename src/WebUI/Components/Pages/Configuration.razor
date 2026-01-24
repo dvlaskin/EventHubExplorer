@@ -10,180 +10,185 @@
 
 <PageTitle>Configuration</PageTitle>
 
-<h1>Configuration</h1>
+<!-- Sticky Actions Container -->
+<div class="sticky-actions">
+    <div class="d-flex gap-2 flex-wrap">
+        <div>
+            <h3>Configuration</h3>
+        </div> 
+        <button class="btn btn-primary" @onclick="AddNewEventHubConfig">Add EventHub</button>
+        <button class="btn btn-primary" @onclick="AddNewStorageQueueConfig">Add StorageQueue</button>
+        <button class="btn btn-success" @onclick="SaveConfiguration">Save Configuration</button>
+    </div>
+</div>
 
+<!-- Configuration Content -->
+<div class="configuration-content">
+    
+    <!-- Event Hubs -->
+    <h2 class="mt-4">EventHubs</h2>
 
-<!-- Add New Config -->
-<button class="btn btn-primary mb-3 me-2" @onclick="AddNewEventHubConfig">Add EventHub</button>
-<button class="btn btn-primary mb-3" @onclick="AddNewStorageQueueConfig">Add StorageQueue</button>
+    @if (appConfiguration?.EventHubsConfigs.Count == 0)
+    {
+        <p>No EventHubs configured</p>
+    }
+    else
+    {
+        <div class="accordion" id="eventHubAccordion">
+            @for (var i = 0; i < appConfiguration?.EventHubsConfigs.Count; i++)
+            {
+                var index = i;
+                var eventHub = appConfiguration.EventHubsConfigs[i];
+                var isEmpty = string.IsNullOrWhiteSpace(eventHub.ConnectionString) || string.IsNullOrWhiteSpace(eventHub.Name);
 
-<!-- Save All Config -->
-<button class="btn btn-success mb-3" @onclick="SaveConfiguration">Save Configuration</button>
-
-
-<!-- Event Hubs -->
-<h2 class="mt-4">EventHubs</h2>
-
-@if (appConfiguration?.EventHubsConfigs.Count == 0)
-{
-    <p>No EventHubs configured</p>
-}
-else
-{
-    <div class="accordion" id="eventHubAccordion">
-        @for (var i = 0; i < appConfiguration?.EventHubsConfigs.Count; i++)
-        {
-            var index = i;
-            var eventHub = appConfiguration.EventHubsConfigs[i];
-            var isEmpty = string.IsNullOrWhiteSpace(eventHub.ConnectionString) || string.IsNullOrWhiteSpace(eventHub.Name);
-
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="heading-eh-@i">
-                    <button class="accordion-button @(isEmpty ? "" : "collapsed") bg-secondary text-white" type="button" data-bs-toggle="collapse"
-                            data-bs-target="#collapse-eh-@i" aria-expanded="@(isEmpty ? "true" : "false")" aria-controls="collapse-eh-@i">
-                        @eventHub.Title
-                    </button>
-                </h2>
-                <div id="collapse-eh-@i" class="accordion-collapse collapse @(isEmpty ? "show" : "")" aria-labelledby="heading-eh-@i"
-                     data-bs-parent="#eventHubAccordion">
-                    <div class="accordion-body">
-                        <div class="mb-3">
-                            <label class="form-label">Title</label>
-                            <input class="form-control" @bind="eventHub.Title">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Connection String</label>
-                            <input class="form-control" @bind="eventHub.ConnectionString">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">EventHub Name</label>
-                            <input class="form-control" @bind="eventHub.Name">
-                        </div>
-                        <div class="mb-3">
-                            <h6>Message encoding settings: </h6>
-                            <div class="form-check d-inline-block me-3">
-                                <input class="form-check-input" type="checkbox" @bind="eventHub.UseGzipCompression"
-                                       @bind:after="@(() => OnGzipCompressionChanged(eventHub))">
-                                <label class="form-check-label">Use Gzip Compression</label>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="heading-eh-@i">
+                        <button class="accordion-button @(isEmpty ? "" : "collapsed") bg-secondary text-white" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapse-eh-@i" aria-expanded="@(isEmpty ? "true" : "false")" aria-controls="collapse-eh-@i">
+                            @eventHub.Title
+                        </button>
+                    </h2>
+                    <div id="collapse-eh-@i" class="accordion-collapse collapse @(isEmpty ? "show" : "")" aria-labelledby="heading-eh-@i"
+                         data-bs-parent="#eventHubAccordion">
+                        <div class="accordion-body">
+                            <div class="mb-3">
+                                <label class="form-label">Title</label>
+                                <input class="form-control" @bind="eventHub.Title">
                             </div>
-                            <div class="form-check d-inline-block">
-                                <input class="form-check-input" type="checkbox" @bind="eventHub.UseBase64Coding"
-                                       disabled="@(!eventHub.UseGzipCompression)">
-                                <label class="form-check-label">Use Base64 Coding</label>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <h6>Message formatting settings: </h6>
-                            @foreach (var formatter in eventHub.MessageFormatters)
-                            {
-                                <div class="form-check d-inline-block me-3">
-                                    <label class="form-check-label">@formatter.Key</label>
-                                    <input class="form-check-input" type="checkbox" 
-                                           @bind:get="formatter.Value"
-                                           @bind:set="(value) => eventHub.MessageFormatters[formatter.Key] = value">
-                                </div>
-                            }
-                        </div>
-                        <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" @bind="eventHub.UseCheckpoints">
-                            <label class="form-check-label">Use Checkpoints</label>
-                        </div>
-
-                        @if (eventHub.UseCheckpoints)
-                        {
-                            eventHub.StorageConfig ??= new BlobConfig { ConnectionString = "", BlobContainerName = "" };
-
-                            <h5>Blob Storage</h5>
                             <div class="mb-3">
                                 <label class="form-label">Connection String</label>
-                                <input class="form-control" @bind="eventHub.StorageConfig.ConnectionString">
+                                <input class="form-control" @bind="eventHub.ConnectionString">
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Container Name</label>
-                                <input class="form-control" @bind="eventHub.StorageConfig.BlobContainerName">
+                                <label class="form-label">EventHub Name</label>
+                                <input class="form-control" @bind="eventHub.Name">
                             </div>
-                        }
-
-                        <button class="btn btn-danger" @onclick="() => RemoveEventHubConfig(index)">Remove</button>
-                    </div>
-                </div>
-            </div>
-        }
-    </div>
-}
-
-
-<!-- Storage Queues -->
-<h2 class="mt-4">StorageQueues</h2>
-
-@if (appConfiguration?.StorageQueuesConfigs.Count == 0)
-{
-    <p>No StorageQueues configured</p>
-}
-else
-{
-    <div class="accordion" id="storageQueueAccordion">
-        @for (var i = 0; i < appConfiguration?.StorageQueuesConfigs.Count; i++)
-        {
-            var index = i;
-            var queueConfig = appConfiguration.StorageQueuesConfigs[i];
-            var isEmpty = string.IsNullOrWhiteSpace(queueConfig.ConnectionString) || string.IsNullOrWhiteSpace(queueConfig.QueueName);
-
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="heading-sq-@i">
-                    <button class="accordion-button @(isEmpty ? "" : "collapsed") bg-info text-white" type="button" data-bs-toggle="collapse"
-                            data-bs-target="#collapse-sq-@i" aria-expanded="@(isEmpty ? "true" : "false")" aria-controls="collapse-sq-@i">
-                        @queueConfig.Title
-                    </button>
-                </h2>
-                <div id="collapse-sq-@i" class="accordion-collapse collapse @(isEmpty ? "show" : "")" aria-labelledby="heading-sq-@i"
-                     data-bs-parent="#storageQueueAccordion">
-                    <div class="accordion-body">
-                        <div class="mb-3">
-                            <label class="form-label">Title</label>
-                            <input class="form-control" @bind="queueConfig.Title">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Connection String</label>
-                            <input class="form-control" @bind="queueConfig.ConnectionString">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Queue Name</label>
-                            <input class="form-control" @bind="queueConfig.QueueName">
-                        </div>
-                        <div class="mb-3">
-                            <h6>Message encoding settings: </h6>
-                            <div class="form-check d-inline-block me-3">
-                                <input class="form-check-input" type="checkbox" @bind="queueConfig.UseGzipCompression"
-                                       @bind:after="@(() => OnGzipCompressionChanged(queueConfig))">
-                                <label class="form-check-label">Use Gzip Compression</label>
-                            </div>
-                            <div class="form-check d-inline-block">
-                                <input class="form-check-input" type="checkbox" @bind="queueConfig.UseBase64Coding"
-                                       disabled>
-                                <label class="form-check-label">Use Base64 Coding</label>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <h6>Message formatting settings: </h6>
-                            @foreach (var formatter in queueConfig.MessageFormatters)
-                            {
+                            <div class="mb-3">
+                                <h6>Message encoding settings: </h6>
                                 <div class="form-check d-inline-block me-3">
-                                    <label class="form-check-label">@formatter.Key</label>
-                                    <input class="form-check-input" type="checkbox" 
-                                           @bind:get="formatter.Value"
-                                           @bind:set="(value) => queueConfig.MessageFormatters[formatter.Key] = value">
+                                    <input class="form-check-input" type="checkbox" @bind="eventHub.UseGzipCompression"
+                                           @bind:after="@(() => OnGzipCompressionChanged(eventHub))">
+                                    <label class="form-check-label">Use Gzip Compression</label>
+                                </div>
+                                <div class="form-check d-inline-block">
+                                    <input class="form-check-input" type="checkbox" @bind="eventHub.UseBase64Coding"
+                                           disabled="@(!eventHub.UseGzipCompression)">
+                                    <label class="form-check-label">Use Base64 Coding</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <h6>Message formatting settings: </h6>
+                                @foreach (var formatter in eventHub.MessageFormatters)
+                                {
+                                    <div class="form-check d-inline-block me-3">
+                                        <label class="form-check-label">@formatter.Key</label>
+                                        <input class="form-check-input" type="checkbox" 
+                                               @bind:get="formatter.Value"
+                                               @bind:set="(value) => eventHub.MessageFormatters[formatter.Key] = value">
+                                    </div>
+                                }
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" @bind="eventHub.UseCheckpoints">
+                                <label class="form-check-label">Use Checkpoints</label>
+                            </div>
+
+                            @if (eventHub.UseCheckpoints)
+                            {
+                                eventHub.StorageConfig ??= new BlobConfig { ConnectionString = "", BlobContainerName = "" };
+
+                                <h5>Blob Storage</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">Connection String</label>
+                                    <input class="form-control" @bind="eventHub.StorageConfig.ConnectionString">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Container Name</label>
+                                    <input class="form-control" @bind="eventHub.StorageConfig.BlobContainerName">
                                 </div>
                             }
-                        </div>
 
-                        <button class="btn btn-danger" @onclick="() => RemoveStorageQueueConfig(index)">Remove</button>
+                            <button class="btn btn-danger" @onclick="() => RemoveEventHubConfig(index)">Remove</button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        }
-    </div>
-}
+            }
+        </div>
+    }
+
+
+    <!-- Storage Queues -->
+    <h2 class="mt-4">StorageQueues</h2>
+
+    @if (appConfiguration?.StorageQueuesConfigs.Count == 0)
+    {
+        <p>No StorageQueues configured</p>
+    }
+    else
+    {
+        <div class="accordion" id="storageQueueAccordion">
+            @for (var i = 0; i < appConfiguration?.StorageQueuesConfigs.Count; i++)
+            {
+                var index = i;
+                var queueConfig = appConfiguration.StorageQueuesConfigs[i];
+                var isEmpty = string.IsNullOrWhiteSpace(queueConfig.ConnectionString) || string.IsNullOrWhiteSpace(queueConfig.QueueName);
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="heading-sq-@i">
+                        <button class="accordion-button @(isEmpty ? "" : "collapsed") bg-secondary text-white" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapse-sq-@i" aria-expanded="@(isEmpty ? "true" : "false")" aria-controls="collapse-sq-@i">
+                            @queueConfig.Title
+                        </button>
+                    </h2>
+                    <div id="collapse-sq-@i" class="accordion-collapse collapse @(isEmpty ? "show" : "")" aria-labelledby="heading-sq-@i"
+                         data-bs-parent="#storageQueueAccordion">
+                        <div class="accordion-body">
+                            <div class="mb-3">
+                                <label class="form-label">Title</label>
+                                <input class="form-control" @bind="queueConfig.Title">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Connection String</label>
+                                <input class="form-control" @bind="queueConfig.ConnectionString">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Queue Name</label>
+                                <input class="form-control" @bind="queueConfig.QueueName">
+                            </div>
+                            <div class="mb-3">
+                                <h6>Message encoding settings: </h6>
+                                <div class="form-check d-inline-block me-3">
+                                    <input class="form-check-input" type="checkbox" @bind="queueConfig.UseGzipCompression"
+                                           @bind:after="@(() => OnGzipCompressionChanged(queueConfig))">
+                                    <label class="form-check-label">Use Gzip Compression</label>
+                                </div>
+                                <div class="form-check d-inline-block">
+                                    <input class="form-check-input" type="checkbox" @bind="queueConfig.UseBase64Coding"
+                                           disabled>
+                                    <label class="form-check-label">Use Base64 Coding</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <h6>Message formatting settings: </h6>
+                                @foreach (var formatter in queueConfig.MessageFormatters)
+                                {
+                                    <div class="form-check d-inline-block me-3">
+                                        <label class="form-check-label">@formatter.Key</label>
+                                        <input class="form-check-input" type="checkbox" 
+                                               @bind:get="formatter.Value"
+                                               @bind:set="(value) => queueConfig.MessageFormatters[formatter.Key] = value">
+                                    </div>
+                                }
+                            </div>
+
+                            <button class="btn btn-danger" @onclick="() => RemoveStorageQueueConfig(index)">Remove</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
 
 
 <!-- Toast notification -->

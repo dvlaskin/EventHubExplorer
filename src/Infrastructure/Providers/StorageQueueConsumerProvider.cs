@@ -52,7 +52,7 @@ public sealed class StorageQueueConsumerProvider : IMessageConsumerProvider
 
                 if (messages.Value.Length == 0)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+                    await Task.Delay(TimeSpan.FromMilliseconds(500), cancellationToken);
                     continue;
                 }
 
