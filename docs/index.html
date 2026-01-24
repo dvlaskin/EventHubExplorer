@@ -120,66 +120,86 @@
     </div>
     
     <div class="container">
-        <p>EventHub Explorer is a developer tool that allows you to interact with the Azure EventHubs service using a graphical user interface. It supports both real Azure Event Hubs and the <a href="https://learn.microsoft.com/en-us/azure/event-hubs/overview-emulator">eventhubs-emulator</a>.</p>
+        <p>EventHub Explorer is a developer tool that allows you to interact with Azure Event Hubs and Azure Storage Queues using a graphical user interface. It supports both real Azure services, the <a href="https://learn.microsoft.com/en-us/azure/event-hubs/overview-emulator">eventhubs-emulator</a> for Event Hubs and <a href="https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite">Azurite</a> for StorageQueue.</p>
 
-    <img src="./assets/Screenshot_01.png" alt="HomePage" />
-    <img src="./assets/Screenshot_02.png" alt="ConfigurationPage" />
-    <img src="./assets/Screenshot_03.png" alt="EventHubPage" />
+        <img src="./assets/Screenshot_01.png" alt="HomePage" />
+        <img src="./assets/Screenshot_02.png" alt="ConfigurationPage" />
+        <img src="./assets/Screenshot_03.png" alt="EventHubPage" />
 
-    <h2>Features</h2>
+        <h2>Features</h2>
 
-    <h3>Sending Messages to Event Hubs</h3>
-    <ul>
-        <li>Override GUID, DateTime values in a message before sending</li>
-        <li>Ability to compress and encode a message before sending</li>
-        <li>Send a <strong>single message</strong></li>
-        <li>Send a <strong>batch of messages</strong></li>
-        <li>Send a <strong>batch of messages</strong> with a <strong>time delay</strong> between each message</li>
-    </ul>
+        <h3>Sending Messages to Event Hubs</h3>
+        <ul>
+            <li>Override GUID, DateTime values in a message before sending</li>
+            <li>Ability to compress and encode a message before sending</li>
+            <li>Send a <strong>single message</strong></li>
+            <li>Send a <strong>batch of messages</strong></li>
+            <li>Send a <strong>batch of messages</strong> with a <strong>time delay</strong> between each message</li>
+        </ul>
 
-    <h3>Receiving Messages from Event Hubs</h3>
-    <ul>
-        <li>Format a message to JSON if it is a JSON string</li>
-        <li>Ability to decompress and decode a message after receiving</li>
-        <li>Receive messages <strong>without checkpoints</strong> (always fetch the newest messages)</li>
-        <li>Receive messages <strong>with checkpoints</strong> (using external storage to track received message IDs)</li>
-    </ul>
+        <h3>Receiving Messages from Event Hubs</h3>
+        <ul>
+            <li>Format a message to JSON if it is a JSON string</li>
+            <li>Ability to decompress and decode a message after receiving</li>
+            <li>Receive messages <strong>without checkpoints</strong> (always fetch the newest messages, if is not yet received another consumer)</li>
+            <li>Receive messages <strong>with checkpoints</strong> (using external storage to track received message IDs)</li>
+        </ul>
+        
+        <div class="note">
+            <p><strong>Note:</strong> The application uses the <code>$Default</code> consumer group by default.</p>
+        </div>
 
-    <div class="note">
-        <p><strong>Note:</strong> The application uses the <code>$Default</code> consumer group by default.</p>
-    </div>
+        <h3>Sending Messages to Storage Queues</h3>
+        <ul>
+            <li>Override GUID, DateTime values in a message before sending</li>
+            <li>Ability to compress and encode a message before sending</li>
+            <li>Send a <strong>single message</strong></li>
+            <li>Send a <strong>batch of messages</strong></li>
+            <li>Send a <strong>batch of messages</strong> with a <strong>time delay</strong> between each message</li>
+        </ul>
 
-    <h2>Example Connection Strings</h2>
+        <h3>Receiving Messages from Storage Queues</h3>
+        <ul>
+            <li>Format a message to JSON if it is a JSON string</li>
+            <li>Ability to decompress and decode a message after receiving</li>
+        </ul>
 
-    <h3>EventHubs Emulator</h3>
-    <pre><code>Endpoint=sb://eventhub-docker;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;</code></pre>
+        <h2>Example Connection Strings</h2>
 
-    <div class="note">
-        <p><code>eventhub-docker</code> is the Docker service name of the Event Hubs emulator running in the same Docker network.</p>
-    </div>
+        <h3>EventHubs Emulator</h3>
+        <pre><code>Endpoint=sb://eventhub-docker;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;</code></pre>
+        <div class="note">
+            <p><code>eventhub-docker</code> is the Docker service name of the Event Hubs emulator running in the same Docker network.</p>
+        </div>
 
-    <h3>Azurite Blob Storage</h3>
-    <pre><code>DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://eventhub-azurite:10000/devstoreaccount1;</code></pre>
+        <h3>Azurite Blob Storage</h3>
+        <pre><code>DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://eventhub-azurite:10000/devstoreaccount1;</code></pre>
+        <div class="note">
+            <p><code>eventhub-azurite</code> is the Docker service name of the Azurite blob storage running in the same Docker network.</p>
+        </div>
 
-    <div class="note">
-        <p><code>eventhub-azurite</code> is the Docker service name of the Azurite blob storage running in the same Docker network.</p>
-    </div>
+        <h3>Azurite Storage Queue</h3>
+        <pre><code>DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;QueueEndpoint=http://eventhub-azurite:10001/devstoreaccount1;</code></pre>
+        <div class="note">
+            <p><code>eventhub-azurite</code> is the Docker service name of the Azurite storage running in the same Docker network.</p>
+        </div>
 
-    <h2>Requirements</h2>
-    <ul>
-        <li>Docker (for emulator and Azurite usage)</li>
-        <li>Azure Event Hubs and Blob Storage credentials (for real Azure usage)</li>
-    </ul>
+        <h2>Requirements</h2>
+        <ul>
+            <li>Docker for emulator and Azurite usage</li>
+            <li>Azure Event Hubs, Blob and Queue Storage credentials (for real Azure usage)</li>
+        </ul>
 
-    <h2>Install options</h2>
-    <ul>
-        <li>Clone solution in the repo</li>
-        <li>Or Use docker image <code>docker pull dvlaskin/eventhubexplorer</code></li>
-        <li>Open in browser http://localhost:5235/</li>
-    </ul>
+        <h2>Install options</h2>
+        <ul>
+            <li>Clone solution in the repo</li>
+            <li>Or use docker image <code>docker pull dvlaskin/eventhubexplorer</code></li>
+            <li>Run docker image or WebUI project in the solution</li>
+            <li>Open in browser http://localhost:5235/</li>
+        </ul>
 
-    <h3>Example of a docker compose file</h3>
-    <pre><code>services:
+        <h3>Example of a docker compose file</h3>
+        <pre><code>services:
 
   eventhubexplorer:
     image: dvlaskin/eventhubexplorer:latest
@@ -196,7 +216,9 @@ volumes:
     
 networks:
   docker-network:
-    external: true</code></pre>
+    external: true
+
+</code></pre>
 
         <h2>License</h2>
         <p>MIT</p>
