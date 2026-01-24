@@ -1,4 +1,3 @@
-using System.Text;
 using Application.Utils;
 using Azure.Messaging.EventHubs;
 using Azure.Messaging.EventHubs.Consumer;
@@ -37,8 +36,10 @@ public sealed class EventHubConsumerProviderWithoutStorage : IMessageConsumerPro
             RetryOptions = new EventHubsRetryOptions
             {
                 MaximumRetries = 3,
+                MaximumDelay = TimeSpan.FromSeconds(1),
                 Delay = TimeSpan.FromSeconds(1),
-                TryTimeout = TimeSpan.FromSeconds(3)
+                TryTimeout = TimeSpan.FromSeconds(1),
+                Mode = EventHubsRetryMode.Fixed,
             },
         };
         
@@ -52,7 +53,7 @@ public sealed class EventHubConsumerProviderWithoutStorage : IMessageConsumerPro
             
             var msgData = new EventHubMessage
             {
-                Message = DecodeMessage(partitionEvent.Data.Body),
+                Message = CompressingEncoding.DecodeMessage(partitionEvent.Data.Body, config),
                 PartitionId = partitionEvent.Partition.PartitionId,
                 SequenceNumber = partitionEvent.Data.SequenceNumber,
                 EnqueuedTime = partitionEvent.Data.EnqueuedTime
@@ -66,16 +67,5 @@ public sealed class EventHubConsumerProviderWithoutStorage : IMessageConsumerPro
     {
         needToStop = true;
         return Task.CompletedTask;
-    }
-
-
-    private string DecodeMessage(ReadOnlyMemory<byte> messageBody)
-    {
-        return config switch
-        {
-            { UseGzipCompression: false } => Encoding.UTF8.GetString(messageBody.ToArray()),
-            { UseGzipCompression: true, UseBase64Coding: false } => messageBody.ToArray().Decompress(),
-            _ => Encoding.UTF8.GetString(messageBody.ToArray()).DecodeBase64().Decompress()
-        };
     }
 }

@@ -4,5 +4,5 @@ namespace Domain.Interfaces.Factories;
 
 public interface IMessageProducerFactory
 {
-    IMessageProducerService CreateProducerService(Guid configId);
+    IMessageProducerService CreateProducer(Guid configId);
 }

@@ -6,6 +6,10 @@
 # dotenv files
 .env
 
+# ai instructions
+AGENTS.md
+GEMINI.md
+
 # User-specific files
 *.rsuser
 *.suo

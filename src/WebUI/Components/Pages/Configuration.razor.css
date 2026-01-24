@@ -1,0 +1,35 @@
+.sticky-actions {
+    position: sticky;
+    top: 3.5rem;
+    background: rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 1rem 2rem;
+    z-index: 100;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin: 0 -2rem;
+}
+
+.configuration-content {
+    margin-top: 1rem;
+}
+
+@media (max-width: 640.98px) {
+    .sticky-actions {
+        padding: 1rem 1rem;
+        margin: 0 -1rem;
+        background: rgba(255, 255, 255, 0.35);
+    }
+    
+    .configuration-content {
+        margin-top: 1rem;
+    }
+}
+
+.accordion-button:hover {
+    z-index: 0 !important;
+}
+
+.accordion-button:focus {
+    z-index: 0 !important;
+}

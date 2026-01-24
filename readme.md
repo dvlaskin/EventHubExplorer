@@ -2,7 +2,13 @@
 
 ![.NET Version](https://img.shields.io/badge/.NET%20Version-10.0-blueviolet)
 
-EventHub Explorer is a developer tool that allows you to interact with the Azure EventHubs service using a graphical user interface. It supports both real Azure Event Hubs and the [eventhubs-emulator](https://learn.microsoft.com/en-us/azure/event-hubs/overview-emulator).
+EventHub Explorer is a developer tool that allows you to interact with Azure Event Hubs 
+and Azure Storage Queues using a graphical user interface. 
+It supports both real Azure services, 
+the [eventhubs-emulator](https://learn.microsoft.com/en-us/azure/event-hubs/overview-emulator) 
+for Event Hubs 
+and [Azurite](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite) 
+for StorageQueue.
 
 <img src="./docs/assets/Screenshot_01.png" alt="HomePage" width="50%"/>
 <img src="./docs/assets/Screenshot_02.png" alt="ConfigurationPage" width="50%"/>
@@ -23,10 +29,23 @@ EventHub Explorer is a developer tool that allows you to interact with the Azure
 
 * Format a message to JSON if it is a JSON string
 * Ability to decompress and decode a message after receiving
-* Receive messages **without checkpoints** (always fetch the newest messages)
+* Receive messages **without checkpoints** (always fetch the newest messages, if is not yet received another consumer)
 * Receive messages **with checkpoints** (using external storage to track received message IDs)
 
 > Note: The application uses the `$Default` consumer group by default.
+
+### Sending Messages to Storage Queues
+
+* Override GUID, DateTime values in a message before sending
+* Ability to compress and encode a message before sending
+* Send a **single message**
+* Send a **batch of messages**
+* Send a **batch of messages** with a **time delay** between each message
+
+### Receiving Messages from Storage Queues
+
+* Format a message to JSON if it is a JSON string
+* Ability to decompress and decode a message after receiving
 
 ## Example Connection Strings
 
@@ -46,15 +65,24 @@ DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02x
 
 > `eventhub-azurite` is the Docker service name of the Azurite blob storage running in the same Docker network.
 
+### Azurite Storage Queue
+
+```
+DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;QueueEndpoint=http://eventhub-azurite:10001/devstoreaccount1;
+```
+
+> `eventhub-azurite` is the Docker service name of the Azurite storage running in the same Docker network.
+
 ## Requirements
 
-* Docker (for emulator and Azurite usage)
-* Azure Event Hubs and Blob Storage credentials (for real Azure usage)
+* Docker for emulator and Azurite usage
+* Azure Event Hubs, Blob and Queue Storage credentials (for real Azure usage)
 
 ## Install options
 
 * Clone solution in the repo
 * Or use docker image ```docker pull dvlaskin/eventhubexplorer```
+* Run docker image or WebUI project in the solution
 * Open in browser http://localhost:5235/
 
 Example of a docker compose file

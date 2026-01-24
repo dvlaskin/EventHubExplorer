@@ -1,4 +1,3 @@
-using System.Text;
 using Application.Utils;
 using Azure.Messaging.EventHubs;
 using Azure.Messaging.EventHubs.Processor;
@@ -83,14 +82,22 @@ public sealed class EventHubConsumerProviderWithStorage : IMessageConsumerProvid
             "$Default",
             config.ConnectionString,
             config.Name,
-            new ()
+            new EventProcessorClientOptions
             {
                 ConnectionOptions = new()
                 {
                     TransportType = config.ConnectionString.Contains("UseDevelopmentEmulator=true") 
                         ? EventHubsTransportType.AmqpTcp 
                         : EventHubsTransportType.AmqpWebSockets,
-                }
+                },
+                RetryOptions = new EventHubsRetryOptions
+                {
+                    MaximumRetries = 3,
+                    MaximumDelay = TimeSpan.FromSeconds(1),
+                    Delay = TimeSpan.FromSeconds(1),
+                    TryTimeout = TimeSpan.FromSeconds(1),
+                    Mode = EventHubsRetryMode.Fixed,
+                },
             }
         );
     }
@@ -99,7 +106,7 @@ public sealed class EventHubConsumerProviderWithStorage : IMessageConsumerProvid
     {
         var msgData = new EventHubMessage
         {
-            Message = DecodeMessage(eventArgs.Data.Body),
+            Message = CompressingEncoding.DecodeMessage(eventArgs.Data.Body, config),
             PartitionId = eventArgs.Partition.PartitionId,
             SequenceNumber = eventArgs.Data.SequenceNumber,
             EnqueuedTime = eventArgs.Data.EnqueuedTime
@@ -117,15 +124,5 @@ public sealed class EventHubConsumerProviderWithStorage : IMessageConsumerProvid
     {
         logger.LogError(arg.Exception, "Error while processing event: {Message}", arg.Exception.Message);
         return Task.CompletedTask;
-    }
-    
-    private string DecodeMessage(ReadOnlyMemory<byte> messageBody)
-    {
-        return config switch
-        {
-            { UseGzipCompression: false } => Encoding.UTF8.GetString(messageBody.ToArray()),
-            { UseGzipCompression: true, UseBase64Coding: false } => messageBody.ToArray().Decompress(),
-            _ => Encoding.UTF8.GetString(messageBody.ToArray()).DecodeBase64().Decompress()
-        };
     }
 }

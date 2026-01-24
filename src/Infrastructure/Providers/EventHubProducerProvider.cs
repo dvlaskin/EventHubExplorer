@@ -114,8 +114,10 @@ public sealed class EventHubProducerProvider : IMessageProducerProvider
                 RetryOptions = new EventHubsRetryOptions
                 {
                     MaximumRetries = 3,
+                    MaximumDelay = TimeSpan.FromSeconds(1),
                     Delay = TimeSpan.FromSeconds(1),
-                    TryTimeout = TimeSpan.FromSeconds(3)
+                    TryTimeout = TimeSpan.FromSeconds(1),
+                    Mode = EventHubsRetryMode.Fixed,
                 },
             });
     }

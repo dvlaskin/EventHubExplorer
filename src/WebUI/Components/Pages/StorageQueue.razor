@@ -1,4 +1,4 @@
-@page "/eventhub/{id:guid}"
+@page "/storagequeue/{id:guid}"
 @using Application.Utils
 @using Domain.Configs
 @using Domain.Enums
@@ -11,7 +11,7 @@
 @inject IJSRuntime JsRuntime
 @implements IAsyncDisposable
 
-<PageTitle>EventHub - @title</PageTitle>
+<PageTitle>StorageQueue - @title</PageTitle>
 
 <h3>@title</h3>
 
@@ -20,7 +20,7 @@
 <div class="row">
     <div class="col-6">
         <div class="mb-3">
-            <label for="message" class="form-label">Send Event</label>
+            <label for="message" class="form-label">Send Message</label>
             <div class="position-relative">
                 <textarea class="form-control" id="message" rows="10" style="resize: none;" @bind="messageToSend"></textarea>
                 <button class="btn position-absolute top-0 end-0 m-2 p-1 history-icon" @onclick="ToggleMessageHistory">
@@ -49,14 +49,14 @@
     </div>
     <div class="col-6">
         <div class="mb-3">
-            <label for="events-list" class="form-label">@($"Received Events - {receivedMessages.TotalAddedCount}")</label>
+            <label for="events-list" class="form-label">@($"Received Messages - {receivedMessages.TotalAddedCount}")</label>
             @if (receivedMessages.Count == 0)
             {
                 <textarea class="form-control" rows="10" readonly style="resize: none;">No messages received yet.</textarea>
             }
             else
             {
-                <!-- Events List -->
+                <!-- Messages List -->
                 <ul id="events-list" class="list-group scrollable-list" @ref="listElement">
                     @foreach (var message in receivedMessages.Index())
                     {
@@ -65,7 +65,7 @@
                             ? message.Item.Message[..20] + "..." 
                             : message.Item.Message;
                         <li class=@($"list-group-item{ activeClass }") @onclick="() => OnEventSelected(message.Index)">
-                            @($"{receivedMessages.GetVirtualIndex(message.Index) + 1} -> partition {message.Item.PartitionId}, sequenceNumber {message.Item.SequenceNumber}, enqueued {message.Item.EnqueuedTime.ToString("yyyyMMdd HH:mm:ss")}, message: {messageString}")
+                            @($"{receivedMessages.GetVirtualIndex(message.Index) + 1} -> message: {messageString}, enqueued: {message.Item.EnqueuedTime.ToString("yyyyMMdd HH:mm:ss")}")
                         </li>
                     }
                 </ul>
@@ -113,7 +113,7 @@
     </div>
 </div>
 
-<!-- Event Body -->
+<!-- Message Body -->
 <div class="row">
     <div class="col-md-12">
         <textarea class="form-control" rows="10" readonly style="resize: none;" @bind="receivedMessage"></textarea>
@@ -125,10 +125,10 @@
 
 
 @code {
-    [Inject] private ILogger<EventHub>? Logger { get; set; }
+    [Inject] private ILogger<StorageQueue>? Logger { get; set; }
     [Inject] private IOptionsMonitor<AppConfiguration>? Config { get; set; }
-    [Inject(Key = MessageBusType.EventHub)] private IMessageProducerFactory? MessageProducerFactory { get; set; }
-    [Inject(Key = MessageBusType.EventHub)] private IMessageConsumerFactory? MessageConsumerFactory { get; set; }
+    [Inject(Key = MessageBusType.StorageQueue)] private IMessageProducerFactory? MessageProducerFactory { get; set; }
+    [Inject(Key = MessageBusType.StorageQueue)] private IMessageConsumerFactory? MessageConsumerFactory { get; set; }
     [Inject] private IMessageHistory<Guid, List<string>>? MessagesHistoryService { get; set; }
     
     [Parameter] public Guid Id { get; set; }
@@ -156,8 +156,8 @@
 
     protected override void OnInitialized()
     {
-        var ehConfig = Config?.CurrentValue.EventHubsConfigs.First(w => w.Id == Id);
-        title = ehConfig?.Title ?? "unknown event hub";
+        var queueConfig = Config?.CurrentValue.StorageQueuesConfigs.First(w => w.Id == Id);
+        title = queueConfig?.Title ?? "unknown storage queue";
     }
 
     private void InitializeMessageProducer()
@@ -290,7 +290,7 @@
 
             try
             {
-                await foreach (var message in  messageConsumer.StartReceiveMessageAsync(receiverCts.Token))
+                await foreach (var message in messageConsumer.StartReceiveMessageAsync(receiverCts.Token))
                 {
                     if (!isProcessing)
                         return;
@@ -351,22 +351,18 @@
 
     public async ValueTask DisposeAsync()
     {
-        // Cancel any pending operations first
         receiverCts.Cancel();
         delayedSenderCts.Cancel();
         
-        // Dispose of services
         if (messageProducer is not null)
             await messageProducer.DisposeAsync();
         
         if (messageConsumer is not null)
             await messageConsumer.DisposeAsync();
         
-        // Dispose of cancellation tokens
         receiverCts.Dispose();
         delayedSenderCts.Dispose();
         
-        // Clear collections
         receivedMessages.Clear();
         messagesHistoryList.Clear();
         
