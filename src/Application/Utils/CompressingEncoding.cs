@@ -1,23 +1,13 @@
 using System.Buffers;
 using System.IO.Compression;
 using System.Text;
-using Domain.Configs;
+using Domain.Interfaces;
 
 namespace Application.Utils;
 
 public static class CompressingEncoding
 {
-    public static string DecodeMessage(ReadOnlyMemory<byte> messageBody, EventHubConfig config)
-    {
-        return config switch
-        {
-            { UseGzipCompression: false } => Encoding.UTF8.GetString(messageBody.ToArray()),
-            { UseGzipCompression: true, UseBase64Coding: false } => messageBody.ToArray().Decompress(),
-            _ => Encoding.UTF8.GetString(messageBody.ToArray()).DecodeBase64().Decompress()
-        };
-    }
-    
-    public static string DecodeMessage(ReadOnlyMemory<byte> messageBody, StorageQueueConfig config)
+    public static string DecodeMessage(ReadOnlyMemory<byte> messageBody, IFormattingConfig config)
     {
         return config switch
         {

@@ -1,6 +1,6 @@
 # План: Поддержка Azure Service Bus
 _Создан: 2026-03-14_
-_Статус: В РАБОТЕ (Шаг 2 из 6 выполнен)_
+_Статус: В РАБОТЕ (Шаг 3 из 6 выполнен)_
 
 ## Цель
 Добавить поддержку Azure Service Bus (Queue и Topic) в приложение, обеспечивая возможность отправки и получения сообщений в реальном времени через веб-интерфейс, аналогично текущей реализации для Event Hub и Storage Queue.
@@ -68,12 +68,18 @@ _Статус: В РАБОТЕ (Шаг 2 из 6 выполнен)_
 ---
 
 ### Шаг 3: Реализация ServiceBus Провайдеров
-**Статус:** ⬜ TODO
+**Статус:** ✅ DONE
 **Что:** Создать `ServiceBusProducerProvider` и `ServiceBusConsumerProvider`.
 **Зачем:** Инкапсуляция логики взаимодействия с Azure Service Bus SDK.
 **Файлы:** `src/Infrastructure/Providers/ServiceBusProducerProvider.cs`, `src/Infrastructure/Providers/ServiceBusConsumerProvider.cs`
 **Зависит от:** Шаг 1, Шаг 2
 **Детали реализации:** Провайдеры должны реализовывать `IMessageProducerProvider` и `IMessageConsumerProvider` соответственно. Для ConsumerProvider нужно реализовать цикл получения сообщений (destructive read, как в Storage Queue).
+
+**Заметки по реализации:**
+- **Что сделано:** Реализованы `ServiceBusProducerProvider` и `ServiceBusConsumerProvider`.
+- **Отклонения от плана:** Нет.
+- **Ключевые места:** `src/Infrastructure/Providers/ServiceBusProducerProvider.cs`, `src/Infrastructure/Providers/ServiceBusConsumerProvider.cs`. Добавлена поддержка `ServiceBusConfig` в `CompressingEncoding.cs`.
+- **Важно знать:** Использован `Lazy` для инициализации клиентов Service Bus. Реализован "destructive read" (получение с последующим `CompleteMessageAsync`).
 
 ---
 
