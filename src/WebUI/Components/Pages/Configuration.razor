@@ -1,5 +1,6 @@
 @page "/Configuration"
 @using Domain.Configs
+@using Domain.Enums
 @using Domain.Interfaces.Providers
 @using Domain.Interfaces.Services
 
@@ -18,6 +19,7 @@
         </div> 
         <button class="btn btn-primary" @onclick="AddNewEventHubConfig">Add EventHub</button>
         <button class="btn btn-primary" @onclick="AddNewStorageQueueConfig">Add StorageQueue</button>
+        <button class="btn btn-primary" @onclick="AddNewServiceBusConfig">Add ServiceBus</button>
         <button class="btn btn-success" @onclick="SaveConfiguration">Save Configuration</button>
     </div>
 </div>
@@ -188,6 +190,94 @@
             }
         </div>
     }
+
+    <!-- Service Bus -->
+    <h2 class="mt-4">ServiceBus</h2>
+
+    @if (appConfiguration?.ServiceBusConfigs.Count == 0)
+    {
+        <p>No ServiceBus configured</p>
+    }
+    else
+    {
+        <div class="accordion" id="serviceBusAccordion">
+            @for (var i = 0; i < appConfiguration?.ServiceBusConfigs.Count; i++)
+            {
+                var index = i;
+                var sbConfig = appConfiguration.ServiceBusConfigs[i];
+                var isEmpty = string.IsNullOrWhiteSpace(sbConfig.ConnectionString) || string.IsNullOrWhiteSpace(sbConfig.EntityName);
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="heading-sb-@i">
+                        <button class="accordion-button @(isEmpty ? "" : "collapsed") bg-secondary text-white" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapse-sb-@i" aria-expanded="@(isEmpty ? "true" : "false")" aria-controls="collapse-sb-@i">
+                            @sbConfig.Title
+                        </button>
+                    </h2>
+                    <div id="collapse-sb-@i" class="accordion-collapse collapse @(isEmpty ? "show" : "")" aria-labelledby="heading-sb-@i"
+                         data-bs-parent="#serviceBusAccordion">
+                        <div class="accordion-body">
+                            <div class="mb-3">
+                                <label class="form-label">Title</label>
+                                <input class="form-control" @bind="sbConfig.Title">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Connection String</label>
+                                <input class="form-control" @bind="sbConfig.ConnectionString">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Entity Name (Queue or Topic)</label>
+                                <input class="form-control" @bind="sbConfig.EntityName">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Entity Type</label>
+                                <select class="form-select" @bind="sbConfig.EntityType">
+                                    <option value="@ServiceBusEntityType.Queue">Queue</option>
+                                    <option value="@ServiceBusEntityType.Topic">Topic</option>
+                                </select>
+                            </div>
+
+                            @if (sbConfig.EntityType == ServiceBusEntityType.Topic)
+                            {
+                                <div class="mb-3">
+                                    <label class="form-label">Subscription Name (for consuming)</label>
+                                    <input class="form-control" @bind="sbConfig.SubscriptionName">
+                                </div>
+                            }
+
+                            <div class="mb-3">
+                                <h6>Message encoding settings: </h6>
+                                <div class="form-check d-inline-block me-3">
+                                    <input class="form-check-input" type="checkbox" @bind="sbConfig.UseGzipCompression"
+                                           @bind:after="@(() => OnGzipCompressionChanged(sbConfig))">
+                                    <label class="form-check-label">Use Gzip Compression</label>
+                                </div>
+                                <div class="form-check d-inline-block">
+                                    <input class="form-check-input" type="checkbox" @bind="sbConfig.UseBase64Coding"
+                                           disabled="@(!sbConfig.UseGzipCompression)">
+                                    <label class="form-check-label">Use Base64 Coding</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <h6>Message formatting settings: </h6>
+                                @foreach (var formatter in sbConfig.MessageFormatters)
+                                {
+                                    <div class="form-check d-inline-block me-3">
+                                        <label class="form-check-label">@formatter.Key</label>
+                                        <input class="form-check-input" type="checkbox" 
+                                               @bind:get="formatter.Value"
+                                               @bind:set="(value) => sbConfig.MessageFormatters[formatter.Key] = value">
+                                    </div>
+                                }
+                            </div>
+
+                            <button class="btn btn-danger" @onclick="() => RemoveServiceBusConfig(index)">Remove</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
 </div>
 
 
@@ -244,6 +334,17 @@
                 queueConfig.MessageFormatters.TryAdd(msgFormatter.Name, false);
             }
         }
+
+        foreach (var sbConfig in appConfiguration.ServiceBusConfigs)
+        {
+            if (sbConfig.MessageFormatters.Count == MessageFormatters?.Count())
+                continue;
+
+            foreach (var msgFormatter in MessageFormatters ?? Enumerable.Empty<IMessageFormatter>())
+            {
+                sbConfig.MessageFormatters.TryAdd(msgFormatter.Name, false);
+            }
+        }
     }
     
     private async Task SaveConfiguration()
@@ -282,6 +383,18 @@
             MessageFormatters = MessageFormatters?.ToDictionary(k => k.Name, v => false) ?? new Dictionary<string, bool>()
         });
     }
+
+    private void AddNewServiceBusConfig()
+    {
+        appConfiguration?.ServiceBusConfigs.Add(new ServiceBusConfig
+        {
+            Title = "New Service Bus",
+            ConnectionString = "",
+            EntityName = "",
+            EntityType = ServiceBusEntityType.Queue,
+            MessageFormatters = MessageFormatters?.ToDictionary(k => k.Name, v => false) ?? new Dictionary<string, bool>()
+        });
+    }
     
     private void RemoveEventHubConfig(int index)
     {
@@ -299,6 +412,15 @@
             MessagesHistoryService.RemoveAllAsync(configId.Value);
         
         appConfiguration?.StorageQueuesConfigs.RemoveAt(index);
+    }
+
+    private void RemoveServiceBusConfig(int index)
+    {
+        var configId = appConfiguration?.ServiceBusConfigs[index].Id;
+        if (configId is not null)
+            MessagesHistoryService.RemoveAllAsync(configId.Value);
+        
+        appConfiguration?.ServiceBusConfigs.RemoveAt(index);
     }
     
     private void HideToast()
@@ -318,5 +440,13 @@
     private static void OnGzipCompressionChanged(StorageQueueConfig queueConfig)
     {
         queueConfig.UseBase64Coding = queueConfig.UseGzipCompression;
+    }
+
+    private static void OnGzipCompressionChanged(ServiceBusConfig sbConfig)
+    {
+        if (sbConfig is { UseGzipCompression: false, UseBase64Coding: true })
+        {
+            sbConfig.UseBase64Coding = false;
+        }
     }
 }

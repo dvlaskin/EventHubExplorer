@@ -1,6 +1,6 @@
 # План: Поддержка Azure Service Bus
 _Создан: 2026-03-14_
-_Статус: В РАБОТЕ (Шаг 5 из 6 выполнен)_
+_Статус: ЗАВЕРШЕНО ✅_
 
 ## Цель
 Добавить поддержку Azure Service Bus (Queue и Topic) в приложение, обеспечивая возможность отправки и получения сообщений в реальном времени через веб-интерфейс, аналогично текущей реализации для Event Hub и Storage Queue.
@@ -111,15 +111,22 @@ _Статус: В РАБОТЕ (Шаг 5 из 6 выполнен)_
 - **Отклонения от плана:** Нет.
 - **Ключевые места:** `src/WebUI/Components/Pages/ServiceBus.razor`.
 - **Важно знать:** Страница использует `MessageBusType.ServiceBus` для получения фабрик через Keyed DI. В списке полученных сообщений отображается Sequence Number (`sn`).
+_Статус: ЗАВЕРШЕНО ✅_
 
----
+...
 
 ### Шаг 6: Интеграция в NavMenu и Configuration
-**Статус:** ⬜ TODO
+**Статус:** ✅ DONE
 **Что:** Обновить `NavMenu.razor` и `Configuration.razor`.
 **Зачем:** Позволить пользователю настраивать Service Bus и переходить на страницу управления.
 **Файлы:** `src/WebUI/Components/Layout/NavMenu.razor`, `src/WebUI/Components/Pages/Configuration.razor`
 **Зависит от:** Шаг 5
+
+**Заметки по реализации:**
+- **Что сделано:** Обновлено навигационное меню (`NavMenu.razor` и `NavMenu.razor.cs`) для отображения сущностей Service Bus. В `Configuration.razor` добавлен интерфейс для управления конфигурациями Service Bus, включая выбор типа сущности (Queue/Topic).
+- **Отклонения от плана:** Нет.
+- **Ключевые места:** `src/WebUI/Components/Layout/NavMenu.razor`, `src/WebUI/Components/Pages/Configuration.razor`.
+- **Важно знать:** Для иконок Service Bus использован класс `bi-broadcast-pin`. В конфигурации реализовано динамическое отображение поля `SubscriptionName` только для типа `Topic`.
 
 ## Открытые вопросы
 - Использовать ли `EventHubMessage` как общую модель сообщения или переименовать её? (Пока используем как есть для минимизации изменений).
