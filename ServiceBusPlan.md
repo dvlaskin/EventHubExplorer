@@ -1,6 +1,6 @@
 # План: Поддержка Azure Service Bus
 _Создан: 2026-03-14_
-_Статус: В РАБОТЕ (Шаг 3 из 6 выполнен)_
+_Статус: В РАБОТЕ (Шаг 4 из 6 выполнен)_
 
 ## Цель
 Добавить поддержку Azure Service Bus (Queue и Topic) в приложение, обеспечивая возможность отправки и получения сообщений в реальном времени через веб-интерфейс, аналогично текущей реализации для Event Hub и Storage Queue.
@@ -84,11 +84,17 @@ _Статус: В РАБОТЕ (Шаг 3 из 6 выполнен)_
 ---
 
 ### Шаг 4: Реализация Фабрик и регистрация DI
-**Статус:** ⬜ TODO
+**Статус:** ✅ DONE
 **Что:** Создать `ServiceBusProducerFactory`, `ServiceBusConsumerFactory` и обновить `InfrastructureRegistration.cs`.
 **Зачем:** Обеспечить создание провайдеров через фабрики и их доступность через Keyed DI.
 **Файлы:** `src/Infrastructure/Factories/ServiceBusProducerFactory.cs`, `src/Infrastructure/Factories/ServiceBusConsumerFactory.cs`, `src/Infrastructure/IoC/InfrastructureRegistration.cs`
 **Зависит от:** Шаг 3
+
+**Заметки по реализации:**
+- **Что сделано:** Реализованы `ServiceBusProducerFactory` и `ServiceBusConsumerFactory`. Зарегистрированы в DI как Keyed Services с ключом `MessageBusType.ServiceBus`.
+- **Отклонения от плана:** Нет.
+- **Ключевые места:** `ServiceBusProducerFactory.cs`, `ServiceBusConsumerFactory.cs`, `InfrastructureRegistration.cs`.
+- **Важно знать:** Фабрики используют существующие `StringMessageProducer`, `BytesMessageProducer` и `EventHubConsumerService` (как универсальный потребитель), передавая им новые Service Bus провайдеры.
 
 ---
 

@@ -25,6 +25,10 @@ public static class InfrastructureRegistration
         services.AddKeyedSingleton<IMessageProducerFactory, StorageQueueProducerFactory>(MessageBusType.StorageQueue);
         services.AddKeyedSingleton<IMessageConsumerFactory, StorageQueueConsumerFactory>(MessageBusType.StorageQueue);
         
+        // service bus
+        services.AddKeyedSingleton<IMessageProducerFactory, ServiceBusProducerFactory>(MessageBusType.ServiceBus);
+        services.AddKeyedSingleton<IMessageConsumerFactory, ServiceBusConsumerFactory>(MessageBusType.ServiceBus);
+        
         services.AddSingleton<IStorageClientFactory<BlobConfig, BlobContainerClient>, BlobStorageFactory>();
         
         return services;
