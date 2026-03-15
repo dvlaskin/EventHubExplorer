@@ -16,8 +16,8 @@ public sealed class ServiceBusConsumerProvider : IMessageConsumerProvider
     private readonly Lazy<ServiceBusReceiver> receiver;
     
     private Func<EventHubMessage, Task>? runMessageProcessing;
-    private bool isProcessing;
-    private bool disposed;
+    private volatile bool isProcessing;
+    private volatile bool disposed;
 
     
     public ServiceBusConsumerProvider(ILogger<ServiceBusConsumerProvider> logger, ServiceBusConfig config)
@@ -134,23 +134,16 @@ public sealed class ServiceBusConsumerProvider : IMessageConsumerProvider
         if (disposed)
             return;
 
+        disposed = true;
         isProcessing = false;
 
         if (receiver.IsValueCreated)
-        {
             await receiver.Value.DisposeAsync();
-        }
 
         if (client.IsValueCreated)
-        {
             await client.Value.DisposeAsync();
-        }
 
-        logger.LogInformation("ServiceBusConsumerProvider is Disposed");
-        
         GC.SuppressFinalize(this);
-        disposed = true;
+        logger.LogInformation("ServiceBusConsumerProvider is Disposed");
     }
-    
-    ~ServiceBusConsumerProvider() => DisposeAsync().AsTask().GetAwaiter().GetResult();
 }

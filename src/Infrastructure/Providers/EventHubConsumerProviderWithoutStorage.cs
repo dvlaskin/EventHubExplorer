@@ -15,6 +15,7 @@ public sealed class EventHubConsumerProviderWithoutStorage : IMessageConsumerPro
     
     private const string ConsumerGroup = EventHubConsumerClient.DefaultConsumerGroupName;
     private bool needToStop;
+    private volatile bool disposed;
 
     public EventHubConsumerProviderWithoutStorage(ILogger<EventHubConsumerProviderWithoutStorage> logger, EventHubConfig config)
     {
@@ -67,5 +68,17 @@ public sealed class EventHubConsumerProviderWithoutStorage : IMessageConsumerPro
     {
         needToStop = true;
         return Task.CompletedTask;
+    }
+    
+    
+    public async ValueTask DisposeAsync()
+    {
+        if (disposed)
+            return;
+
+        disposed = true;
+        await StopReceiveMessageAsync();
+        GC.SuppressFinalize(this);
+        logger.LogInformation("EventHubConsumerProviderWithoutStorage is Disposed");
     }
 }
