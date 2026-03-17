@@ -26,6 +26,10 @@
     }
 }
 
+.accordion-button::after {
+    filter: brightness(0) invert(1);
+}
+
 .accordion-button:hover {
     z-index: 0 !important;
 }

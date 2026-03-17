@@ -13,6 +13,10 @@ public partial class NavMenu : ComponentBase, IDisposable
     private List<StorageQueueConfig>? StorageQueuesConfigs { get; set; }
     private List<ServiceBusConfig>? ServiceBusConfigs { get; set; }
 
+    private bool isEventHubsExpanded = false;
+    private bool isStorageQueuesExpanded = false;
+    private bool isServiceBusExpanded = false;
+
     protected override void OnInitialized()
     {
         EventHubsConfigs = Config?.CurrentValue.EventHubsConfigs ?? [];
@@ -28,6 +32,10 @@ public partial class NavMenu : ComponentBase, IDisposable
         });
     }
     
+    private void ToggleEventHubs() => isEventHubsExpanded = !isEventHubsExpanded;
+    private void ToggleStorageQueues() => isStorageQueuesExpanded = !isStorageQueuesExpanded;
+    private void ToggleServiceBus() => isServiceBusExpanded = !isServiceBusExpanded;
+
     public void Dispose()
     {
         configSubscription?.Dispose();
