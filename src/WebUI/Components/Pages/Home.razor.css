@@ -1,8 +1,8 @@
 /* ─── Hero ─────────────────────────────────────────────────── */
 
 .hero {
-    background: linear-gradient(135deg, rgb(5, 39, 103) 0%, #3a0647 100%);
-    border-radius: 12px;
+    background: var(--gradient-hero);
+    border-radius: var(--radius-card);
     padding: 4rem 2rem;
     position: relative;
     overflow: hidden;
@@ -21,7 +21,7 @@
 
 .hero-icon {
     font-size: 3.5rem;
-    color: #ffc107;
+    color: var(--color-accent);
     display: inline-block;
     animation: pulse-glow 2.4s ease-in-out infinite;
 }
@@ -79,7 +79,7 @@
     font-weight: 700;
     text-align: center;
     margin-bottom: 1.75rem;
-    color: #1a1a2e;
+    color: var(--color-dark);
     position: relative;
 }
 
@@ -88,7 +88,7 @@
     display: block;
     width: 48px;
     height: 3px;
-    background: linear-gradient(90deg, #6610f2, #0d6efd);
+    background: var(--gradient-brand);
     border-radius: 2px;
     margin: 0.5rem auto 0;
 }
@@ -102,15 +102,15 @@
 }
 
 .service-card {
-    background: rgba(255,255,255,0.65);
-    border: 1px solid rgba(255,255,255,0.9);
-    border-radius: 12px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-card);
     padding: 2rem 1.5rem;
     text-align: center;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+    transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
     cursor: default;
 }
 
@@ -119,9 +119,9 @@
     box-shadow: 0 10px 28px rgba(0,0,0,0.14);
 }
 
-.service-card--eventhub:hover  { border-color: #0d6efd; }
-.service-card--queue:hover     { border-color: #8c139e; }
-.service-card--servicebus:hover{ border-color: #6610f2; }
+.service-card--eventhub:hover  { border-color: var(--color-secondary); }
+.service-card--queue:hover     { border-color: var(--color-success); }
+.service-card--servicebus:hover{ border-color: var(--color-primary); }
 
 .service-icon {
     font-size: 2.4rem;
@@ -129,20 +129,20 @@
     display: block;
 }
 
-.service-card--eventhub  .service-icon { color: #0d6efd; }
-.service-card--queue     .service-icon { color: #8c139e; }
-.service-card--servicebus .service-icon { color: #6610f2; }
+.service-card--eventhub  .service-icon { color: var(--color-secondary); }
+.service-card--queue     .service-icon { color: var(--color-success); }
+.service-card--servicebus .service-icon { color: var(--color-primary); }
 
 .service-card h5 {
     font-weight: 700;
     font-size: 1rem;
     margin-bottom: 0.4rem;
-    color: #1a1a2e;
+    color: var(--color-dark);
 }
 
 .service-card p {
     font-size: 0.85rem;
-    color: #6c757d;
+    color: var(--color-muted);
     margin: 0;
     line-height: 1.45;
 }
@@ -157,18 +157,17 @@
 
 .step-card {
     background: #fff;
-    border-radius: 12px;
+    border-radius: var(--radius-card);
     padding: 1.75rem 1.5rem 1.5rem;
     text-align: center;
     position: relative;
-    /* gradient border via box-shadow */
     box-shadow: 0 0 0 2px transparent, 0 4px 14px rgba(0,0,0,0.07);
-    transition: box-shadow 0.22s ease, transform 0.22s ease;
+    transition: box-shadow var(--transition), transform var(--transition);
 }
 
 .step-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 0 0 2px #6610f2, 0 8px 24px rgba(102, 16, 242, 0.14);
+    box-shadow: 0 0 0 2px var(--color-primary), 0 8px 24px rgba(102, 16, 242, 0.14);
 }
 
 .step-number {
@@ -178,7 +177,7 @@
     width: 2.4rem;
     height: 2.4rem;
     border-radius: 50%;
-    background: linear-gradient(135deg, #6610f2, #0d6efd);
+    background: var(--gradient-brand);
     color: #fff;
     font-weight: 700;
     font-size: 1rem;
@@ -187,7 +186,7 @@
 
 .step-icon {
     font-size: 2rem;
-    color: #6610f2;
+    color: var(--color-primary);
     margin-bottom: 0.75rem;
     display: block;
 }
@@ -195,13 +194,13 @@
 .step-card h5 {
     font-weight: 700;
     font-size: 0.95rem;
-    color: #1a1a2e;
+    color: var(--color-dark);
     margin-bottom: 0.4rem;
 }
 
 .step-card p {
     font-size: 0.84rem;
-    color: #6c757d;
+    color: var(--color-muted);
     margin: 0;
     line-height: 1.45;
 }
@@ -209,8 +208,8 @@
 /* ─── CTA ────────────────────────────────────────────────── */
 
 .cta-panel {
-    background: linear-gradient(135deg, rgb(5, 39, 103) 0%, #3a0647 100%);
-    border-radius: 12px;
+    background: var(--gradient-hero);
+    border-radius: var(--radius-card);
     padding: 3rem 2rem;
     text-align: center;
     position: relative;
@@ -243,10 +242,10 @@
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    background: linear-gradient(135deg, #6610f2, #0d6efd);
+    background: var(--gradient-brand);
     color: #fff !important;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius-btn);
     padding: 0.7rem 2rem;
     font-weight: 600;
     font-size: 1rem;

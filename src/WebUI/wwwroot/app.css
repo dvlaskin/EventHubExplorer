@@ -1,3 +1,35 @@
+/* ── Design tokens ───────────────────────────────────────── */
+
+:root {
+    /* Brand colors */
+    --color-primary:   #6610f2;
+    --color-secondary: #0d6efd;
+    --color-success:   #8c139e;
+    --color-danger:    #bf2d54;
+    --color-accent:    #ffc107;
+
+    /* Text */
+    --color-dark:  #1a1a2e;
+    --color-muted: #6c757d;
+
+    /* Gradient color stops (shared between hero, sidebar, CTA) */
+    --gradient-dark-from: rgb(5, 39, 103);
+    --gradient-dark-to:   #3a0647;
+
+    /* Gradients */
+    --gradient-hero:  linear-gradient(135deg, var(--gradient-dark-from) 0%, var(--gradient-dark-to) 100%);
+    --gradient-brand: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+
+    /* Glassmorphism */
+    --glass-bg:     rgba(255, 255, 255, 0.65);
+    --glass-border: rgba(255, 255, 255, 0.9);
+
+    /* Shape & motion */
+    --radius-card: 12px;
+    --radius-btn:  8px;
+    --transition:  0.22s ease;
+}
+
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
@@ -7,18 +39,18 @@ a, .btn-link {
 }
 
 .bg-primary {
-    background-color: #6610f2 !important;   
+    background-color: var(--color-primary) !important;
 }
 
 .bg-secondary {
-    background-color: #0d6efd !important;
+    background-color: var(--color-secondary) !important;
 }
 
 .bg-success {
-    background-color: #8c139e !important;
+    background-color: var(--color-success) !important;
 }
 
-.btn-primary {background-image: linear-gradient(to right, #6610f2 0%, #6610f2 51%, #0d6efd 100%)}
+.btn-primary {background-image: linear-gradient(to right, var(--color-primary) 0%, var(--color-primary) 51%, var(--color-secondary) 100%)}
 .btn-primary {
     text-align: center;
     transition: 0.8s;
@@ -28,13 +60,13 @@ a, .btn-link {
 }
 
 .btn-primary:hover {
-    background-position: right center; /* change the direction of the change here */
+    background-position: right center;
     color: #fff;
     text-decoration: none;
     border-color: white;
 }
 
-.btn-success {background-image: linear-gradient(to right, #8c139e 0%, #8c139e 51%, #0d6efd 100%)}
+.btn-success {background-image: linear-gradient(to right, var(--color-success) 0%, var(--color-success) 51%, var(--color-secondary) 100%)}
 .btn-success {
     text-align: center;
     transition: 0.8s;
@@ -44,13 +76,13 @@ a, .btn-link {
 }
 
 .btn-success:hover {
-    background-position: right center; /* change the direction of the change here */
+    background-position: right center;
     color: #fff;
     text-decoration: none;
     border-color: white;
 }
 
-.btn-danger {background-image: linear-gradient(to right, #bf2d54 0%, #bf2d54 51%, #0d6efd 100%)}
+.btn-danger {background-image: linear-gradient(to right, var(--color-danger) 0%, var(--color-danger) 51%, var(--color-secondary) 100%)}
 .btn-danger {
     text-align: center;
     transition: 0.8s;
@@ -60,7 +92,7 @@ a, .btn-link {
 }
 
 .btn-danger:hover {
-    background-position: right center; /* change the direction of the change here */
+    background-position: right center;
     color: #fff;
     text-decoration: none;
     border-color: white;

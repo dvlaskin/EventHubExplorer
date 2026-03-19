@@ -1,39 +1,274 @@
+/* ── Page Header (mini-hero) ─────────────────────────────── */
+
+.config-header {
+    background: var(--gradient-hero);
+    border-radius: var(--radius-card);
+    padding: 1rem;
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.config-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+}
+
+.config-header-icon {
+    font-size: 2rem;
+    color: var(--color-accent);
+    display: block;
+    margin-bottom: 0.5rem;
+    position: relative;
+}
+
+.config-header-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 0.4rem;
+    position: relative;
+}
+
+.config-header-subtitle {
+    color: rgba(255,255,255,0.72);
+    font-size: 1rem;
+    margin: 0;
+    position: relative;
+}
+
+/* ── Sticky Actions Bar ──────────────────────────────────── */
+
 .sticky-actions {
     position: sticky;
     top: 3.5rem;
-    background: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.55);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    padding: 1rem 2rem;
+    padding: 0.75rem 1.5rem;
     z-index: 100;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin: 0 -2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-radius: var(--radius-btn);
+    margin-bottom: 1rem;
 }
 
-.configuration-content {
-    margin-top: 1rem;
+/* ── Custom Tab Navigation ───────────────────────────────── */
+
+.config-tabs {
+    display: flex;
+    gap: 0.5rem;
+    background: rgba(255,255,255,0.55);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: var(--radius-card);
+    padding: 0.4rem;
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    width: fit-content;
+    margin-bottom: 1.5rem;
 }
 
-@media (max-width: 640.98px) {
-    .sticky-actions {
-        padding: 1rem 1rem;
-        margin: 0 -1rem;
-        background: rgba(255, 255, 255, 0.35);
-    }
-    
-    .configuration-content {
-        margin-top: 1rem;
-    }
+.config-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-btn);
+    padding: 0.5rem 1.1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-muted);
+    cursor: pointer;
+    transition: background var(--transition), color var(--transition), box-shadow var(--transition);
+    white-space: nowrap;
+}
+
+.config-tab:hover {
+    background: rgba(102, 16, 242, 0.07);
+    color: var(--color-primary);
+}
+
+.config-tab--active {
+    background: var(--gradient-brand);
+    color: #fff !important;
+    box-shadow: 0 2px 10px rgba(102, 16, 242, 0.35);
+}
+
+.config-tab--active:hover {
+    background: var(--gradient-brand);
+    color: #fff;
+}
+
+.config-tab-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.4rem;
+    height: 1.4rem;
+    padding: 0 0.3rem;
+    border-radius: 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    background: rgba(102, 16, 242, 0.12);
+    color: var(--color-primary);
+    margin-left: 0.3rem;
+    line-height: 1;
+}
+
+.config-tab--active .config-tab-badge {
+    background: rgba(255,255,255,0.3);
+    color: #fff;
+}
+
+/* ── Accordion as Glassmorphism Cards ────────────────────── */
+
+.accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.accordion-item {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--radius-card) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+    overflow: hidden;
+    transition: box-shadow var(--transition);
+}
+
+/* Remove Bootstrap's radius overrides on first/last adjacent items */
+.accordion-item:first-of-type,
+.accordion-item:last-of-type {
+    border-radius: var(--radius-card) !important;
+}
+
+.accordion-item:first-of-type .accordion-button,
+.accordion-item:last-of-type .accordion-button.collapsed {
+    border-radius: var(--radius-card) var(--radius-card) 0 0 !important;
+}
+
+/* Active card: purple glow ring matching step-card hover style on Home */
+.accordion-item:has(.accordion-button:not(.collapsed)) {
+    box-shadow: 0 0 0 2px var(--color-primary), 0 6px 20px rgba(102, 16, 242, 0.12);
+}
+
+.accordion-button {
+    background: var(--gradient-hero) !important;
+    color: #fff !important;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 1rem 1.25rem;
+    transition: opacity var(--transition);
+}
+
+.accordion-button:not(.collapsed) {
+    background: var(--gradient-brand) !important;
+    color: #fff !important;
+    box-shadow: none;
+}
+
+.accordion-button:hover {
+    opacity: 0.92;
+    z-index: 0 !important;
+}
+
+.accordion-button:focus {
+    box-shadow: none !important;
+    z-index: 0 !important;
+    outline: none;
 }
 
 .accordion-button::after {
     filter: brightness(0) invert(1);
 }
 
-.accordion-button:hover {
-    z-index: 0 !important;
+.accordion-body {
+    background: rgba(255,255,255,0.82);
+    padding: 1.5rem;
 }
 
-.accordion-button:focus {
-    z-index: 0 !important;
+/* ── Section Labels (h5/h6 inside accordion-body) ────────── */
+
+.config-section-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-primary);
+    margin-bottom: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+/* ── Empty State ─────────────────────────────────────────── */
+
+.config-empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: rgba(255,255,255,0.55);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-card);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+
+.config-empty-icon {
+    font-size: 2.8rem;
+    color: var(--color-primary);
+    opacity: 0.5;
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.config-empty-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--color-dark);
+    margin-bottom: 0.4rem;
+}
+
+.config-empty-hint {
+    font-size: 0.88rem;
+    color: var(--color-muted);
+    margin: 0;
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+
+@media (max-width: 640.98px) {
+    .config-header {
+        padding: 1.5rem 1rem;
+        border-radius: var(--radius-btn);
+    }
+
+    .config-header-title {
+        font-size: 1.5rem;
+    }
+
+    .sticky-actions {
+        padding: 0.6rem 1rem;
+    }
+
+    .config-tabs {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .config-tab {
+        font-size: 0.82rem;
+        padding: 0.45rem 0.75rem;
+    }
+
+    .accordion-body {
+        padding: 1rem;
+    }
 }

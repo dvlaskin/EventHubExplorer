@@ -83,7 +83,7 @@
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" style="line-height: 1rem;" href="@($"servicebus/{sbConfig.Id}")">
                         <span class="icon">
-                            <i class="bi bi-broadcast-pin"></i>
+                            <i class="bi bi-send-fill"></i>
                         </span>
                         <span class="text" title="@(sbConfig.EntityType == ServiceBusEntityType.Topic ? $"{sbConfig.EntityName} ({sbConfig.SubscriptionName})" : sbConfig.EntityName)">
                             @sbConfig.Title
