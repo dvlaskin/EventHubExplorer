@@ -1,14 +1,19 @@
 @using Domain.Enums
+@implements IDisposable
 @rendermode InteractiveServer
 
 <!-- Toast notification -->
 <div class="toast-container position-fixed top-0 end-0 p-3">
-    <div class="toast @ToastClass" role="alert" aria-live="assertive" aria-atomic="true" style="min-width: 250px; display: @(showToast ? "block" : "none")">
-        <div class="toast-header">
-            <strong class="me-auto">@ToastTitle</strong>
-            <button type="button" class="btn-close" @onclick="HideToast"></button>
+    <div class="toast-popup @ToastTypeClass @(showToast ? "toast-popup--visible" : "")"
+         role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-popup__header">
+            <i class="bi @ToastIcon toast-popup__icon"></i>
+            <strong class="toast-popup__title">@ToastTitle</strong>
+            <button type="button" class="toast-popup__close" @onclick="HideToast" aria-label="Close">
+                <i class="bi bi-x-lg"></i>
+            </button>
         </div>
-        <div class="toast-body">
+        <div class="toast-popup__body">
             @toastMessage
         </div>
     </div>
@@ -18,22 +23,25 @@
 @code {
     private bool showToast = false;
     private string toastMessage = string.Empty;
-    private TimeSpan toastTimeout = TimeSpan.FromSeconds(3);
+    private readonly TimeSpan toastTimeout = TimeSpan.FromSeconds(3);
     private ToastType toastType;
-    
-    private string ToastClass
+    private CancellationTokenSource? hideCts;
+
+    private string ToastTypeClass => toastType switch
     {
-        get
-        {
-            return toastType switch
-            {
-                ToastType.Info => "bg-primary text-white",
-                ToastType.Warning => "bg-warning text-dark",
-                ToastType.Error => "bg-danger text-white",
-                _ => "bg-info text-white"
-            };
-        }
-    }
+        ToastType.Info    => "toast-popup--info",
+        ToastType.Warning => "toast-popup--warning",
+        ToastType.Error   => "toast-popup--error",
+        _                 => "toast-popup--info"
+    };
+
+    private string ToastIcon => toastType switch
+    {
+        ToastType.Info    => "bi-info-circle-fill",
+        ToastType.Warning => "bi-exclamation-triangle-fill",
+        ToastType.Error   => "bi-x-circle-fill",
+        _                 => "bi-info-circle-fill"
+    };
 
     private string ToastTitle => toastType.ToString();
 
@@ -46,21 +54,40 @@
     
     public async Task ShowToast(string message, ToastType notificationType, TimeSpan timeout)
     {
+        // Cancel any pending hide timer so the toast doesn't flicker when
+        // multiple messages arrive in quick succession.
+        hideCts?.Cancel();
+        hideCts?.Dispose();
+        hideCts = new CancellationTokenSource();
+        var token = hideCts.Token;
+
         toastMessage = message;
         toastType = notificationType;
-        
         showToast = true;
         StateHasChanged();
-        
-        // hide Toast after {timeout} seconds
-        await Task.Delay(timeout);
+
+        try
+        {
+            await Task.Delay(timeout, token);
+            showToast = false;
+            StateHasChanged();
+        }
+        catch (OperationCanceledException)
+        {
+            // A newer ShowToast call took over — do nothing.
+        }
+    }
+
+    private void HideToast()
+    {
+        hideCts?.Cancel();
         showToast = false;
         StateHasChanged();
     }
-    
-    private void HideToast()
+
+    public void Dispose()
     {
-        showToast = false;
-        StateHasChanged();
+        hideCts?.Cancel();
+        hideCts?.Dispose();
     }
 }
