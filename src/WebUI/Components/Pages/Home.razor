@@ -3,72 +3,86 @@
 <PageTitle>Home</PageTitle>
 
 <div class="main-container">
-    <div class="bg-secondary text-center py-5 shadow" style="border-radius: 10px;">
-        <h1 class="display-4 text-white"><i class="bi bi-lightning-charge-fill me-2 text-warning"></i>EventHub Explorer</h1>
-        <p class="lead text-white">Effortlessly send, receive, and explore data from your Azure EventHubs streams and StorageQueues</p>
+
+    <!-- ── Hero ─────────────────────────────────────────────── -->
+    <div class="hero">
+        <i class="bi bi-lightning-charge-fill hero-icon"></i>
+        <h1 class="hero-title">EventHub Explorer</h1>
+        <p class="hero-subtitle">
+            Effortlessly send, receive, and explore data from your Azure messaging services
+        </p>
+        <div class="hero-badges">
+            <span class="hero-badge"><i class="bi bi-broadcast"></i> Azure Event Hubs</span>
+            <span class="hero-badge"><i class="bi bi-inbox-fill"></i> Storage Queues</span>
+            <span class="hero-badge"><i class="bi bi-send-fill"></i> Service Bus</span>
+        </div>
     </div>
+
     <div class="container my-5">
-        
-        <section>
-            <h2 class="text-center mb-4">How to Use It</h2>
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <div class="card bg-primary text-white text-center h-100">
-                        <div class="card-body d-flex flex-column">
-                            <div>
-                                <i class="bi bi-plugin fs-1 mb-3"></i>
-                                <h5 class="card-title" style="min-height: 3.5rem">1. Connect</h5>
-                            </div>
-                            <div class="flex-grow-1 d-flex flex-column justify-content-center">
-                                <p class="card-text">
-                                    Create connection configuration to Message Bus service.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+
+        <!-- ── Supported services ─────────────────────────────── -->
+        <section class="mb-5">
+            <h2 class="section-title">Supported Services</h2>
+            <div class="services-grid">
+                <div class="service-card service-card--eventhub">
+                    <i class="bi bi-broadcast service-icon"></i>
+                    <h5>Azure Event Hubs</h5>
+                    <p>High-throughput event streaming. Send and receive millions of events per second with consumer groups support.</p>
                 </div>
-                <div class="col-md-3">
-                    <div class="card bg-primary text-white text-center h-100">
-                        <div class="card-body d-flex flex-column">
-                            <div>
-                                <i class="bi bi-send-fill fs-1 mb-3"></i>
-                                <h5 class="card-title" style="min-height: 3.5rem">2. Send messages to Message Bus service.</h5>
-                            </div>
-                            <div class="flex-grow-1 d-flex flex-column justify-content-center">
-                                <p class="card-text">
-                                    Send one, multiple messages, or multiple with delay between each message.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                <div class="service-card service-card--queue">
+                    <i class="bi bi-inbox-fill service-icon"></i>
+                    <h5>Azure Storage Queues</h5>
+                    <p>Simple and reliable message queuing. Decouple your components with persistent cloud storage queue.</p>
                 </div>
-                <div class="col-md-3">
-                    <div class="card bg-primary text-white text-center h-100">
-                        <div class="card-body d-flex flex-column">
-                           <div>
-                                <i class="bi bi-broadcast fs-1 mb-3"></i>
-                                <h5 class="card-title" style="min-height: 3.5rem">3. Start Listening</h5>
-                            </div>
-                            <div class="flex-grow-1 d-flex flex-column justify-content-center">
-                                <p class="card-text">Click "Start Receive" to stream data from Message Bus service in real time.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-primary text-white text-center h-100">
-                        <div class="card-body d-flex flex-column">
-                            <div>
-                                <i class="bi bi-file-earmark-text-fill fs-1 mb-3"></i>
-                                <h5 class="card-title" style="min-height: 3.5rem">4. Analyze Events</h5>
-                            </div>
-                            <div class="flex-grow-1 d-flex flex-column justify-content-center">
-                                <p class="card-text">Inspect received messages in same place.</p>
-                            </div>
-                        </div>
-                    </div>
+                <div class="service-card service-card--servicebus">
+                    <i class="bi bi-send-fill service-icon"></i>
+                    <h5>Azure Service Bus</h5>
+                    <p>Enterprise-grade message broker. Queues and topics with advanced routing and dead-letter support.</p>
                 </div>
             </div>
         </section>
-    </div>    
+
+        <!-- ── How to use ─────────────────────────────────────── -->
+        <section class="mb-5">
+            <h2 class="section-title">How to Use It</h2>
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <i class="bi bi-plugin step-icon"></i>
+                    <h5>Connect</h5>
+                    <p>Create a connection configuration for your Azure messaging service.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <i class="bi bi-send-fill step-icon"></i>
+                    <h5>Send Messages</h5>
+                    <p>Send one or multiple messages, with optional delay between each.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <i class="bi bi-broadcast step-icon"></i>
+                    <h5>Start Listening</h5>
+                    <p>Click "Start Receive" to stream data from your service in real time.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">4</div>
+                    <i class="bi bi-file-earmark-text-fill step-icon"></i>
+                    <h5>Analyze Events</h5>
+                    <p>Inspect received messages directly in the same interface.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── CTA ────────────────────────────────────────────── -->
+        <section>
+            <div class="cta-panel">
+                <h3>Ready to explore?</h3>
+                <p>Add a connection and start sending or receiving messages in seconds.</p>
+                <a href="/configuration" class="btn-cta">
+                    <i class="bi bi-plugin"></i> Configure Connection
+                </a>
+            </div>
+        </section>
+
+    </div>
 </div>

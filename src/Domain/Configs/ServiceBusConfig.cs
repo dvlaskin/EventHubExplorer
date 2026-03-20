@@ -1,13 +1,16 @@
+using Domain.Enums;
 using Domain.Interfaces;
 
 namespace Domain.Configs;
 
-public class StorageQueueConfig : IFormattingConfig
+public class ServiceBusConfig : IFormattingConfig
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public required string Title { get; set; }
     public required string ConnectionString { get; set; }
-    public required string QueueName { get; set; }
+    public required string EntityName { get; set; }
+    public ServiceBusEntityType EntityType { get; set; }
+    public string? SubscriptionName { get; set; }
     
     public bool UseGzipCompression { get; set; }
     public bool UseBase64Coding { get; set; }

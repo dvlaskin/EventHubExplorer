@@ -76,6 +76,7 @@ public class EventHubConsumerService : IMessageConsumerService
     {
         channel.Writer.TryComplete();
         await StopReceiveMessageAsync();
+        await messageConsumerProvider.DisposeAsync();
         GC.SuppressFinalize(this);
         logger.LogInformation("EventHubConsumerService is Disposed");
     }

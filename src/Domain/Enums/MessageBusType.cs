@@ -3,5 +3,6 @@ namespace Domain.Enums;
 public enum MessageBusType
 {
     EventHub,
-    StorageQueue
+    StorageQueue,
+    ServiceBus
 }

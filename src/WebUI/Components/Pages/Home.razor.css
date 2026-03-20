@@ -1,0 +1,261 @@
+/* ─── Hero ─────────────────────────────────────────────────── */
+
+.hero {
+    background: var(--gradient-hero);
+    border-radius: var(--radius-card);
+    padding: 4rem 2rem;
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+}
+
+/* Subtle dot-grid overlay */
+.hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+}
+
+.hero-icon {
+    font-size: 3.5rem;
+    color: var(--color-accent);
+    display: inline-block;
+    animation: pulse-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% { text-shadow: 0 0 8px rgba(255, 193, 7, 0.5); transform: scale(1); }
+    50%       { text-shadow: 0 0 24px rgba(255, 193, 7, 0.9); transform: scale(1.12); }
+}
+
+.hero-title {
+    font-size: 2.8rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0.5rem 0 1rem;
+    letter-spacing: -0.5px;
+}
+
+.hero-subtitle {
+    color: rgba(255,255,255,0.75);
+    font-size: 1.15rem;
+    max-width: 560px;
+    margin: 0 auto 1.5rem;
+}
+
+.hero-badges {
+    display: flex;
+    gap: 0.6rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 20px;
+    color: rgba(255,255,255,0.9);
+    font-size: 0.82rem;
+    padding: 0.3rem 0.75rem;
+    backdrop-filter: blur(6px);
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.hero-badge:hover {
+    background: rgba(255,255,255,0.22);
+    border-color: rgba(255,255,255,0.4);
+}
+
+/* ─── Section titles ─────────────────────────────────────── */
+
+.section-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 1.75rem;
+    color: var(--color-dark);
+    position: relative;
+}
+
+.section-title::after {
+    content: '';
+    display: block;
+    width: 48px;
+    height: 3px;
+    background: var(--gradient-brand);
+    border-radius: 2px;
+    margin: 0.5rem auto 0;
+}
+
+/* ─── Service cards (glassmorphism) ─────────────────────── */
+
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+}
+
+.service-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-card);
+    padding: 2rem 1.5rem;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+    cursor: default;
+}
+
+.service-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 28px rgba(0,0,0,0.14);
+}
+
+.service-card--eventhub:hover  { border-color: var(--color-secondary); }
+.service-card--queue:hover     { border-color: var(--color-success); }
+.service-card--servicebus:hover{ border-color: var(--color-primary); }
+
+.service-icon {
+    font-size: 2.4rem;
+    margin-bottom: 0.75rem;
+    display: block;
+}
+
+.service-card--eventhub  .service-icon { color: var(--color-secondary); }
+.service-card--queue     .service-icon { color: var(--color-success); }
+.service-card--servicebus .service-icon { color: var(--color-primary); }
+
+.service-card h5 {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 0.4rem;
+    color: var(--color-dark);
+}
+
+.service-card p {
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    margin: 0;
+    line-height: 1.45;
+}
+
+/* ─── Step cards ─────────────────────────────────────────── */
+
+.steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 1.25rem;
+}
+
+.step-card {
+    background: #fff;
+    border-radius: var(--radius-card);
+    padding: 1.75rem 1.5rem 1.5rem;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 0 0 2px transparent, 0 4px 14px rgba(0,0,0,0.07);
+    transition: box-shadow var(--transition), transform var(--transition);
+}
+
+.step-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 0 0 2px var(--color-primary), 0 8px 24px rgba(102, 16, 242, 0.14);
+}
+
+.step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
+    background: var(--gradient-brand);
+    color: #fff;
+    font-weight: 700;
+    font-size: 1rem;
+    margin: 0 auto 0.9rem;
+}
+
+.step-icon {
+    font-size: 2rem;
+    color: var(--color-primary);
+    margin-bottom: 0.75rem;
+    display: block;
+}
+
+.step-card h5 {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--color-dark);
+    margin-bottom: 0.4rem;
+}
+
+.step-card p {
+    font-size: 0.84rem;
+    color: var(--color-muted);
+    margin: 0;
+    line-height: 1.45;
+}
+
+/* ─── CTA ────────────────────────────────────────────────── */
+
+.cta-panel {
+    background: var(--gradient-hero);
+    border-radius: var(--radius-card);
+    padding: 3rem 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.cta-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+}
+
+.cta-panel h3 {
+    color: #fff;
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.cta-panel p {
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+}
+
+.btn-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--gradient-brand);
+    color: #fff !important;
+    border: none;
+    border-radius: var(--radius-btn);
+    padding: 0.7rem 2rem;
+    font-weight: 600;
+    font-size: 1rem;
+    text-decoration: none;
+    transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 14px rgba(102, 16, 242, 0.45);
+}
+
+.btn-cta:hover {
+    opacity: 0.92;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 16, 242, 0.55);
+}

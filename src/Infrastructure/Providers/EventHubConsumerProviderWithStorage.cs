@@ -19,6 +19,7 @@ public sealed class EventHubConsumerProviderWithStorage : IMessageConsumerProvid
     private BlobContainerClient? storageClient;
     private EventProcessorClient? eventProcessorClient;
     private Func<EventHubMessage, Task>? runMessageProcessing;
+    private volatile bool disposed;
 
     
     public EventHubConsumerProviderWithStorage(        
@@ -124,5 +125,18 @@ public sealed class EventHubConsumerProviderWithStorage : IMessageConsumerProvid
     {
         logger.LogError(arg.Exception, "Error while processing event: {Message}", arg.Exception.Message);
         return Task.CompletedTask;
+    }
+    
+    
+    public async ValueTask DisposeAsync()
+    {
+        if (disposed)
+            return;
+
+        disposed = true;
+        await StopReceiveMessageAsync();
+
+        GC.SuppressFinalize(this);
+        logger.LogInformation("EventHubConsumerProviderWithStorage is Disposed");
     }
 }

@@ -1,0 +1,84 @@
+/* ─── Toast Popup ─────────────────────────────────────────── */
+
+.toast-popup {
+    min-width: 300px;
+    max-width: 380px;
+    background: rgba(26, 26, 46, 0.88);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-left: 4px solid transparent;
+    border-radius: var(--radius-card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+    /* hidden state — slides off to the right */
+    opacity: 0;
+    transform: translateX(calc(100% + 1rem));
+    transition: opacity 0.28s ease, transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none;
+}
+
+.toast-popup--visible {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
+/* ── Type accent border ──────────────────────────────────── */
+
+.toast-popup--info    { border-left-color: var(--color-primary); }
+.toast-popup--warning { border-left-color: var(--color-accent); }
+.toast-popup--error   { border-left-color: var(--color-danger); }
+
+/* ── Header ──────────────────────────────────────────────── */
+
+.toast-popup__header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 0.85rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.toast-popup__icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.toast-popup--info    .toast-popup__icon { color: var(--color-primary); }
+.toast-popup--warning .toast-popup__icon { color: var(--color-accent); }
+.toast-popup--error   .toast-popup__icon { color: var(--color-danger); }
+
+.toast-popup__title {
+    flex: 1;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.3px;
+}
+
+.toast-popup__close {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.75rem;
+    cursor: pointer;
+    padding: 0.15rem 0.3rem;
+    border-radius: 4px;
+    line-height: 1;
+    transition: color var(--transition), background var(--transition);
+}
+
+.toast-popup__close:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* ── Body ────────────────────────────────────────────────── */
+
+.toast-popup__body {
+    padding: 0.65rem 0.85rem;
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.82);
+    line-height: 1.45;
+}

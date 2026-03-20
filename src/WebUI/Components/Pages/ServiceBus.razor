@@ -1,4 +1,4 @@
-@page "/storagequeue/{id:guid}"
+@page "/servicebus/{id:guid}"
 @using Application.Utils
 @using Domain.Configs
 @using Domain.Enums
@@ -11,10 +11,19 @@
 @inject IJSRuntime JsRuntime
 @implements IAsyncDisposable
 
-<PageTitle>StorageQueue - @title</PageTitle>
+<PageTitle>ServiceBus - @title</PageTitle>
 
-<h3 class="page-title"><i class="bi bi-inbox-fill"></i> @title</h3>
-
+<h3 class="page-title"><i class="bi bi-send-fill"></i> @title</h3>
+@if (config is not null)
+{
+    <div class="mb-3 text-muted">
+        @($"{config.EntityType}: {config.EntityName}")
+        @if (config.EntityType == ServiceBusEntityType.Topic && !string.IsNullOrEmpty(config.SubscriptionName))
+        {
+            <span> (@($"Subscription: {config.SubscriptionName}"))</span>
+        }
+    </div>
+}
 
 <!-- Send and Receive messages -->
 <div class="row">
@@ -56,7 +65,7 @@
             }
             else
             {
-                <!-- Messages List -->
+                <!-- Events List -->
                 <ul id="events-list" class="list-group scrollable-list" @ref="listElement">
                     @foreach (var message in receivedMessages.Index())
                     {
@@ -64,8 +73,8 @@
                         var messageString = message.Item.Message?.Length > 20 
                             ? message.Item.Message[..20] + "..." 
                             : message.Item.Message;
-                        <li class=@($"list-group-item{ activeClass }") @onclick="() => OnEventSelected(message.Index)">
-                            @($"{receivedMessages.GetVirtualIndex(message.Index) + 1} -> message: {messageString}, enqueued: {message.Item.EnqueuedTime.ToString("yyyyMMdd HH:mm:ss")}")
+                        <li class=@($"list-group-item{ activeClass }") @onclick="() => OnMessageSelected(message.Index)">
+                            @($"{receivedMessages.GetVirtualIndex(message.Index) + 1} -> sn {message.Item.SequenceNumber}, enqueued {message.Item.EnqueuedTime.ToString("yyyyMMdd HH:mm:ss")}, message: {messageString}")
                         </li>
                     }
                 </ul>
@@ -125,10 +134,10 @@
 
 
 @code {
-    [Inject] private ILogger<StorageQueue>? Logger { get; set; }
+    [Inject] private ILogger<ServiceBus>? Logger { get; set; }
     [Inject] private IOptionsMonitor<AppConfiguration>? Config { get; set; }
-    [Inject(Key = MessageBusType.StorageQueue)] private IMessageProducerFactory? MessageProducerFactory { get; set; }
-    [Inject(Key = MessageBusType.StorageQueue)] private IMessageConsumerFactory? MessageConsumerFactory { get; set; }
+    [Inject(Key = MessageBusType.ServiceBus)] private IMessageProducerFactory? MessageProducerFactory { get; set; }
+    [Inject(Key = MessageBusType.ServiceBus)] private IMessageConsumerFactory? MessageConsumerFactory { get; set; }
     [Inject] private IMessageHistory<Guid, List<string>>? MessagesHistoryService { get; set; }
     
     [Parameter] public Guid Id { get; set; }
@@ -138,6 +147,7 @@
     private IMessageProducerService? messageProducer;
     private IMessageConsumerService? messageConsumer;
 
+    private ServiceBusConfig? config;
     private string? title;
     private string? messageToSend;
     private uint numberMessagesToSend = 1;
@@ -156,8 +166,8 @@
 
     protected override void OnInitialized()
     {
-        var queueConfig = Config?.CurrentValue.StorageQueuesConfigs.First(w => w.Id == Id);
-        title = queueConfig?.Title ?? "unknown storage queue";
+        config = Config?.CurrentValue.ServiceBusConfigs.FirstOrDefault(w => w.Id == Id);
+        title = config?.Title ?? "unknown service bus";
     }
 
     private void InitializeMessageProducer()
@@ -290,7 +300,7 @@
 
             try
             {
-                await foreach (var message in messageConsumer.StartReceiveMessageAsync(receiverCts.Token))
+                await foreach (var message in  messageConsumer.StartReceiveMessageAsync(receiverCts.Token))
                 {
                     if (!isProcessing)
                         return;
@@ -336,7 +346,7 @@
         await JsRuntime.InvokeVoidAsync("scrollToBottom", listElement);
     }
 
-    private void OnEventSelected(int index)
+    private void OnMessageSelected(int index)
     {
         selectedIndex = index;
         receivedMessage = receivedMessages[index].Message;
@@ -351,18 +361,22 @@
 
     public async ValueTask DisposeAsync()
     {
+        // Cancel any pending operations first
         receiverCts.Cancel();
         delayedSenderCts.Cancel();
         
+        // Dispose of services
         if (messageProducer is not null)
             await messageProducer.DisposeAsync();
         
         if (messageConsumer is not null)
             await messageConsumer.DisposeAsync();
         
+        // Dispose of cancellation tokens
         receiverCts.Dispose();
         delayedSenderCts.Dispose();
         
+        // Clear collections
         receivedMessages.Clear();
         messagesHistoryList.Clear();
         

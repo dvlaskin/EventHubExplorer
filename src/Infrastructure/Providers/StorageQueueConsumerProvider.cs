@@ -15,7 +15,8 @@ public sealed class StorageQueueConsumerProvider : IMessageConsumerProvider
 
     private QueueClient? queueClient;
     private Func<EventHubMessage, Task>? runMessageProcessing;
-    private bool isProcessing;
+    private volatile bool isProcessing;
+    private volatile bool disposed;
 
     public StorageQueueConsumerProvider(ILogger<StorageQueueConsumerProvider> logger, StorageQueueConfig config)
     {
@@ -118,7 +119,13 @@ public sealed class StorageQueueConsumerProvider : IMessageConsumerProvider
     
     public ValueTask DisposeAsync()
     {
+        if (disposed)
+            return ValueTask.CompletedTask;
+
+        disposed = true;
         isProcessing = false;
+        GC.SuppressFinalize(this);
+        logger.LogInformation("StorageQueueConsumerProvider is Disposed");
         return ValueTask.CompletedTask;
     }
 }

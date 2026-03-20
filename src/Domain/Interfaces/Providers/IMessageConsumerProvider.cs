@@ -2,7 +2,7 @@ using Domain.Models;
 
 namespace Domain.Interfaces.Providers;
 
-public interface IMessageConsumerProvider
+public interface IMessageConsumerProvider : IAsyncDisposable
 {
     Task StartReceiveMessageAsync(Func<EventHubMessage, Task> onMessageReceived, CancellationToken cancellationToken);
     Task StopReceiveMessageAsync();
