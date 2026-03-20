@@ -335,30 +335,18 @@
 </div>
 
 
-<!-- Toast notification -->
-<div class="toast-container position-fixed top-0 end-0 p-3">
-    <div class="toast @ToastClass" role="alert" aria-live="assertive" aria-atomic="true" style="min-width: 250px; display: @(showToast ? "block" : "none")">
-        <div class="toast-header">
-            <strong class="me-auto">Notification</strong>
-            <button type="button" class="btn-close" @onclick="HideToast"></button>
-        </div>
-        <div class="toast-body">
-            Configuration saved
-        </div>
-    </div>
-</div>
+<ToastNotification @ref="toast" />
 
 
 
 @code {
     [Inject] private IEnumerable<IMessageFormatter>? MessageFormatters { get; set; }
 
+    private ToastNotification toast = default!;
+
     private AppConfiguration? appConfiguration;
 
     private string activeTab = "eventhubs";
-
-    private bool showToast = false;
-    private const string ToastClass = "bg-success text-white";
 
     private void SetActiveTab(string tab) => activeTab = tab;
 
@@ -410,12 +398,7 @@
         if (appConfiguration is null) return;
         await ConfigurationProvider.SaveDataAsync(appConfiguration);
 
-        showToast = true;
-        StateHasChanged();
-
-        await Task.Delay(3000);
-        showToast = false;
-        StateHasChanged();
+        await toast.ShowToast("Configuration saved", ToastType.Info);
     }
 
     private void AddNewEventHubConfig()
@@ -479,12 +462,6 @@
             MessagesHistoryService.RemoveAllAsync(configId.Value);
 
         appConfiguration?.ServiceBusConfigs.RemoveAt(index);
-    }
-
-    private void HideToast()
-    {
-        showToast = false;
-        StateHasChanged();
     }
 
     private static void OnGzipCompressionChanged(EventHubConfig eventHub)
