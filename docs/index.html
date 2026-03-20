@@ -14,7 +14,7 @@
             --accent-color: #0066cc;
             --border-color: #3d3d3d;
         }
-        
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
             line-height: 1.6;
@@ -118,9 +118,14 @@
     <div class="header">
         <h1>EventHub Explorer</h1>
     </div>
-    
+
     <div class="container">
-        <p>EventHub Explorer is a developer tool that allows you to interact with Azure Event Hubs and Azure Storage Queues using a graphical user interface. It supports both real Azure services, the <a href="https://learn.microsoft.com/en-us/azure/event-hubs/overview-emulator">eventhubs-emulator</a> for Event Hubs and <a href="https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite">Azurite</a> for StorageQueue.</p>
+        <p>EventHub Explorer is a developer tool that allows you to interact with Azure Event Hubs,
+        Azure Storage Queues and Azure Service Bus using a graphical user interface.
+        It supports real Azure services, the <a href="https://learn.microsoft.com/en-us/azure/event-hubs/overview-emulator">eventhubs-emulator</a>
+        for Event Hubs, the <a href="https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite">Azurite</a>
+        for StorageQueue, and the <a href="https://learn.microsoft.com/en-us/azure/service-bus-messaging/overview-emulator">Service Bus emulator</a>
+        for Service Bus.</p>
 
         <img src="./assets/Screenshot_01.png" alt="HomePage" />
         <img src="./assets/Screenshot_02.png" alt="ConfigurationPage" />
@@ -144,7 +149,7 @@
             <li>Receive messages <strong>without checkpoints</strong> (always fetch the newest messages, if is not yet received another consumer)</li>
             <li>Receive messages <strong>with checkpoints</strong> (using external storage to track received message IDs)</li>
         </ul>
-        
+
         <div class="note">
             <p><strong>Note:</strong> The application uses the <code>$Default</code> consumer group by default.</p>
         </div>
@@ -164,38 +169,115 @@
             <li>Ability to decompress and decode a message after receiving</li>
         </ul>
 
+        <h3>Sending Messages to Service Bus</h3>
+        <ul>
+            <li>Override GUID, DateTime values in a message before sending</li>
+            <li>Ability to compress and encode a message before sending</li>
+            <li>Send a <strong>single message</strong></li>
+            <li>Send a <strong>batch of messages</strong></li>
+            <li>Send a <strong>batch of messages</strong> with a <strong>time delay</strong> between each message</li>
+            <li>Supports both <strong>Queue</strong> and <strong>Topic</strong> entity types</li>
+        </ul>
+
+        <h3>Receiving Messages from Service Bus</h3>
+        <ul>
+            <li>Format a message to JSON if it is a JSON string</li>
+            <li>Ability to decompress and decode a message after receiving</li>
+            <li>Receive messages from a <strong>Queue</strong> or a <strong>Topic Subscription</strong></li>
+        </ul>
+
         <h2>Example Connection Strings</h2>
 
-        <h3>EventHubs Emulator</h3>
-        <pre><code>Endpoint=sb://eventhub-docker;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;</code></pre>
+        <h3>Event Hubs Emulator</h3>
+        <p>The Event Hubs emulator uses a static connection string. The host value depends on how your application is deployed relative to the emulator.</p>
+
+        <p><strong>Application running natively on the same local machine as the emulator:</strong></p>
+        <pre><code>Endpoint=sb://localhost;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;</code></pre>
+
+        <p><strong>Application on a different machine on the same local network</strong> (use the IPv4 address of the machine running the emulator):</p>
+        <pre><code>Endpoint=sb://192.168.x.y;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;</code></pre>
+
+        <p><strong>Application container on the same Docker bridge network</strong> (use the emulator container alias, default is <code>eventhubs-emulator</code>):</p>
+        <pre><code>Endpoint=sb://eventhubs-emulator;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;</code></pre>
+
+        <p><strong>Application container on a different Docker bridge network:</strong></p>
+        <pre><code>Endpoint=sb://host.docker.internal;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;</code></pre>
+
+        <h3>Real Azure Event Hubs</h3>
+        <p><strong>Namespace-level connection string</strong> (access to all event hubs in the namespace):</p>
+        <pre><code>Endpoint=sb://&lt;NamespaceName&gt;.servicebus.windows.net/;SharedAccessKeyName=&lt;KeyName&gt;;SharedAccessKey=&lt;KeyValue&gt;</code></pre>
+
+        <p><strong>Event hub-level connection string</strong> (access to a specific event hub):</p>
+        <pre><code>Endpoint=sb://&lt;NamespaceName&gt;.servicebus.windows.net/;SharedAccessKeyName=&lt;KeyName&gt;;SharedAccessKey=&lt;KeyValue&gt;;EntityPath=&lt;EventHubName&gt;</code></pre>
+
+        <hr/>
+
+        <h3>Azurite Blob Storage (Emulator)</h3>
+        <p>The default well-known account for Azurite:</p>
+        <ul>
+            <li>Account name: <code>devstoreaccount1</code></li>
+            <li>Account key: <code>Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==</code></li>
+        </ul>
+
+        <p><strong>Running locally (localhost):</strong></p>
+        <pre><code>DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;</code></pre>
+
+        <p><strong>Running as a Docker container on the same bridge network</strong> (use the Azurite container service name, e.g. <code>azurite</code>):</p>
+        <pre><code>DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;</code></pre>
+
+        <p><strong>Shortcut</strong> (when running locally without Docker):</p>
+        <pre><code>UseDevelopmentStorage=true</code></pre>
+
+        <h3>Azurite Storage Queue (Emulator)</h3>
+        <p><strong>Running locally (localhost):</strong></p>
+        <pre><code>DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;</code></pre>
+
+        <p><strong>Running as a Docker container on the same bridge network</strong> (use the Azurite container service name, e.g. <code>azurite</code>):</p>
+        <pre><code>DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;QueueEndpoint=http://azurite:10001/devstoreaccount1;</code></pre>
+
+        <h3>Real Azure Storage Queue</h3>
+        <pre><code>DefaultEndpointsProtocol=https;AccountName=&lt;AccountName&gt;;AccountKey=&lt;AccountKey&gt;;QueueEndpoint=https://&lt;AccountName&gt;.queue.core.windows.net;</code></pre>
+
+        <hr/>
+
+        <h3>Service Bus Emulator</h3>
+        <p>The Service Bus emulator uses a static connection string. The host value depends on how your application is deployed relative to the emulator.</p>
+
+        <p><strong>Application running natively on the same local machine as the emulator:</strong></p>
+        <pre><code>Endpoint=sb://localhost;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;</code></pre>
+
+        <p><strong>Application on a different machine on the same local network</strong> (use the IPv4 address of the machine running the emulator):</p>
+        <pre><code>Endpoint=sb://192.168.x.y;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;</code></pre>
+
+        <p><strong>Application container on the same Docker bridge network</strong> (use the emulator container alias, default is <code>servicebus-emulator</code>):</p>
+        <pre><code>Endpoint=sb://servicebus-emulator;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;</code></pre>
+
+        <p><strong>Application container on a different Docker bridge network:</strong></p>
+        <pre><code>Endpoint=sb://host.docker.internal;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;</code></pre>
+
         <div class="note">
-            <p><code>eventhub-docker</code> is the Docker service name of the Event Hubs emulator running in the same Docker network.</p>
+            <p><strong>Note:</strong> For management operations (creating/deleting entities via the Administration Client), append port <code>5300</code> to the connection string. Example for local machine:</p>
+            <pre><code>Endpoint=sb://localhost:5300;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;</code></pre>
         </div>
 
-        <h3>Azurite Blob Storage</h3>
-        <pre><code>DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://eventhub-azurite:10000/devstoreaccount1;</code></pre>
-        <div class="note">
-            <p><code>eventhub-azurite</code> is the Docker service name of the Azurite blob storage running in the same Docker network.</p>
-        </div>
-
-        <h3>Azurite Storage Queue</h3>
-        <pre><code>DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;QueueEndpoint=http://eventhub-azurite:10001/devstoreaccount1;</code></pre>
-        <div class="note">
-            <p><code>eventhub-azurite</code> is the Docker service name of the Azurite storage running in the same Docker network.</p>
-        </div>
+        <h3>Real Azure Service Bus</h3>
+        <p><strong>Namespace-level connection string:</strong></p>
+        <pre><code>Endpoint=sb://&lt;NamespaceName&gt;.servicebus.windows.net/;SharedAccessKeyName=&lt;KeyName&gt;;SharedAccessKey=&lt;KeyValue&gt;</code></pre>
 
         <h2>Requirements</h2>
         <ul>
-            <li>Docker for emulator and Azurite usage</li>
-            <li>Azure Event Hubs, Blob and Queue Storage credentials (for real Azure usage)</li>
+            <li>Docker</li>
+            <li>Azure Event Hubs*</li>
+            <li>Blob Storage*</li>
+            <li>Storage Queue*</li>
+            <li>Service Bus*</li>
         </ul>
+        <p>* — the service you want to use</p>
 
         <h2>Install options</h2>
         <ul>
-            <li>Clone solution in the repo</li>
-            <li>Or use docker image <code>docker pull dvlaskin/eventhubexplorer</code></li>
-            <li>Run docker image or WebUI project in the solution</li>
-            <li>Open in browser http://localhost:5235/</li>
+            <li>Option 1: Clone solution from the repo, build and run the solution locally, open in browser <code>http://localhost:5235/</code></li>
+            <li>Option 2: Pull and run docker image <code>docker pull dvlaskin/eventhubexplorer</code>, open in browser <code>http://localhost:5235/</code></li>
         </ul>
 
         <h3>Example of a docker compose file</h3>
@@ -210,10 +292,10 @@
       - data-volume:/app/Data
     networks:
       - docker-network
-        
+
 volumes:
   data-volume:
-    
+
 networks:
   docker-network:
     external: true

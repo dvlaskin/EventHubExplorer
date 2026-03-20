@@ -12,9 +12,10 @@ for StorageQueue,
 the [Service Bus emulator](https://learn.microsoft.com/en-us/azure/service-bus-messaging/overview-emulator)
 for Service Bus.
 
-<img src="./docs/assets/Screenshot_01.png" alt="HomePage" width="50%"/>
-<img src="./docs/assets/Screenshot_02.png" alt="ConfigurationPage" width="50%"/>
-<img src="./docs/assets/Screenshot_03.png" alt="EventHubPage" width="50%"/>
+
+<img src="./docs/assets/Screenshot_01.png" alt="HomePage" width="90%"/>
+<img src="./docs/assets/Screenshot_02.png" alt="ConfigurationPage" width="90%"/>
+<img src="./docs/assets/Screenshot_03.png" alt="EventHubPage" width="90%"/>
 
 
 ## Features
@@ -226,6 +227,14 @@ networks:
     external: true
 
 ```
+
+## Support the Project
+
+If you find **EventHub Explorer** useful in your day-to-day development workflow, consider giving it a ⭐ star on GitHub.
+
+It takes just a second, but it means a lot — it helps me understand that the tool is being used and motivates me to keep improving it with new features and fixes.
+
+> Your star is the best signal that this project is worth continuing. Thank you!
 
 ## License
 
