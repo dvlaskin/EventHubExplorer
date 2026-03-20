@@ -13,7 +13,7 @@
 
 <PageTitle>ServiceBus - @title</PageTitle>
 
-<h3>@title</h3>
+<h3 class="page-title"><i class="bi bi-send-fill"></i> @title</h3>
 @if (config is not null)
 {
     <div class="mb-3 text-muted">
@@ -29,7 +29,7 @@
 <div class="row">
     <div class="col-6">
         <div class="mb-3">
-            <label for="message" class="form-label">Send Message</label>
+            <label for="message" class="form-label label-section">Send Message</label>
             <div class="position-relative">
                 <textarea class="form-control" id="message" rows="10" style="resize: none;" @bind="messageToSend"></textarea>
                 <button class="btn position-absolute top-0 end-0 m-2 p-1 history-icon" @onclick="ToggleMessageHistory">
@@ -58,7 +58,7 @@
     </div>
     <div class="col-6">
         <div class="mb-3">
-            <label for="events-list" class="form-label">@($"Received Messages - {receivedMessages.TotalAddedCount}")</label>
+            <label for="events-list" class="form-label label-section">Received Messages</label>
             @if (receivedMessages.Count == 0)
             {
                 <textarea class="form-control" rows="10" readonly style="resize: none;">No messages received yet.</textarea>
@@ -89,11 +89,11 @@
         <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
             <button class="btn btn-primary" @onclick="SendMessage">Send</button>
             <div class="d-flex align-items-center gap-2">
-                <label for="message-count" class="form-label mb-0">Number of messages</label>
+                <label for="message-count" class="form-label mb-0 label-inline">Number of messages</label>
                 <input class="form-control form-control-sm" type="number" id="message-count" @bind="numberMessagesToSend" min="1" style="width: 5rem;" />
             </div>
             <div class="d-flex align-items-center gap-2">
-                <label for="message-delay" class="form-label mb-0">Delay</label>
+                <label for="message-delay" class="form-label mb-0 label-inline">Delay</label>
                 <input class="form-control form-control-sm" type="number" id="message-delay" @bind="delayToSend" min="0" style="width: 5rem;" />
                 <select class="form-select form-select-sm" @bind="delayTimeUnit" style="width: 5rem;">
                     <option value="@DelayTimeUnit.Second">@DelayTimeUnit.Second</option>
