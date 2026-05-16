@@ -1,5 +1,6 @@
 using Domain.Configs;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.Extensions.Options;
 
 namespace WebUI.Components.Layout;
@@ -7,6 +8,7 @@ namespace WebUI.Components.Layout;
 public partial class NavMenu : ComponentBase, IDisposable
 {
     [Inject] private IOptionsMonitor<AppConfiguration>? Config { get; set; }
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
     
     private IDisposable? configSubscription;
     private List<EventHubConfig>? EventHubsConfigs { get; set; }
@@ -17,27 +19,58 @@ public partial class NavMenu : ComponentBase, IDisposable
     private bool isStorageQueuesExpanded = false;
     private bool isServiceBusExpanded = false;
 
+    private bool IsEventHubRouteActive => IsRouteActive("eventhub/");
+    private bool IsStorageQueueRouteActive => IsRouteActive("storagequeue/");
+    private bool IsServiceBusRouteActive => IsRouteActive("servicebus/");
+
     protected override void OnInitialized()
     {
         EventHubsConfigs = Config?.CurrentValue.EventHubsConfigs ?? [];
         StorageQueuesConfigs = Config?.CurrentValue.StorageQueuesConfigs ?? [];
         ServiceBusConfigs = Config?.CurrentValue.ServiceBusConfigs ?? [];
+        EnsureSectionExpandedForCurrentRoute();
         
         configSubscription = Config?.OnChange(x =>
         {
             EventHubsConfigs = x.EventHubsConfigs;
             StorageQueuesConfigs = x.StorageQueuesConfigs;
             ServiceBusConfigs = x.ServiceBusConfigs;
+            EnsureSectionExpandedForCurrentRoute();
             InvokeAsync(StateHasChanged).ConfigureAwait(false);
         });
+
+        Navigation.LocationChanged += OnLocationChanged;
     }
     
     private void ToggleEventHubs() => isEventHubsExpanded = !isEventHubsExpanded;
     private void ToggleStorageQueues() => isStorageQueuesExpanded = !isStorageQueuesExpanded;
     private void ToggleServiceBus() => isServiceBusExpanded = !isServiceBusExpanded;
 
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        EnsureSectionExpandedForCurrentRoute();
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private bool IsRouteActive(string routePrefix)
+        => Navigation.ToBaseRelativePath(Navigation.Uri)
+            .StartsWith(routePrefix, StringComparison.OrdinalIgnoreCase);
+
+    private void EnsureSectionExpandedForCurrentRoute()
+    {
+        if (IsEventHubRouteActive)
+            isEventHubsExpanded = true;
+
+        if (IsStorageQueueRouteActive)
+            isStorageQueuesExpanded = true;
+
+        if (IsServiceBusRouteActive)
+            isServiceBusExpanded = true;
+    }
+
     public void Dispose()
     {
+        Navigation.LocationChanged -= OnLocationChanged;
         configSubscription?.Dispose();
         GC.SuppressFinalize(this);
     }

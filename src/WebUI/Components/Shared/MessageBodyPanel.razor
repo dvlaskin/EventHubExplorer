@@ -1,0 +1,10 @@
+<div class="message-body-panel d-flex flex-column h-100">
+    <label class="form-label label-section" for="@messagePayloadId">Message Payload</label>
+    <textarea id="@messagePayloadId" class="form-control flex-grow-1 message-body-input" readonly>@Content</textarea>
+</div>
+
+@code {
+    private readonly string messagePayloadId = $"message-payload-{Guid.NewGuid():N}";
+
+    [Parameter] public string? Content { get; set; }
+}

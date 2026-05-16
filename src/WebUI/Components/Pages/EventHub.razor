@@ -4,121 +4,80 @@
 @using Domain.Enums
 @using Domain.Helpers
 @using Domain.Interfaces.Factories
+@using Domain.Interfaces.Providers
 @using Domain.Interfaces.Services
 @using Domain.Models
 @using Microsoft.Extensions.Options
 @rendermode InteractiveServer
 @inject IJSRuntime JsRuntime
+@inject IFileStorageProvider<AppConfiguration> ConfigurationProvider
 @implements IAsyncDisposable
 
 <PageTitle>EventHub - @title</PageTitle>
 
 <h3 class="page-title"><i class="bi bi-broadcast"></i> @title</h3>
 
-
-<!-- Send and Receive messages -->
-<div class="row">
-    <div class="col-6">
-        <div class="mb-3">
-            <label for="message" class="form-label label-section">Send Event</label>
-            <div class="position-relative">
-                <textarea class="form-control" id="message" rows="10" style="resize: none;" @bind="messageToSend"></textarea>
-                <button class="btn position-absolute top-0 end-0 m-2 p-1 history-icon" @onclick="ToggleMessageHistory">
-                    <i class="bi bi-clock-history"></i>
-                </button>
-                @if (showMessageHistory && messagesHistoryList.Any())
-                {
-                    <div class="message-history-dropdown">
-                        <div class="list-group">
-                            @foreach (var message in messagesHistoryList)
-                            {
-                                <div class="list-group-item list-group-item-action d-flex align-items-center">
-                                    <div class="flex-grow-1 message-text" @onclick="() => SelectMessage(message)">
-                                        @(message.Length > 50 ? message[..45] + "..." : message)
-                                    </div>
-                                    <button type="button" class="btn btn-link btn-sm text-danger p-0 ms-2 delete-button" @onclick="() => RemoveFromHistory(message)" @onclick:stopPropagation>
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
-                            }
-                        </div>
-                    </div>
-                }
-            </div>
-        </div>
+<div class="row g-3 mb-3">
+    <div class="col-md-6 col-lg-5">
+        <label class="form-label" for="eventhub-layout-preset">Blocks layout</label>
+        <select id="eventhub-layout-preset"
+                class="form-select"
+                @bind="currentLayoutPreset"
+                @bind:after="SaveLayoutPreferenceAsync">
+            <option value="@MessagePageLayoutPreset.TopSendReceiveBottomPayload">Top: Send + Receive, Bottom: Payload</option>
+            <option value="@MessagePageLayoutPreset.LeftSendReceiveRightPayload">Left: Send + Receive, Right: Payload</option>
+        </select>
     </div>
-    <div class="col-6">
-        <div class="mb-3">
-            <label for="events-list" class="form-label label-section">Received Events</label>
-            @if (receivedMessages.Count == 0)
-            {
-                <textarea class="form-control" rows="10" readonly style="resize: none;">No messages received yet.</textarea>
-            }
-            else
-            {
-                <!-- Events List -->
+</div>
+
+<MessagePageLayout LayoutPreset="@currentLayoutPreset">
+    <SendArea>
+        <MessageSendPanel MessageToSend="@messageToSend"
+                          MessageToSendChanged="@(value => messageToSend = value)"
+                          MessagesHistory="@messagesHistoryList"
+                          ShowHistory="@showMessageHistory"
+                          ShowHistoryChanged="@(value => showMessageHistory = value)"
+                          NumberToSend="@numberMessagesToSend"
+                          NumberToSendChanged="@(value => numberMessagesToSend = value)"
+                          Delay="@delayToSend"
+                          DelayChanged="@(value => delayToSend = value)"
+                          DelayTimeUnit="@delayTimeUnit"
+                          DelayTimeUnitChanged="@(value => delayTimeUnit = value)"
+                          SendLabel="Send Event"
+                          OnSend="SendMessage"
+                          OnToggleHistory="ToggleMessageHistory"
+                          OnSelectMessage="SelectMessage"
+                          OnRemoveFromHistory="RemoveFromHistory" />
+    </SendArea>
+    <ReceiveArea>
+        <MessageReceivePanel IsProcessing="@isProcessing"
+                             HasMessages="@(receivedMessages.Count > 0)"
+                             ReceiveLabel="Received Events"
+                             OnStartReceive="StartReceiveMessages"
+                             OnStopReceive="StopReceiveMessages"
+                             OnClearMessages="ClearMessages">
+            <MessageList>
                 <ul id="events-list" class="list-group scrollable-list" @ref="listElement">
                     @foreach (var message in receivedMessages.Index())
                     {
                         var activeClass = selectedIndex.HasValue && selectedIndex.Value == message.Index ? " active" : "";
-                        var messageString = message.Item.Message?.Length > 20 
-                            ? message.Item.Message[..20] + "..." 
+                        var messageString = message.Item.Message?.Length > 20
+                            ? message.Item.Message[..20] + "..."
                             : message.Item.Message;
-                        <li class=@($"list-group-item{ activeClass }") @onclick="() => OnEventSelected(message.Index)">
-                            @($"{receivedMessages.GetVirtualIndex(message.Index) + 1} -> partition {message.Item.PartitionId}, sequenceNumber {message.Item.SequenceNumber}, enqueued {message.Item.EnqueuedTime.ToString("yyyyMMdd HH:mm:ss")}, message: {messageString}")
+                        <li class=@($"list-group-item{ activeClass }")>
+                            <button type="button" class="message-list-item-button" @onclick="() => OnEventSelected(message.Index)">
+                                @($"{receivedMessages.GetVirtualIndex(message.Index) + 1} -> partition {message.Item.PartitionId}, sequenceNumber {message.Item.SequenceNumber}, enqueued {message.Item.EnqueuedTime.ToString("yyyyMMdd HH:mm:ss")}, message: {messageString}")
+                            </button>
                         </li>
                     }
                 </ul>
-            }
-        </div>
-    </div>
-</div>
-
-<!-- Send and Receive controls -->
-<div class="row">
-    <div class="col-6">
-        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-            <button class="btn btn-primary" @onclick="SendMessage">Send</button>
-            <div class="d-flex align-items-center gap-2">
-                <label for="message-count" class="form-label mb-0 label-inline">Number of messages</label>
-                <input class="form-control form-control-sm" type="number" id="message-count" @bind="numberMessagesToSend" min="1" style="width: 5rem;" />
-            </div>
-            <div class="d-flex align-items-center gap-2">
-                <label for="message-delay" class="form-label mb-0 label-inline">Delay</label>
-                <input class="form-control form-control-sm" type="number" id="message-delay" @bind="delayToSend" min="0" style="width: 5rem;" />
-                <select class="form-select form-select-sm" @bind="delayTimeUnit" style="width: 5rem;">
-                    <option value="@DelayTimeUnit.Second">@DelayTimeUnit.Second</option>
-                    <option value="@DelayTimeUnit.Millisecond">@DelayTimeUnit.Millisecond</option>
-                </select>
-            </div>
-        </div>
-    </div>    
-    <div class="col-6">
-        @if (isProcessing)
-        {
-            <button class="btn btn-primary" @onclick="StopReceiveMessages">Stop Receive</button>
-        }
-        else
-        {
-            <div class="mb-1">
-                <row>
-                    <button class="me-2 btn btn-primary" type="button" @onclick="StartReceiveMessages">Start Receive</button>
-                    @if (receivedMessages.Count > 0)
-                    {
-                        <button class="btn btn-outline-secondary" type="button" @onclick="ClearMessages">Clear Messages</button>
-                    }
-                </row>
-            </div>
-        }
-    </div>
-</div>
-
-<!-- Event Body -->
-<div class="row">
-    <div class="col-md-12">
-        <textarea class="form-control" rows="10" readonly style="resize: none;" @bind="receivedMessage"></textarea>
-    </div>
-</div>
+            </MessageList>
+        </MessageReceivePanel>
+    </ReceiveArea>
+    <BodyArea>
+        <MessageBodyPanel Content="@receivedMessage" />
+    </BodyArea>
+</MessagePageLayout>
 
 <!-- Toast Notification -->
 <ToastNotification @ref="toast"/>
@@ -138,6 +97,7 @@
     private IMessageProducerService? messageProducer;
     private IMessageConsumerService? messageConsumer;
 
+    private EventHubConfig? config;
     private string? title;
     private string? messageToSend;
     private uint numberMessagesToSend = 1;
@@ -149,15 +109,33 @@
     private string? receivedMessage;
     private bool isProcessing;
     private int? selectedIndex;
+    private MessagePageLayoutPreset currentLayoutPreset;
     private readonly CircularBuffer<EventHubMessage> receivedMessages = new(50);
     private readonly ResettableCts receiverCts = new();
     private readonly ResettableCts delayedSenderCts = new();
 
-
     protected override void OnInitialized()
     {
-        var ehConfig = Config?.CurrentValue.EventHubsConfigs.First(w => w.Id == Id);
-        title = ehConfig?.Title ?? "unknown event hub";
+        config = Config?.CurrentValue.EventHubsConfigs.FirstOrDefault(w => w.Id == Id);
+        title = config?.Title ?? "unknown event hub";
+        currentLayoutPreset = config?.MessagePageLayout ?? MessagePageLayoutPreset.TopSendReceiveBottomPayload;
+    }
+
+    private async Task SaveLayoutPreferenceAsync()
+    {
+        try
+        {
+            var appConfiguration = await ConfigurationProvider.GetDataAsync() ?? new AppConfiguration();
+            var eventHubConfig = appConfiguration.EventHubsConfigs.FirstOrDefault(w => w.Id == Id)
+                                 ?? throw new InvalidOperationException($"EventHub configuration with id '{Id}' was not found.");
+
+            eventHubConfig.MessagePageLayout = currentLayoutPreset;
+            await ConfigurationProvider.SaveDataAsync(appConfiguration);
+        }
+        catch (Exception ex)
+        {
+            DisplayErrorMessage(ex, "Error saving page layout preference");
+        }
     }
 
     private void InitializeMessageProducer()

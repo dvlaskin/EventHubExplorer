@@ -1,0 +1,27 @@
+@using Domain.Enums
+
+<div class="message-layout @LayoutPresetClass">
+    <div class="area-send">
+        @SendArea
+    </div>
+    <div class="area-receive">
+        @ReceiveArea
+    </div>
+    <div class="area-payload">
+        @BodyArea
+    </div>
+</div>
+
+@code {
+    [Parameter] public MessagePageLayoutPreset LayoutPreset { get; set; } = MessagePageLayoutPreset.TopSendReceiveBottomPayload;
+
+    [Parameter, EditorRequired] public RenderFragment SendArea { get; set; } = default!;
+    [Parameter, EditorRequired] public RenderFragment ReceiveArea { get; set; } = default!;
+    [Parameter, EditorRequired] public RenderFragment BodyArea { get; set; } = default!;
+
+    private string LayoutPresetClass => LayoutPreset switch
+    {
+        MessagePageLayoutPreset.LeftSendReceiveRightPayload => "layout-left-right",
+        _ => "layout-top-bottom"
+    };
+}

@@ -1,0 +1,62 @@
+.label-section {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-primary);
+}
+
+.receive-empty-state {
+    min-height: 150px;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-btn);
+    background: rgba(255, 255, 255, 0.7);
+    color: var(--color-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    text-align: center;
+}
+
+.receive-status {
+    margin: 0 0 0.5rem;
+    font-size: 0.85rem;
+    color: var(--color-muted);
+}
+
+::deep .scrollable-list {
+    flex: 1;
+    height: 100%;
+    min-height: 150px;
+    overflow-y: auto;
+    border-radius: var(--radius-btn);
+    border: 1px solid var(--glass-border);
+}
+
+::deep .list-group-item {
+    font-size: small;
+    transition:
+        background var(--transition),
+        color var(--transition);
+}
+
+::deep .list-group-item:hover {
+    background-color: rgba(102, 16, 242, 0.1);
+    color: var(--color-primary);
+}
+
+::deep .message-list-item-button {
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    padding: 0;
+    font: inherit;
+}
+
+::deep .message-list-item-button:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}

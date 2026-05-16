@@ -1,3 +1,4 @@
+using Domain.Enums;
 using Domain.Interfaces;
 
 namespace Domain.Configs;
@@ -12,4 +13,5 @@ public class StorageQueueConfig : IFormattingConfig
     public bool UseGzipCompression { get; set; }
     public bool UseBase64Coding { get; set; }
     public Dictionary<string, bool> MessageFormatters { get; set; } = new();
+    public MessagePageLayoutPreset MessagePageLayout { get; set; } = MessagePageLayoutPreset.TopSendReceiveBottomPayload;
 }

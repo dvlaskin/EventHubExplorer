@@ -88,6 +88,15 @@
                     var index = i;
                     var eventHub = appConfiguration.EventHubsConfigs[i];
                     var isEmpty = string.IsNullOrWhiteSpace(eventHub.ConnectionString) || string.IsNullOrWhiteSpace(eventHub.Name);
+                    var titleInputId = $"eh-title-{i}";
+                    var connectionStringInputId = $"eh-connection-string-{i}";
+                    var eventHubNameInputId = $"eh-name-{i}";
+                    var useGzipInputId = $"eh-use-gzip-{i}";
+                    var useBase64InputId = $"eh-use-base64-{i}";
+                    var useCheckpointsInputId = $"eh-use-checkpoints-{i}";
+                    var layoutPresetInputId = $"eh-layout-preset-{i}";
+                    var blobConnectionStringInputId = $"eh-blob-connection-string-{i}";
+                    var blobContainerNameInputId = $"eh-blob-container-name-{i}";
 
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="heading-eh-@i">
@@ -100,45 +109,56 @@
                              data-bs-parent="#eventHubAccordion">
                             <div class="accordion-body">
                                 <div class="mb-3">
-                                    <label class="form-label">Title</label>
-                                    <input class="form-control" @bind="eventHub.Title">
+                                    <label class="form-label" for="@titleInputId">Title</label>
+                                    <input id="@titleInputId" class="form-control" @bind="eventHub.Title">
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Connection String</label>
-                                    <input class="form-control" @bind="eventHub.ConnectionString">
+                                    <label class="form-label" for="@connectionStringInputId">Connection String</label>
+                                    <input id="@connectionStringInputId" class="form-control" @bind="eventHub.ConnectionString">
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">EventHub Name</label>
-                                    <input class="form-control" @bind="eventHub.Name">
+                                    <label class="form-label" for="@eventHubNameInputId">EventHub Name</label>
+                                    <input id="@eventHubNameInputId" class="form-control" @bind="eventHub.Name">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label" for="@layoutPresetInputId">Blocks layout</label>
+                                    <select id="@layoutPresetInputId" class="form-select" @bind="eventHub.MessagePageLayout">
+                                        <option value="@MessagePageLayoutPreset.TopSendReceiveBottomPayload">Top: Send + Receive, Bottom: Payload</option>
+                                        <option value="@MessagePageLayoutPreset.LeftSendReceiveRightPayload">Left: Send + Receive, Right: Payload</option>
+                                    </select>
                                 </div>
                                 <div class="mb-3">
                                     <h6 class="config-section-label">Message encoding settings</h6>
                                     <div class="form-check d-inline-block me-3">
-                                        <input class="form-check-input" type="checkbox" @bind="eventHub.UseGzipCompression"
+                                        <input id="@useGzipInputId" class="form-check-input" type="checkbox" @bind="eventHub.UseGzipCompression"
                                                @bind:after="@(() => OnGzipCompressionChanged(eventHub))">
-                                        <label class="form-check-label">Use Gzip Compression</label>
+                                        <label class="form-check-label" for="@useGzipInputId">Use Gzip Compression</label>
                                     </div>
                                     <div class="form-check d-inline-block">
-                                        <input class="form-check-input" type="checkbox" @bind="eventHub.UseBase64Coding"
+                                        <input id="@useBase64InputId" class="form-check-input" type="checkbox" @bind="eventHub.UseBase64Coding"
                                                disabled="@(!eventHub.UseGzipCompression)">
-                                        <label class="form-check-label">Use Base64 Coding</label>
+                                        <label class="form-check-label" for="@useBase64InputId">Use Base64 Coding</label>
                                     </div>
                                 </div>
                                 <div class="mb-3">
                                     <h6 class="config-section-label">Message formatting settings</h6>
+                                    @{
+                                        var formatterIndex = 0;
+                                    }
                                     @foreach (var formatter in eventHub.MessageFormatters)
                                     {
+                                        var formatterId = $"eh-formatter-{i}-{formatterIndex++}";
                                         <div class="form-check d-inline-block me-3">
-                                            <label class="form-check-label">@formatter.Key</label>
-                                            <input class="form-check-input" type="checkbox"
+                                            <input id="@formatterId" class="form-check-input" type="checkbox"
                                                    @bind:get="formatter.Value"
                                                    @bind:set="(value) => eventHub.MessageFormatters[formatter.Key] = value">
+                                            <label class="form-check-label" for="@formatterId">@formatter.Key</label>
                                         </div>
                                     }
                                 </div>
                                 <div class="form-check mb-3">
-                                    <input class="form-check-input" type="checkbox" @bind="eventHub.UseCheckpoints">
-                                    <label class="form-check-label">Use Checkpoints</label>
+                                    <input id="@useCheckpointsInputId" class="form-check-input" type="checkbox" @bind="eventHub.UseCheckpoints">
+                                    <label class="form-check-label" for="@useCheckpointsInputId">Use Checkpoints</label>
                                 </div>
 
                                 @if (eventHub.UseCheckpoints)
@@ -147,12 +167,12 @@
 
                                     <h5 class="config-section-label">Blob Storage</h5>
                                     <div class="mb-3">
-                                        <label class="form-label">Connection String</label>
-                                        <input class="form-control" @bind="eventHub.StorageConfig.ConnectionString">
+                                        <label class="form-label" for="@blobConnectionStringInputId">Connection String</label>
+                                        <input id="@blobConnectionStringInputId" class="form-control" @bind="eventHub.StorageConfig.ConnectionString">
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label">Container Name</label>
-                                        <input class="form-control" @bind="eventHub.StorageConfig.BlobContainerName">
+                                        <label class="form-label" for="@blobContainerNameInputId">Container Name</label>
+                                        <input id="@blobContainerNameInputId" class="form-control" @bind="eventHub.StorageConfig.BlobContainerName">
                                     </div>
                                 }
 
@@ -183,6 +203,12 @@
                     var index = i;
                     var queueConfig = appConfiguration.StorageQueuesConfigs[i];
                     var isEmpty = string.IsNullOrWhiteSpace(queueConfig.ConnectionString) || string.IsNullOrWhiteSpace(queueConfig.QueueName);
+                    var titleInputId = $"sq-title-{i}";
+                    var connectionStringInputId = $"sq-connection-string-{i}";
+                    var queueNameInputId = $"sq-name-{i}";
+                    var useGzipInputId = $"sq-use-gzip-{i}";
+                    var useBase64InputId = $"sq-use-base64-{i}";
+                    var layoutPresetInputId = $"sq-layout-preset-{i}";
 
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="heading-sq-@i">
@@ -195,39 +221,50 @@
                              data-bs-parent="#storageQueueAccordion">
                             <div class="accordion-body">
                                 <div class="mb-3">
-                                    <label class="form-label">Title</label>
-                                    <input class="form-control" @bind="queueConfig.Title">
+                                    <label class="form-label" for="@titleInputId">Title</label>
+                                    <input id="@titleInputId" class="form-control" @bind="queueConfig.Title">
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Connection String</label>
-                                    <input class="form-control" @bind="queueConfig.ConnectionString">
+                                    <label class="form-label" for="@connectionStringInputId">Connection String</label>
+                                    <input id="@connectionStringInputId" class="form-control" @bind="queueConfig.ConnectionString">
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Queue Name</label>
-                                    <input class="form-control" @bind="queueConfig.QueueName">
+                                    <label class="form-label" for="@queueNameInputId">Queue Name</label>
+                                    <input id="@queueNameInputId" class="form-control" @bind="queueConfig.QueueName">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label" for="@layoutPresetInputId">Blocks layout</label>
+                                    <select id="@layoutPresetInputId" class="form-select" @bind="queueConfig.MessagePageLayout">
+                                        <option value="@MessagePageLayoutPreset.TopSendReceiveBottomPayload">Top: Send + Receive, Bottom: Payload</option>
+                                        <option value="@MessagePageLayoutPreset.LeftSendReceiveRightPayload">Left: Send + Receive, Right: Payload</option>
+                                    </select>
                                 </div>
                                 <div class="mb-3">
                                     <h6 class="config-section-label">Message encoding settings</h6>
                                     <div class="form-check d-inline-block me-3">
-                                        <input class="form-check-input" type="checkbox" @bind="queueConfig.UseGzipCompression"
+                                        <input id="@useGzipInputId" class="form-check-input" type="checkbox" @bind="queueConfig.UseGzipCompression"
                                                @bind:after="@(() => OnGzipCompressionChanged(queueConfig))">
-                                        <label class="form-check-label">Use Gzip Compression</label>
+                                        <label class="form-check-label" for="@useGzipInputId">Use Gzip Compression</label>
                                     </div>
                                     <div class="form-check d-inline-block">
-                                        <input class="form-check-input" type="checkbox" @bind="queueConfig.UseBase64Coding"
+                                        <input id="@useBase64InputId" class="form-check-input" type="checkbox" @bind="queueConfig.UseBase64Coding"
                                                disabled>
-                                        <label class="form-check-label">Use Base64 Coding</label>
+                                        <label class="form-check-label" for="@useBase64InputId">Use Base64 Coding</label>
                                     </div>
                                 </div>
                                 <div class="mb-3">
                                     <h6 class="config-section-label">Message formatting settings</h6>
+                                    @{
+                                        var formatterIndex = 0;
+                                    }
                                     @foreach (var formatter in queueConfig.MessageFormatters)
                                     {
+                                        var formatterId = $"sq-formatter-{i}-{formatterIndex++}";
                                         <div class="form-check d-inline-block me-3">
-                                            <label class="form-check-label">@formatter.Key</label>
-                                            <input class="form-check-input" type="checkbox"
+                                            <input id="@formatterId" class="form-check-input" type="checkbox"
                                                    @bind:get="formatter.Value"
                                                    @bind:set="(value) => queueConfig.MessageFormatters[formatter.Key] = value">
+                                            <label class="form-check-label" for="@formatterId">@formatter.Key</label>
                                         </div>
                                     }
                                 </div>
@@ -259,6 +296,14 @@
                     var index = i;
                     var sbConfig = appConfiguration.ServiceBusConfigs[i];
                     var isEmpty = string.IsNullOrWhiteSpace(sbConfig.ConnectionString) || string.IsNullOrWhiteSpace(sbConfig.EntityName);
+                    var titleInputId = $"sb-title-{i}";
+                    var connectionStringInputId = $"sb-connection-string-{i}";
+                    var entityNameInputId = $"sb-entity-name-{i}";
+                    var entityTypeInputId = $"sb-entity-type-{i}";
+                    var subscriptionNameInputId = $"sb-subscription-name-{i}";
+                    var useGzipInputId = $"sb-use-gzip-{i}";
+                    var useBase64InputId = $"sb-use-base64-{i}";
+                    var layoutPresetInputId = $"sb-layout-preset-{i}";
 
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="heading-sb-@i">
@@ -271,55 +316,66 @@
                              data-bs-parent="#serviceBusAccordion">
                             <div class="accordion-body">
                                 <div class="mb-3">
-                                    <label class="form-label">Title</label>
-                                    <input class="form-control" @bind="sbConfig.Title">
+                                    <label class="form-label" for="@titleInputId">Title</label>
+                                    <input id="@titleInputId" class="form-control" @bind="sbConfig.Title">
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Connection String</label>
-                                    <input class="form-control" @bind="sbConfig.ConnectionString">
+                                    <label class="form-label" for="@connectionStringInputId">Connection String</label>
+                                    <input id="@connectionStringInputId" class="form-control" @bind="sbConfig.ConnectionString">
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Entity Name (Queue or Topic)</label>
-                                    <input class="form-control" @bind="sbConfig.EntityName">
+                                    <label class="form-label" for="@entityNameInputId">Entity Name (Queue or Topic)</label>
+                                    <input id="@entityNameInputId" class="form-control" @bind="sbConfig.EntityName">
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Entity Type</label>
-                                    <select class="form-select" @bind="sbConfig.EntityType">
+                                    <label class="form-label" for="@entityTypeInputId">Entity Type</label>
+                                    <select id="@entityTypeInputId" class="form-select" @bind="sbConfig.EntityType">
                                         <option value="@ServiceBusEntityType.Queue">Queue</option>
                                         <option value="@ServiceBusEntityType.Topic">Topic</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label" for="@layoutPresetInputId">Blocks layout</label>
+                                    <select id="@layoutPresetInputId" class="form-select" @bind="sbConfig.MessagePageLayout">
+                                        <option value="@MessagePageLayoutPreset.TopSendReceiveBottomPayload">Top: Send + Receive, Bottom: Payload</option>
+                                        <option value="@MessagePageLayoutPreset.LeftSendReceiveRightPayload">Left: Send + Receive, Right: Payload</option>
                                     </select>
                                 </div>
 
                                 @if (sbConfig.EntityType == ServiceBusEntityType.Topic)
                                 {
                                     <div class="mb-3">
-                                        <label class="form-label">Subscription Name (for consuming)</label>
-                                        <input class="form-control" @bind="sbConfig.SubscriptionName">
+                                        <label class="form-label" for="@subscriptionNameInputId">Subscription Name (for consuming)</label>
+                                        <input id="@subscriptionNameInputId" class="form-control" @bind="sbConfig.SubscriptionName">
                                     </div>
                                 }
 
                                 <div class="mb-3">
                                     <h6 class="config-section-label">Message encoding settings</h6>
                                     <div class="form-check d-inline-block me-3">
-                                        <input class="form-check-input" type="checkbox" @bind="sbConfig.UseGzipCompression"
+                                        <input id="@useGzipInputId" class="form-check-input" type="checkbox" @bind="sbConfig.UseGzipCompression"
                                                @bind:after="@(() => OnGzipCompressionChanged(sbConfig))">
-                                        <label class="form-check-label">Use Gzip Compression</label>
+                                        <label class="form-check-label" for="@useGzipInputId">Use Gzip Compression</label>
                                     </div>
                                     <div class="form-check d-inline-block">
-                                        <input class="form-check-input" type="checkbox" @bind="sbConfig.UseBase64Coding"
+                                        <input id="@useBase64InputId" class="form-check-input" type="checkbox" @bind="sbConfig.UseBase64Coding"
                                                disabled="@(!sbConfig.UseGzipCompression)">
-                                        <label class="form-check-label">Use Base64 Coding</label>
+                                        <label class="form-check-label" for="@useBase64InputId">Use Base64 Coding</label>
                                     </div>
                                 </div>
                                 <div class="mb-3">
                                     <h6 class="config-section-label">Message formatting settings</h6>
+                                    @{
+                                        var formatterIndex = 0;
+                                    }
                                     @foreach (var formatter in sbConfig.MessageFormatters)
                                     {
+                                        var formatterId = $"sb-formatter-{i}-{formatterIndex++}";
                                         <div class="form-check d-inline-block me-3">
-                                            <label class="form-check-label">@formatter.Key</label>
-                                            <input class="form-check-input" type="checkbox"
+                                            <input id="@formatterId" class="form-check-input" type="checkbox"
                                                    @bind:get="formatter.Value"
                                                    @bind:set="(value) => sbConfig.MessageFormatters[formatter.Key] = value">
+                                            <label class="form-check-label" for="@formatterId">@formatter.Key</label>
                                         </div>
                                     }
                                 </div>
@@ -408,6 +464,7 @@
             Title = "New Event Hub",
             ConnectionString = "",
             Name = "",
+            MessagePageLayout = MessagePageLayoutPreset.TopSendReceiveBottomPayload,
             MessageFormatters = MessageFormatters?.ToDictionary(k => k.Name, v => false) ?? new Dictionary<string, bool>(),
             UseCheckpoints = false,
             StorageConfig = new BlobConfig { ConnectionString = "", BlobContainerName = "" }
@@ -421,6 +478,7 @@
             Title = "New Storage Queue",
             ConnectionString = "",
             QueueName = "",
+            MessagePageLayout = MessagePageLayoutPreset.TopSendReceiveBottomPayload,
             MessageFormatters = MessageFormatters?.ToDictionary(k => k.Name, v => false) ?? new Dictionary<string, bool>()
         });
     }
@@ -433,6 +491,7 @@
             ConnectionString = "",
             EntityName = "",
             EntityType = ServiceBusEntityType.Queue,
+            MessagePageLayout = MessagePageLayoutPreset.TopSendReceiveBottomPayload,
             MessageFormatters = MessageFormatters?.ToDictionary(k => k.Name, v => false) ?? new Dictionary<string, bool>()
         });
     }

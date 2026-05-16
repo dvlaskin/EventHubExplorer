@@ -1,0 +1,32 @@
+.error-page {
+    min-height: 90vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.error-panel {
+    width: min(680px, 100%);
+    background: var(--gradient-hero);
+    color: #fff;
+    border-radius: var(--radius-card);
+    padding: 2rem;
+    box-shadow: 0 10px 28px rgba(5, 39, 103, 0.28);
+}
+
+.error-panel h1 {
+    margin-bottom: 1rem;
+    font-size: 1.75rem;
+}
+
+.error-panel p {
+    margin-bottom: 0.75rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.error-request-id {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+}

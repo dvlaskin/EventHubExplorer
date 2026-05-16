@@ -55,10 +55,26 @@
 }
 
 .nav-section-toggle {
+    display: flex;
+    align-items: center;
+    width: 100%;
     justify-content: space-between;
     cursor: pointer;
     user-select: none;
     transition: background-color 0.15s ease;
+    border: none;
+    padding: 0;
+    text-align: left;
+}
+
+.nav-section-toggle:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.65);
+    outline-offset: 2px;
+}
+
+.nav-section-toggle--active {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
 }
 
 .nav-section-chevron {
@@ -96,6 +112,7 @@
         align-items: center;
         line-height: 3rem;
         width: 100%;
+        padding-left: 1rem;
     }
 
 .nav-item ::deep a.active {
@@ -106,6 +123,14 @@
 .nav-item ::deep .nav-link:hover {
     background-color: rgba(255,255,255,0.1);
     color: white;
+}
+
+.nav-item ::deep .nav-link.nav-link--compact {
+    line-height: 1rem;
+    height: auto;
+    min-height: 2rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
 }
 
 .nav-scrollable {

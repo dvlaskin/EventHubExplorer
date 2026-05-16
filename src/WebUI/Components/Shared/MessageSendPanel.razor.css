@@ -1,0 +1,103 @@
+.label-section {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-primary);
+}
+
+.label-inline {
+    font-size: 0.92rem;
+    color: var(--color-muted);
+}
+
+.history-icon {
+    opacity: 0.5;
+    transition: opacity var(--transition);
+    background: var(--glass-bg);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: none;
+    border-radius: var(--radius-btn);
+}
+
+.history-icon:hover {
+    opacity: 1;
+}
+
+.history-icon:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.message-history-dropdown {
+    position: absolute;
+    top: 40px;
+    right: 5%;
+    width: 90%;
+    max-height: 200px;
+    overflow-y: auto;
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--color-primary);
+    border-radius: var(--radius-btn);
+    z-index: 1000;
+    box-shadow: 0 4px 16px rgba(102, 16, 242, 0.18);
+}
+
+.message-history-dropdown .list-group-item {
+    padding: 0.5rem 1rem;
+    border-left: none;
+    border-right: none;
+    list-style: none;
+}
+
+.message-input {
+    resize: none;
+}
+
+.message-number-input,
+.message-delay-input,
+.message-delay-unit {
+    width: 5rem;
+}
+
+.message-text {
+    border: none;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    padding: 0;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.message-text:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.message-history-dropdown .list-group-item:hover,
+.message-history-dropdown .list-group-item:focus-within {
+    background-color: rgba(102, 16, 242, 0.1);
+    color: var(--color-primary);
+}
+
+.message-history-dropdown .list-group-item:first-child {
+    border-top: none;
+}
+
+.message-history-dropdown .list-group-item:last-child {
+    border-bottom: none;
+}
+
+.delete-button {
+    visibility: hidden;
+}
+
+.list-group-item:hover .delete-button {
+    visibility: visible;
+}
