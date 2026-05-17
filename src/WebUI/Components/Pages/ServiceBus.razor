@@ -27,19 +27,9 @@
     <div class="servicebus-entity text-muted" title="@entityDescription">@entityDescription</div>
 }
 
-<div class="row g-3 mb-3">
-    <div class="col-md-6 col-lg-5">
-        <label class="form-label" for="servicebus-layout-preset">Blocks layout</label>
-        <select id="servicebus-layout-preset"
-                class="form-select"
-                @bind="currentLayoutPreset"
-                @bind:after="SaveLayoutPreferenceAsync">
-            <option value="@MessagePageLayoutPreset.TopSendReceiveBottomPayload">Top: Send + Receive, Bottom: Payload</option>
-            <option value="@MessagePageLayoutPreset.LeftSendReceiveRightPayload">Left: Send + Receive, Right: Payload</option>
-            <option value="@MessagePageLayoutPreset.LeftSendRightReceiveBottomPayload">Left: Send, Right: Receive + Payload (50/50)</option>
-        </select>
-    </div>
-</div>
+<MessageLayoutPresetSelector InputId="servicebus-layout-preset"
+                             @bind-Value="currentLayoutPreset"
+                             OnAfterChange="SaveLayoutPreferenceAsync" />
 
 <MessagePageLayout LayoutPreset="@currentLayoutPreset">
     <SendArea>

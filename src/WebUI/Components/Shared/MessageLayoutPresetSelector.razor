@@ -1,0 +1,37 @@
+@using System.Globalization
+@using Domain.Enums
+
+<div class="row g-3 mb-3">
+    <div class="col-md-6 col-lg-5">
+        <label class="form-label label-section" for="@InputId">@Label</label>
+        <select id="@InputId" class="form-select" value="@Value" @onchange="HandleValueChangedAsync">
+            <option value="@MessagePageLayoutPreset.TopSendReceiveBottomPayload">Top: Send/Receive | Bottom: Payload</option>
+            <option value="@MessagePageLayoutPreset.LeftSendReceiveRightPayload">Left: Send/Receive | Right: Payload</option>
+            <option value="@MessagePageLayoutPreset.LeftSendRightReceiveBottomPayload">Left: Send | Right: Receive/Payload</option>
+        </select>
+    </div>
+</div>
+
+@code {
+    [Parameter] public MessagePageLayoutPreset Value { get; set; } = MessagePageLayoutPreset.TopSendReceiveBottomPayload;
+    [Parameter] public EventCallback<MessagePageLayoutPreset> ValueChanged { get; set; }
+    [Parameter] public EventCallback OnAfterChange { get; set; }
+    [Parameter] public string Label { get; set; } = "Blocks layout";
+    [Parameter] public string InputId { get; set; } = $"message-layout-preset-{Guid.NewGuid():N}";
+
+    private async Task HandleValueChangedAsync(ChangeEventArgs eventArgs)
+    {
+        if (!BindConverter.TryConvertTo<MessagePageLayoutPreset>(eventArgs.Value, CultureInfo.InvariantCulture, out var selectedLayoutPreset))
+        {
+            throw new InvalidOperationException($"Cannot convert '{eventArgs.Value}' to {nameof(MessagePageLayoutPreset)}.");
+        }
+
+        Value = selectedLayoutPreset;
+        await ValueChanged.InvokeAsync(selectedLayoutPreset);
+
+        if (OnAfterChange.HasDelegate)
+        {
+            await OnAfterChange.InvokeAsync();
+        }
+    }
+}
