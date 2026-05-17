@@ -31,6 +31,14 @@
         "receive payload";
 }
 
+.layout-left-right-split {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+        "send receive"
+        "send payload";
+}
+
 .area-send {
     grid-area: send;
 }
@@ -44,7 +52,8 @@
 }
 
 @media (max-width: 991.98px) {
-    .layout-left-right {
+    .layout-left-right,
+    .layout-left-right-split {
         grid-template-columns: 1fr;
         grid-template-rows: auto auto 1fr;
         grid-template-areas:

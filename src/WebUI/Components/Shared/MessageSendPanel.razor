@@ -1,9 +1,9 @@
 @using Domain.Enums
 
-<div class="message-send-panel d-flex flex-column">
-    <div class="mb-3">
+<div class="message-send-panel d-flex flex-column @(StretchMessageInput ? "layout-stretched" : string.Empty)">
+    <div class="mb-3 message-input-section">
         <label for="@messageInputId" class="form-label label-section">@SendLabel</label>
-        <div class="position-relative">
+        <div class="position-relative message-input-wrapper">
             <textarea class="form-control message-input"
                       id="@messageInputId"
                       rows="6"
@@ -101,6 +101,7 @@
     [Parameter] public EventCallback<string> DelayTimeUnitChanged { get; set; }
 
     [Parameter] public string SendLabel { get; set; } = "Send Message";
+    [Parameter] public bool StretchMessageInput { get; set; }
 
     [Parameter] public EventCallback OnSend { get; set; }
     [Parameter] public EventCallback OnToggleHistory { get; set; }

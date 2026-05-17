@@ -22,6 +22,7 @@
     private string LayoutPresetClass => LayoutPreset switch
     {
         MessagePageLayoutPreset.LeftSendReceiveRightPayload => "layout-left-right",
+        MessagePageLayoutPreset.LeftSendRightReceiveBottomPayload => "layout-left-right-split",
         _ => "layout-top-bottom"
     };
 }

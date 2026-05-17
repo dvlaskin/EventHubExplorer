@@ -36,6 +36,7 @@
                 @bind:after="SaveLayoutPreferenceAsync">
             <option value="@MessagePageLayoutPreset.TopSendReceiveBottomPayload">Top: Send + Receive, Bottom: Payload</option>
             <option value="@MessagePageLayoutPreset.LeftSendReceiveRightPayload">Left: Send + Receive, Right: Payload</option>
+            <option value="@MessagePageLayoutPreset.LeftSendRightReceiveBottomPayload">Left: Send, Right: Receive + Payload (50/50)</option>
         </select>
     </div>
 </div>
@@ -47,6 +48,7 @@
                           MessagesHistory="@messagesHistoryList"
                           ShowHistory="@showMessageHistory"
                           ShowHistoryChanged="@(value => showMessageHistory = value)"
+                          StretchMessageInput="@(currentLayoutPreset == MessagePageLayoutPreset.LeftSendRightReceiveBottomPayload)"
                           NumberToSend="@numberMessagesToSend"
                           NumberToSendChanged="@(value => numberMessagesToSend = value)"
                           Delay="@delayToSend"
