@@ -1,0 +1,12 @@
+.label-section {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-primary);
+}
+
+.message-body-input {
+    resize: none;
+    min-height: 200px;
+}

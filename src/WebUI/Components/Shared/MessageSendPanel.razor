@@ -1,0 +1,157 @@
+@using Domain.Enums
+
+<div class="message-send-panel d-flex flex-column @(StretchMessageInput ? "layout-stretched" : string.Empty)">
+    <div class="mb-3 message-input-section">
+        <label for="@messageInputId" class="form-label label-section">@SendLabel</label>
+        <div class="position-relative message-input-wrapper">
+            <textarea class="form-control message-input"
+                      id="@messageInputId"
+                      rows="6"
+                      @bind:get="MessageToSend"
+                      @bind:set="SetMessageToSendAsync"></textarea>
+
+            <button type="button"
+                    class="btn position-absolute top-0 end-0 m-2 p-1 history-icon"
+                    aria-label="Toggle message history"
+                    aria-expanded="@ShowHistory"
+                    aria-controls="@historyDropdownId"
+                    @onclick="ToggleHistoryAsync">
+                <i class="bi bi-clock-history" aria-hidden="true"></i>
+            </button>
+
+            @if (ShowHistory && MessagesHistory.Any())
+            {
+                <div id="@historyDropdownId" class="message-history-dropdown">
+                    <ul class="list-group list-unstyled mb-0">
+                        @foreach (var message in MessagesHistory)
+                        {
+                            <li class="list-group-item d-flex align-items-center">
+                                <button type="button"
+                                        class="flex-grow-1 message-text"
+                                        @onclick="() => OnSelectMessage.InvokeAsync(message)">
+                                    @TrimHistoryMessage(message)
+                                </button>
+                                <button type="button"
+                                        class="btn btn-link btn-sm text-danger p-0 ms-2 delete-button"
+                                        aria-label="Remove message from history"
+                                        @onclick="() => OnRemoveFromHistory.InvokeAsync(message)"
+                                        @onclick:stopPropagation>
+                                    <i class="bi bi-trash" aria-hidden="true"></i>
+                                </button>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-2 message-send-controls">
+        <button class="btn btn-primary" type="button" @onclick="OnSend">Send</button>
+
+        <div class="d-flex align-items-center gap-2">
+            <label for="@messageCountInputId" class="form-label mb-0 label-inline">Number of messages</label>
+            <input class="form-control form-control-sm message-number-input"
+                   type="number"
+                   id="@messageCountInputId"
+                   min="1"
+                   @bind:get="NumberToSend"
+                   @bind:set="SetNumberToSendAsync" />
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <label for="@messageDelayInputId" class="form-label mb-0 label-inline">Delay</label>
+            <input class="form-control form-control-sm message-delay-input"
+                   type="number"
+                   id="@messageDelayInputId"
+                   min="0"
+                   @bind:get="Delay"
+                   @bind:set="SetDelayAsync" />
+            <select class="form-select form-select-sm message-delay-unit"
+                    @bind:get="DelayTimeUnit"
+                    @bind:set="SetDelayTimeUnitAsync">
+                <option value="@Domain.Enums.DelayTimeUnit.Second">@Domain.Enums.DelayTimeUnit.Second</option>
+                <option value="@Domain.Enums.DelayTimeUnit.Millisecond">@Domain.Enums.DelayTimeUnit.Millisecond</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+@code {
+    private readonly string messageInputId = $"message-input-{Guid.NewGuid():N}";
+    private readonly string messageCountInputId = $"message-count-{Guid.NewGuid():N}";
+    private readonly string messageDelayInputId = $"message-delay-{Guid.NewGuid():N}";
+    private readonly string historyDropdownId = $"message-history-{Guid.NewGuid():N}";
+
+    [Parameter] public string? MessageToSend { get; set; }
+    [Parameter] public EventCallback<string?> MessageToSendChanged { get; set; }
+
+    [Parameter] public List<string> MessagesHistory { get; set; } = [];
+
+    [Parameter] public bool ShowHistory { get; set; }
+    [Parameter] public EventCallback<bool> ShowHistoryChanged { get; set; }
+
+    [Parameter] public uint NumberToSend { get; set; } = 1;
+    [Parameter] public EventCallback<uint> NumberToSendChanged { get; set; }
+
+    [Parameter] public int Delay { get; set; }
+    [Parameter] public EventCallback<int> DelayChanged { get; set; }
+
+    [Parameter] public string DelayTimeUnit { get; set; } = global::Domain.Enums.DelayTimeUnit.Second;
+    [Parameter] public EventCallback<string> DelayTimeUnitChanged { get; set; }
+
+    [Parameter] public string SendLabel { get; set; } = "Send Message";
+    [Parameter] public bool StretchMessageInput { get; set; }
+
+    [Parameter] public EventCallback OnSend { get; set; }
+    [Parameter] public EventCallback OnToggleHistory { get; set; }
+    [Parameter] public EventCallback<string> OnSelectMessage { get; set; }
+    [Parameter] public EventCallback<string> OnRemoveFromHistory { get; set; }
+
+    private Task SetMessageToSendAsync(string? value)
+    {
+        if (MessageToSend == value)
+            return Task.CompletedTask;
+
+        MessageToSend = value;
+        return MessageToSendChanged.InvokeAsync(value);
+    }
+
+    private Task SetNumberToSendAsync(uint value)
+    {
+        if (NumberToSend == value)
+            return Task.CompletedTask;
+
+        NumberToSend = value;
+        return NumberToSendChanged.InvokeAsync(value);
+    }
+
+    private Task SetDelayAsync(int value)
+    {
+        if (Delay == value)
+            return Task.CompletedTask;
+
+        Delay = value;
+        return DelayChanged.InvokeAsync(value);
+    }
+
+    private Task SetDelayTimeUnitAsync(string value)
+    {
+        if (DelayTimeUnit == value)
+            return Task.CompletedTask;
+
+        DelayTimeUnit = value;
+        return DelayTimeUnitChanged.InvokeAsync(value);
+    }
+
+    private Task ToggleHistoryAsync()
+    {
+        if (OnToggleHistory.HasDelegate)
+            return OnToggleHistory.InvokeAsync();
+
+        return ShowHistoryChanged.InvokeAsync(!ShowHistory);
+    }
+
+    private static string TrimHistoryMessage(string message)
+        => message.Length > 50 ? $"{message[..45]}..." : message;
+}

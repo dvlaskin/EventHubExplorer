@@ -1,13 +1,13 @@
 ﻿@inherits LayoutComponentBase
 
 <div class="page">
-    <div class="sidebar">
-        <NavMenu/>
-    </div>
+    <aside class="sidebar" aria-label="Primary navigation">
+        <NavMenu />
+    </aside>
 
-    <main >
-        <div class="top-row px-4" style="background: rgb(5, 39, 103);"></div>
-    
+    <main class="main-content">
+        <header class="top-row px-4 app-shell-row" aria-hidden="true"></header>
+
         <article class="content px-4">
             @Body
         </article>
@@ -17,5 +17,5 @@
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
     <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
+    <button type="button" class="dismiss" aria-label="Dismiss error">🗙</button>
 </div>

@@ -1,0 +1,75 @@
+@using Domain.Enums
+
+<div class="row g-3 mb-3">
+    <div class="col-md-10 col-lg-9 layout-preset-toolbar">
+        <label id="@InputId" class="form-label label-section">@Label</label>
+        <div class="layout-preset-switch" role="group" aria-labelledby="@InputId">
+            @foreach (var preset in PresetOptions)
+            {
+                var isActive = Value == preset.Preset;
+                <button type="button"
+                        class="layout-preset-button @(isActive ? "layout-preset-button--active" : null)"
+                        title="@preset.Description"
+                        aria-label="@preset.Description"
+                        aria-pressed="@isActive"
+                        @onclick="() => HandlePresetChangedAsync(preset.Preset)">
+                    <span class="layout-preset-preview @preset.PreviewClass" aria-hidden="true"></span>
+                    <span class="layout-preset-caption">@preset.Caption</span>
+                </button>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private static readonly LayoutPresetOption[] PresetOptions =
+    [
+        new(
+            MessagePageLayoutPreset.TopSendReceiveBottomPayload,
+            "Top | Bottom",
+            "Top: Send/Receive | Bottom: Payload",
+            "layout-preset-preview--top-bottom"
+        ),
+        new(
+            MessagePageLayoutPreset.LeftSendReceiveRightPayload,
+            "Left | Right",
+            "Left: Send/Receive | Right: Payload",
+            "layout-preset-preview--left-right"
+        ),
+        new(
+            MessagePageLayoutPreset.LeftSendRightReceiveBottomPayload,
+            "Split",
+            "Left: Send | Right: Receive/Payload",
+            "layout-preset-preview--split"
+        )
+    ];
+
+    [Parameter] public MessagePageLayoutPreset Value { get; set; } = MessagePageLayoutPreset.TopSendReceiveBottomPayload;
+    [Parameter] public EventCallback<MessagePageLayoutPreset> ValueChanged { get; set; }
+    [Parameter] public EventCallback OnAfterChange { get; set; }
+    [Parameter] public string Label { get; set; } = "Blocks layout";
+    [Parameter] public string InputId { get; set; } = $"message-layout-preset-{Guid.NewGuid():N}";
+
+    private async Task HandlePresetChangedAsync(MessagePageLayoutPreset preset)
+    {
+        if (Value == preset)
+        {
+            return;
+        }
+
+        Value = preset;
+        await ValueChanged.InvokeAsync(preset);
+
+        if (OnAfterChange.HasDelegate)
+        {
+            await OnAfterChange.InvokeAsync();
+        }
+    }
+
+    private readonly record struct LayoutPresetOption(
+        MessagePageLayoutPreset Preset,
+        string Caption,
+        string Description,
+        string PreviewClass
+    );
+}

@@ -1,0 +1,75 @@
+.message-layout {
+    display: grid;
+    gap: 1.25rem;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+}
+
+.area-send,
+.area-receive,
+.area-payload {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.layout-top-bottom {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+        "send receive"
+        "payload payload";
+}
+
+.layout-left-right {
+    grid-template-columns: 1fr 1.5fr;
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+        "send payload"
+        "receive payload";
+}
+
+.layout-left-right-split {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+        "send receive"
+        "send payload";
+}
+
+.area-send {
+    grid-area: send;
+}
+
+.area-receive {
+    grid-area: receive;
+}
+
+.area-payload {
+    grid-area: payload;
+}
+
+@media (max-width: 991.98px) {
+    .layout-left-right,
+    .layout-left-right-split {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto 1fr;
+        grid-template-areas:
+            "send"
+            "receive"
+            "payload";
+    }
+}
+
+@media (max-width: 767.98px) {
+    .layout-top-bottom {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto 1fr;
+        grid-template-areas:
+            "send"
+            "receive"
+            "payload";
+    }
+}

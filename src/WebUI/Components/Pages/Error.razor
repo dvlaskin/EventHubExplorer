@@ -3,17 +3,19 @@
 
 <PageTitle>Error</PageTitle>
 
-<div style="background-color: #0a58ca; color: white; height: 90vh; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: 3em;">
-    <h2>:(</h2>
-    <p>Your website encountered a problem and needs to restart.</p>
-    <p>We're just collecting some error info, and then we'll restart for you.</p>
+<div class="error-page">
+    <section class="error-panel" aria-labelledby="error-title">
+        <h1 id="error-title">Something went wrong</h1>
+        <p>The application encountered an unexpected error and needs to restart.</p>
+        <p>Please wait a moment and then reload the page.</p>
 
-    @if (ShowRequestId)
-    {
-        <p>
-            <strong>Request ID:</strong> @RequestId
-        </p>
-    }
+        @if (ShowRequestId)
+        {
+            <p class="error-request-id">
+                <strong>Request ID:</strong> @RequestId
+            </p>
+        }
+    </section>
 </div>
 
 @code{

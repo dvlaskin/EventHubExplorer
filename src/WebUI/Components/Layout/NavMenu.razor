@@ -2,16 +2,20 @@
 @using Domain.Enums
 @rendermode InteractiveServer
 
-<div class="top-row ps-3 navbar navbar-dark">
+<header class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">EventHub Explorer</a>
+        <NavLink class="navbar-brand" href="" Match="NavLinkMatch.All">EventHub Explorer</NavLink>
     </div>
-</div>
+</header>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler"/>
+<input type="checkbox"
+       class="navbar-toggler"
+       title="Navigation menu"
+       aria-label="Toggle navigation menu"
+       aria-controls="primary-navigation" />
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
+<div class="nav-scrollable">
+    <nav id="primary-navigation" class="nav flex-column" aria-label="Primary">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
                 <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
@@ -19,21 +23,23 @@
         </div>
 
         <div class="nav-item px-3 mt-3">
-            <div class="nav-link nav-section-toggle" @onclick="ToggleEventHubs"
-                 title="@(isEventHubsExpanded ? "Collapse" : "Expand")">
+            <button type="button"
+                    class="nav-link nav-section-toggle @(IsEventHubRouteActive ? "nav-section-toggle--active" : string.Empty)"
+                    @onclick="ToggleEventHubs"
+                    aria-expanded="@isEventHubsExpanded"
+                    aria-controls="eventhubs-nav-group">
                 <span class="nav-section-header">EventHubs</span>
-                <i class="bi @(isEventHubsExpanded ? "bi-chevron-up" : "bi-chevron-down") nav-section-chevron"></i>
-            </div>
+                <i class="bi @(isEventHubsExpanded ? "bi-chevron-up" : "bi-chevron-down") nav-section-chevron" aria-hidden="true"></i>
+            </button>
         </div>
 
-        @if (isEventHubsExpanded)
-        {
+        <div id="eventhubs-nav-group" hidden="@(!isEventHubsExpanded)">
             @foreach (var eventHub in EventHubsConfigs ?? Enumerable.Empty<EventHubConfig>())
             {
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" style="line-height: 1rem;" href="@($"eventhub/{eventHub.Id}")">
+                    <NavLink class="nav-link nav-link--compact" href="@($"eventhub/{eventHub.Id}")">
                         <span class="icon">
-                            <i class="bi bi-event-hubs-nav-menu"></i>
+                            <i class="bi bi-event-hubs-nav-menu" aria-hidden="true"></i>
                         </span>
                         <span class="text">
                             @eventHub.Title
@@ -41,24 +47,26 @@
                     </NavLink>
                 </div>
             }
-        }
-
-        <div class="nav-item px-3 mt-3">
-            <div class="nav-link nav-section-toggle" @onclick="ToggleStorageQueues"
-                 title="@(isStorageQueuesExpanded ? "Collapse" : "Expand")">
-                <span class="nav-section-header">StorageQueues</span>
-                <i class="bi @(isStorageQueuesExpanded ? "bi-chevron-up" : "bi-chevron-down") nav-section-chevron"></i>
-            </div>
         </div>
 
-        @if (isStorageQueuesExpanded)
-        {
+        <div class="nav-item px-3 mt-3">
+            <button type="button"
+                    class="nav-link nav-section-toggle @(IsStorageQueueRouteActive ? "nav-section-toggle--active" : string.Empty)"
+                    @onclick="ToggleStorageQueues"
+                    aria-expanded="@isStorageQueuesExpanded"
+                    aria-controls="storagequeue-nav-group">
+                <span class="nav-section-header">StorageQueues</span>
+                <i class="bi @(isStorageQueuesExpanded ? "bi-chevron-up" : "bi-chevron-down") nav-section-chevron" aria-hidden="true"></i>
+            </button>
+        </div>
+
+        <div id="storagequeue-nav-group" hidden="@(!isStorageQueuesExpanded)">
             @foreach (var queueConfig in StorageQueuesConfigs ?? Enumerable.Empty<StorageQueueConfig>())
             {
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" style="line-height: 1rem;" href="@($"storagequeue/{queueConfig.Id}")">
+                    <NavLink class="nav-link nav-link--compact" href="@($"storagequeue/{queueConfig.Id}")">
                         <span class="icon">
-                            <i class="bi bi-inbox-fill"></i>
+                            <i class="bi bi-inbox-fill" aria-hidden="true"></i>
                         </span>
                         <span class="text">
                             @queueConfig.Title
@@ -66,24 +74,26 @@
                     </NavLink>
                 </div>
             }
-        }
-
-        <div class="nav-item px-3 mt-3">
-            <div class="nav-link nav-section-toggle" @onclick="ToggleServiceBus"
-                 title="@(isServiceBusExpanded ? "Collapse" : "Expand")">
-                <span class="nav-section-header">ServiceBus</span>
-                <i class="bi @(isServiceBusExpanded ? "bi-chevron-up" : "bi-chevron-down") nav-section-chevron"></i>
-            </div>
         </div>
 
-        @if (isServiceBusExpanded)
-        {
+        <div class="nav-item px-3 mt-3">
+            <button type="button"
+                    class="nav-link nav-section-toggle @(IsServiceBusRouteActive ? "nav-section-toggle--active" : string.Empty)"
+                    @onclick="ToggleServiceBus"
+                    aria-expanded="@isServiceBusExpanded"
+                    aria-controls="servicebus-nav-group">
+                <span class="nav-section-header">ServiceBus</span>
+                <i class="bi @(isServiceBusExpanded ? "bi-chevron-up" : "bi-chevron-down") nav-section-chevron" aria-hidden="true"></i>
+            </button>
+        </div>
+
+        <div id="servicebus-nav-group" hidden="@(!isServiceBusExpanded)">
             @foreach (var sbConfig in ServiceBusConfigs ?? Enumerable.Empty<ServiceBusConfig>())
             {
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" style="line-height: 1rem;" href="@($"servicebus/{sbConfig.Id}")">
+                    <NavLink class="nav-link nav-link--compact" href="@($"servicebus/{sbConfig.Id}")">
                         <span class="icon">
-                            <i class="bi bi-send-fill"></i>
+                            <i class="bi bi-send-fill" aria-hidden="true"></i>
                         </span>
                         <span class="text" title="@(sbConfig.EntityType == ServiceBusEntityType.Topic ? $"{sbConfig.EntityName} ({sbConfig.SubscriptionName})" : sbConfig.EntityName)">
                             @sbConfig.Title
@@ -91,7 +101,7 @@
                     </NavLink>
                 </div>
             }
-        }
+        </div>
         
         <div class="nav-item px-3 mt-3">
             <NavLink class="nav-link" href="configuration">
