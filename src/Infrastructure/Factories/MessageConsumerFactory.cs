@@ -18,7 +18,7 @@ public class MessageConsumerFactory : IMessageConsumerFactory
     private readonly IServiceProvider serviceProvider;
 
     public MessageConsumerFactory(
-        ILogger<MessageConsumerFactory> logger, 
+        ILogger<MessageConsumerFactory> logger,
         IOptionsMonitor<AppConfiguration> config,
         IServiceProvider serviceProvider
     )
@@ -27,14 +27,14 @@ public class MessageConsumerFactory : IMessageConsumerFactory
         this.config = config;
         this.serviceProvider = serviceProvider;
     }
-    
+
     public IMessageConsumerService CreateConsumer(Guid configId)
     {
         logger.LogInformation("Creating consumer for configId: {ConfigId}", configId);
         var eventHubConfig = config.CurrentValue.EventHubsConfigs.First(x => x.Id == configId);
 
         IMessageConsumerProvider ehConsumerProvider = eventHubConfig.UseCheckpoints
-            ? CreateConsumerWithStorage(eventHubConfig) 
+            ? CreateConsumerWithStorage(eventHubConfig)
             : CreateConsumerWithoutStorage(eventHubConfig);
 
         var textProcessingPipeline = GetTextProcessingPipeline(eventHubConfig);
@@ -43,27 +43,27 @@ public class MessageConsumerFactory : IMessageConsumerFactory
                 serviceProvider, ehConsumerProvider, textProcessingPipeline
         );
     }
-    
+
     private EventHubConsumerProviderWithStorage CreateConsumerWithStorage(EventHubConfig eventHubConfig)
     {
         return ActivatorUtilities.CreateInstance<EventHubConsumerProviderWithStorage>(serviceProvider, eventHubConfig);
     }
-    
+
     private EventHubConsumerProviderWithoutStorage CreateConsumerWithoutStorage(EventHubConfig eventHubConfig)
     {
         return ActivatorUtilities.CreateInstance<EventHubConsumerProviderWithoutStorage>(serviceProvider, eventHubConfig);
     }
-    
-    
+
+
     private ITextProcessingPipeline GetTextProcessingPipeline(EventHubConfig eventHubConfig)
     {
         var activeMessageFormatters = GetActiveMessageFormatters(eventHubConfig);
         var textProcessingPipeline = serviceProvider.GetRequiredService<ITextProcessingPipeline>();
         textProcessingPipeline.AddFormatters(activeMessageFormatters);
-        
+
         return textProcessingPipeline;
     }
-    
+
     private IMessageFormatter[] GetActiveMessageFormatters(EventHubConfig eventHubConfig)
     {
         var ehMessageFormattersNames = eventHubConfig
@@ -74,11 +74,11 @@ public class MessageConsumerFactory : IMessageConsumerFactory
 
         var messageFormattersList = serviceProvider
             .GetServices<IMessageFormatter>()
-            .Where(w => 
+            .Where(w =>
                 w.Type == MessageFormatterType.AfterReceive
                 && ehMessageFormattersNames.Contains(w.Name)
             ).ToArray();
-        
+
         return messageFormattersList;
     }
 }

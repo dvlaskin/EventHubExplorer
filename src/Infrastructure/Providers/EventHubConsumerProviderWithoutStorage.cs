@@ -12,7 +12,7 @@ public sealed class EventHubConsumerProviderWithoutStorage : IMessageConsumerPro
 {
     private readonly ILogger<EventHubConsumerProviderWithoutStorage> logger;
     private readonly EventHubConfig config;
-    
+
     private const string ConsumerGroup = EventHubConsumerClient.DefaultConsumerGroupName;
     private bool needToStop;
     private volatile bool disposed;
@@ -22,7 +22,7 @@ public sealed class EventHubConsumerProviderWithoutStorage : IMessageConsumerPro
         this.logger = logger;
         this.config = config;
     }
-    
+
     public async Task StartReceiveMessageAsync(Func<EventHubMessage, Task> onMessageReceived, CancellationToken cancellationToken)
     {
         needToStop = false;
@@ -43,7 +43,7 @@ public sealed class EventHubConsumerProviderWithoutStorage : IMessageConsumerPro
                 Mode = EventHubsRetryMode.Fixed,
             },
         };
-        
+
         await using var consumer = new EventHubConsumerClient(ConsumerGroup, config.ConnectionString, config.Name, options);
         var partitions = await consumer.GetPartitionIdsAsync(cancellationToken);
         logger.LogInformation("Start reading from partitions {Partitions}", string.Join(", ", partitions));
@@ -51,7 +51,7 @@ public sealed class EventHubConsumerProviderWithoutStorage : IMessageConsumerPro
         {
             if (needToStop)
                 break;
-            
+
             var msgData = new EventHubMessage
             {
                 Message = CompressingEncoding.DecodeMessage(partitionEvent.Data.Body, config),
@@ -59,7 +59,7 @@ public sealed class EventHubConsumerProviderWithoutStorage : IMessageConsumerPro
                 SequenceNumber = partitionEvent.Data.SequenceNumber,
                 EnqueuedTime = partitionEvent.Data.EnqueuedTime
             };
-            
+
             await onMessageReceived(msgData);
         }
     }
@@ -69,8 +69,8 @@ public sealed class EventHubConsumerProviderWithoutStorage : IMessageConsumerPro
         needToStop = true;
         return Task.CompletedTask;
     }
-    
-    
+
+
     public async ValueTask DisposeAsync()
     {
         if (disposed)

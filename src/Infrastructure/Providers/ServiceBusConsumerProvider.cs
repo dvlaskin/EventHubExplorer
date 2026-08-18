@@ -14,12 +14,12 @@ public sealed class ServiceBusConsumerProvider : IMessageConsumerProvider
     private readonly ServiceBusConfig config;
     private readonly Lazy<ServiceBusClient> client;
     private readonly Lazy<ServiceBusReceiver> receiver;
-    
+
     private Func<EventHubMessage, Task>? runMessageProcessing;
     private volatile bool isProcessing;
     private volatile bool disposed;
 
-    
+
     public ServiceBusConsumerProvider(ILogger<ServiceBusConsumerProvider> logger, ServiceBusConfig config)
     {
         this.logger = logger;
@@ -28,14 +28,14 @@ public sealed class ServiceBusConsumerProvider : IMessageConsumerProvider
         receiver = new Lazy<ServiceBusReceiver>(CreateReceiver);
     }
 
-    
+
     public async Task StartReceiveMessageAsync(Func<EventHubMessage, Task> onMessageReceived, CancellationToken cancellationToken)
     {
         runMessageProcessing = onMessageReceived;
         isProcessing = true;
-        
+
         logger.LogInformation("Start receiving messages from Service Bus {EntityType} {EntityName}", config.EntityType, config.EntityName);
-        
+
         await ReceiveMessagesAsync(cancellationToken);
     }
 
@@ -46,7 +46,7 @@ public sealed class ServiceBusConsumerProvider : IMessageConsumerProvider
         return Task.CompletedTask;
     }
 
-    
+
     private async Task ReceiveMessagesAsync(CancellationToken cancellationToken)
     {
         while (isProcessing && !cancellationToken.IsCancellationRequested)
@@ -95,7 +95,7 @@ public sealed class ServiceBusConsumerProvider : IMessageConsumerProvider
     private ServiceBusClient CreateClient()
     {
         logger.LogInformation("Creating ServiceBusClient for {EntityName}", config.EntityName);
-        
+
         var options = new ServiceBusClientOptions
         {
             TransportType = config.ConnectionString.Contains("UseDevelopmentEmulator=true")

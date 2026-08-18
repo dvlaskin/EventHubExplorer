@@ -12,14 +12,14 @@ public abstract class BaseMessageProducer<T> : IMessageProducerService
 
 
     protected BaseMessageProducer(
-        IMessageProducerProvider messageProducerProvider, 
+        IMessageProducerProvider messageProducerProvider,
         MessageOptions? messageOptions = null
     )
     {
         this.messageProducerProvider = messageProducerProvider;
         this.messageOptions = messageOptions;
     }
-    
+
 
     public async Task SendMessagesAsync(
         string? messageText, uint numberOfMessages = 1, TimeSpan? delayToSend = null, CancellationToken cancellationToken = default
@@ -29,7 +29,7 @@ public abstract class BaseMessageProducer<T> : IMessageProducerService
             return;
 
         var messageModifier = CreateMessageModifier();
-        
+
         if (numberOfMessages <= 1)
         {
             await messageProducerProvider
@@ -50,7 +50,7 @@ public abstract class BaseMessageProducer<T> : IMessageProducerService
         }
     }
 
-    
+
     private Func<string, BinaryData> CreateMessageModifier()
     {
         return messageInput =>
@@ -65,20 +65,20 @@ public abstract class BaseMessageProducer<T> : IMessageProducerService
     {
         return messageOptions?.TextProcessingPipeline?.Process(messageText) ?? messageText;
     }
-    
+
     protected abstract T ApplyEncodingOptions(string message);
     protected abstract BinaryData EncodeToBinaryData(T message);
-    
-    
+
+
     public async ValueTask DisposeAsync()
     {
         if (disposed)
             return;
-        
+
         await messageProducerProvider.DisposeAsync().ConfigureAwait(false);
         GC.SuppressFinalize(this);
         disposed = true;
     }
-    
+
     ~BaseMessageProducer() => DisposeAsync().AsTask().GetAwaiter().GetResult();
 }

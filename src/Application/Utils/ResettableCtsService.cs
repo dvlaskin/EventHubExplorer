@@ -17,19 +17,19 @@ public class ResettableCts : IDisposable
             }
         }
     }
-    
+
     public void Reset()
     {
         lock (lockObj)
         {
             EnsureNotDisposed();
-            
+
             cts.Cancel();
             cts.Dispose();
             cts = new CancellationTokenSource();
         }
     }
-    
+
     public void Cancel()
     {
         lock (lockObj)
@@ -38,7 +38,7 @@ public class ResettableCts : IDisposable
             cts.Cancel();
         }
     }
-    
+
     public void Dispose()
     {
         if (disposed) return;

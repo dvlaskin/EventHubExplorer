@@ -18,7 +18,7 @@ public class MessageProducerFactory : IMessageProducerFactory
     private readonly IServiceProvider serviceProvider;
 
     public MessageProducerFactory(
-        ILogger<MessageProducerFactory> logger, 
+        ILogger<MessageProducerFactory> logger,
         IOptionsMonitor<AppConfiguration> config,
         IServiceProvider serviceProvider
     )
@@ -43,27 +43,27 @@ public class MessageProducerFactory : IMessageProducerFactory
             UseBase64Coding = eventHubConfig.UseBase64Coding,
             TextProcessingPipeline = textProcessingPipeline
         };
-        
+
         if (msgOptions is { UseGzipCompression: true, UseBase64Coding: false })
             return ActivatorUtilities.CreateInstance<BytesMessageProducer>(
                 serviceProvider, ehProducerProvider, msgOptions
             );
-        
+
         return ActivatorUtilities.CreateInstance<StringMessageProducer>(
             serviceProvider, ehProducerProvider, msgOptions
         );
     }
-    
+
 
     private ITextProcessingPipeline GetTextProcessingPipeline(EventHubConfig eventHubConfig)
     {
         var activeMessageFormatters = GetActiveMessageFormatters(eventHubConfig);
         var textProcessingPipeline = serviceProvider.GetRequiredService<ITextProcessingPipeline>();
         textProcessingPipeline.AddFormatters(activeMessageFormatters);
-        
+
         return textProcessingPipeline;
     }
-    
+
     private IMessageFormatter[] GetActiveMessageFormatters(EventHubConfig eventHubConfig)
     {
         var ehMessageFormattersNames = eventHubConfig
@@ -74,11 +74,11 @@ public class MessageProducerFactory : IMessageProducerFactory
 
         var messageFormattersList = serviceProvider
             .GetServices<IMessageFormatter>()
-            .Where(w => 
+            .Where(w =>
                 w.Type == MessageFormatterType.BeforeSend
                 && ehMessageFormattersNames.Contains(w.Name)
             ).ToArray();
-        
+
         return messageFormattersList;
     }
 }

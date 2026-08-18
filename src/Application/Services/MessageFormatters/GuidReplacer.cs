@@ -11,13 +11,13 @@ public partial class GuidReplacer : IMessageFormatter
 
     public MessageFormatterType Type => MessageFormatterType.BeforeSend;
     public string Name => FormatterName;
-    
+
     public string Transform(string inputText)
     {
         return guidRegex.Replace(inputText, match => Guid.NewGuid().ToString());
     }
 
-    
+
     [GeneratedRegex(@"\b[A-Fa-f0-9]{8}-?[A-Fa-f0-9]{4}-?[A-Fa-f0-9]{4}-?[A-Fa-f0-9]{4}-?[A-Fa-f0-9]{12}\b")]
     private static partial Regex GuidTextRegex();
 }

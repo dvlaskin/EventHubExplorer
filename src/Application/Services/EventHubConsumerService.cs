@@ -12,14 +12,14 @@ public class EventHubConsumerService : IMessageConsumerService
     private readonly ILogger<EventHubConsumerService> logger;
     private readonly IMessageConsumerProvider messageConsumerProvider;
     private readonly ITextProcessingPipeline textProcessingPipeline;
-    
+
     private readonly Channel<EventHubMessage> channel = Channel
         .CreateBounded<EventHubMessage>(new BoundedChannelOptions(100)
         {
             FullMode = BoundedChannelFullMode.Wait
         });
     private bool isProcessing;
-    
+
 
     public EventHubConsumerService(
         ILogger<EventHubConsumerService> logger,
@@ -31,8 +31,8 @@ public class EventHubConsumerService : IMessageConsumerService
         this.messageConsumerProvider = messageConsumerProvider;
         this.textProcessingPipeline = textProcessingPipeline;
     }
-    
-    
+
+
     public async IAsyncEnumerable<EventHubMessage> StartReceiveMessageAsync(
         [EnumeratorCancellation] CancellationToken cancellationToken = default
     )
@@ -43,7 +43,7 @@ public class EventHubConsumerService : IMessageConsumerService
         {
             logger.LogInformation("Received message {MsgData}", message.Message);
             message.Message = textProcessingPipeline.Process(message.Message);
-            
+
             yield return message;
         }
     }
@@ -53,8 +53,8 @@ public class EventHubConsumerService : IMessageConsumerService
         Interlocked.Exchange(ref isProcessing, false);
         await messageConsumerProvider.StopReceiveMessageAsync();
     }
-        
-    
+
+
     private async Task ReadMessageAsync(CancellationToken cancellationToken)
     {
         if (Interlocked.CompareExchange(ref isProcessing, true, false))
@@ -64,14 +64,14 @@ public class EventHubConsumerService : IMessageConsumerService
         {
             await channel.Writer.WriteAsync(message, cancellationToken);
         }, cancellationToken);
-        
+
         if (taskResult.Exception is not null)
             throw taskResult.Exception;
 
         await Task.CompletedTask;
     }
-    
-    
+
+
     public async ValueTask DisposeAsync()
     {
         channel.Writer.TryComplete();

@@ -80,7 +80,7 @@ public sealed class StorageQueueProducerProvider : IMessageProducerProvider
 
         var opt = new QueueClientOptions()
         {
-            Retry = 
+            Retry =
             {
                 MaxRetries = 3,
                 Delay = TimeSpan.FromSeconds(1),
@@ -90,7 +90,7 @@ public sealed class StorageQueueProducerProvider : IMessageProducerProvider
         };
         var queueServiceClient = new QueueServiceClient(config.ConnectionString, opt);
         var client = queueServiceClient.GetQueueClient(config.QueueName);
-        
+
         return client.Exists() ? client : throw new InvalidOperationException($"Queue {config.QueueName} does not exist");
     }
 

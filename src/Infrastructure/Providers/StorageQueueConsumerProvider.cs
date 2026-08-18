@@ -101,7 +101,7 @@ public sealed class StorageQueueConsumerProvider : IMessageConsumerProvider
 
             var opt = new QueueClientOptions()
             {
-                Retry = 
+                Retry =
                 {
                     MaxRetries = 3,
                     Delay = TimeSpan.FromSeconds(1),
@@ -115,8 +115,8 @@ public sealed class StorageQueueConsumerProvider : IMessageConsumerProvider
                 throw new InvalidOperationException($"Queue {config.QueueName} does not exist");
         }
     }
-    
-    
+
+
     public ValueTask DisposeAsync()
     {
         if (disposed)

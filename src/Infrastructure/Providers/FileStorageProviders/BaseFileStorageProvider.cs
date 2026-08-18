@@ -10,7 +10,7 @@ public abstract class BaseFileStorageProvider<T> : IFileStorageProvider<T>, IDis
     private readonly JsonSerializerOptions jsSerializerOptions = new() { WriteIndented = true };
     private readonly SemaphoreSlim semaphore = new(1, 1);
     private string? dataDirectoryPath = null;
-    
+
     public async Task<T?> GetDataAsync()
     {
         await semaphore.WaitAsync();
@@ -40,7 +40,7 @@ public abstract class BaseFileStorageProvider<T> : IFileStorageProvider<T>, IDis
             {
                 Directory.CreateDirectory(GetDataDirectoryPath());
             }
-            
+
             await File.WriteAllTextAsync(DataFilePath, json);
         }
         finally
@@ -48,19 +48,19 @@ public abstract class BaseFileStorageProvider<T> : IFileStorageProvider<T>, IDis
             semaphore.Release();
         }
     }
-    
+
     private string GetDataDirectoryPath()
     {
         dataDirectoryPath ??= Path.GetDirectoryName(DataFilePath) ?? string.Empty;
         return dataDirectoryPath;
     }
-    
-    
+
+
     protected virtual void Dispose(bool disposing)
     {
         if (disposed)
             return;
-        
+
         if (disposing)
         {
             semaphore.Dispose();
@@ -78,7 +78,7 @@ public abstract class BaseFileStorageProvider<T> : IFileStorageProvider<T>, IDis
     {
         if (disposed)
             return;
-        
+
         if (semaphore is IAsyncDisposable semaphoreAsyncDisposable)
             await semaphoreAsyncDisposable.DisposeAsync();
         else

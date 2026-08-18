@@ -9,7 +9,7 @@ public partial class NavMenu : ComponentBase, IDisposable
 {
     [Inject] private IOptionsMonitor<AppConfiguration>? Config { get; set; }
     [Inject] private NavigationManager Navigation { get; set; } = default!;
-    
+
     private IDisposable? configSubscription;
     private List<EventHubConfig>? EventHubsConfigs { get; set; }
     private List<StorageQueueConfig>? StorageQueuesConfigs { get; set; }
@@ -29,7 +29,7 @@ public partial class NavMenu : ComponentBase, IDisposable
         StorageQueuesConfigs = Config?.CurrentValue.StorageQueuesConfigs ?? [];
         ServiceBusConfigs = Config?.CurrentValue.ServiceBusConfigs ?? [];
         EnsureSectionExpandedForCurrentRoute();
-        
+
         configSubscription = Config?.OnChange(x =>
         {
             EventHubsConfigs = x.EventHubsConfigs;
@@ -41,7 +41,7 @@ public partial class NavMenu : ComponentBase, IDisposable
 
         Navigation.LocationChanged += OnLocationChanged;
     }
-    
+
     private void ToggleEventHubs() => isEventHubsExpanded = !isEventHubsExpanded;
     private void ToggleStorageQueues() => isStorageQueuesExpanded = !isStorageQueuesExpanded;
     private void ToggleServiceBus() => isServiceBusExpanded = !isServiceBusExpanded;
