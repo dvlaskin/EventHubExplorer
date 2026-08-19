@@ -1,0 +1,21 @@
+using Domain.Enums;
+using Domain.Interfaces;
+
+namespace Domain.Configs;
+
+public sealed class RabbitMqConfig : IFormattingConfig
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public required string Title { get; set; }
+    public required string ConnectionString { get; set; }
+    public required string EntityName { get; set; }
+    public RabbitMqEntityType EntityType { get; set; }
+    public RabbitMqExchangeType ExchangeType { get; set; } = RabbitMqExchangeType.Direct;
+    public string? RoutingKey { get; set; }
+    public string? QueueName { get; set; }
+
+    public bool UseGzipCompression { get; set; }
+    public bool UseBase64Coding { get; set; }
+    public Dictionary<string, bool> MessageFormatters { get; set; } = new();
+    public MessagePageLayoutPreset MessagePageLayout { get; set; } = MessagePageLayoutPreset.TopSendReceiveBottomPayload;
+}

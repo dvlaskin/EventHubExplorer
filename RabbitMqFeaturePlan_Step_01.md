@@ -2,7 +2,7 @@
 
 _Файл: `RabbitMqFeaturePlan_Step_01.md`_
 
-**Статус:** ⬜ TODO
+**Статус:** ✅ DONE
 **Что:** Добавить в Domain-слой новые сущности для RabbitMQ: значение `RabbitMq` в `MessageBusType`, enum'ы `RabbitMqEntityType` и `RabbitMqExchangeType`, класс `RabbitMqConfig : IFormattingConfig` и список `RabbitMqConfigs` в `AppConfiguration`.
 **Зачем:** Спецификация (раздел 8.2, FR-002/FR-003). Domain-слой — единственное место, где должны появиться типы; Application/Infrastructure/WebUI будут на них ссылаться.
 **Файлы:**
@@ -90,3 +90,9 @@ public List<RabbitMqConfig> RabbitMqConfigs { get; set; } = [];
 **Критерии завершения:**
 - `dotnet build EventHubExplorer.sln` собирается без ошибок.
 - Новые типы доступны в namespace `Domain.Enums` / `Domain.Configs`.
+
+**Заметки по реализации:**
+- **Что сделано:** Добавлены `MessageBusType.RabbitMq`, enum'ы `RabbitMqEntityType` и `RabbitMqExchangeType`, конфигурация `RabbitMqConfig` с обязательными полями подключения и форматирования, а также `AppConfiguration.RabbitMqConfigs`.
+- **Отклонения от плана:** Нет.
+- **Ключевые места:** `RabbitMqConfig` в `src/Domain/Configs/RabbitMqConfig.cs`; `AppConfiguration.RabbitMqConfigs` в `src/Domain/Configs/AppConfiguration.cs`.
+- **Важно знать:** `RabbitMqEntityType.Queue` остаётся значением по умолчанию, а `RabbitMqExchangeType.Direct` назначается явно.

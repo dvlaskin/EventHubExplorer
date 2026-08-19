@@ -4,5 +4,6 @@ public enum MessageBusType
 {
     EventHub,
     StorageQueue,
-    ServiceBus
+    ServiceBus,
+    RabbitMq
 }
