@@ -2,7 +2,7 @@
 
 _Файл: `RabbitMqFeaturePlan_Step_02.md`_
 
-**Статус:** ⬜ TODO
+**Статус:** ✅ DONE
 **Что:** Добавить NuGet-пакет `RabbitMQ.Client` версии 7.2.2 в `src/Infrastructure/Infrastructure.csproj`.
 **Зачем:** Клиент AMQP 0-9-1 для RabbitMQ. Версия 7.x актуальна (последняя 7.2.2, подтверждена по NuGet/GitHub) и совместима с `net10.0`. Спецификация раздел 2.4 п.2 и 17.
 **Файлы:**
@@ -26,3 +26,9 @@ _Файл: `RabbitMqFeaturePlan_Step_02.md`_
 **Критерии завершения:**
 - `dotnet restore` и `dotnet build EventHubExplorer.sln` без ошибок.
 - `dotnet list src/Infrastructure/Infrastructure.csproj package` показывает `RabbitMQ.Client 7.2.2`.
+
+**Заметки по реализации:**
+- **Что сделано:** В `src/Infrastructure/Infrastructure.csproj` добавлена фиксированная зависимость `RabbitMQ.Client` версии `7.2.2`.
+- **Отклонения от плана:** По указанию пользователя проверки `restore/build` и вывод списка пакетов пропущены.
+- **Ключевые места:** `src/Infrastructure/Infrastructure.csproj` — секция `PackageReference`.
+- **Важно знать:** Фактическое восстановление пакета и сборку следует выполнить перед шагом 6 или до интеграции RabbitMQ API.
