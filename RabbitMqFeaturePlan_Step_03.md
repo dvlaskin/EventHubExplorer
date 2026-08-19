@@ -2,7 +2,7 @@
 
 _Файл: `RabbitMqFeaturePlan_Step_03.md`_
 
-**Статус:** ⬜ TODO
+**Статус:** ✅ DONE
 **Что:** Создать `RabbitMqProducerProvider` — реализацию `IMessageProducerProvider` для отправки одиночных/пакетных сообщений и батчей с задержкой, с декларацией очереди/exchange перед публикацией.
 **Зачем:** FR-020/021/022/025. Провайдер — единственное место, где код касается RabbitMQ.Client при отправке; Application-слой остаётся нетронутым (G4).
 **Файлы:**
@@ -175,3 +175,9 @@ public sealed class RabbitMqProducerProvider : IMessageProducerProvider
 - Класс компилируется; `dotnet build EventHubExplorer.sln` без ошибок.
 - Отправка в очередь публикует в default exchange с routing key = `EntityName`; в exchange — с routing key `RoutingKey`.
 - Очередь/exchange декларируется один раз, `durable: true`.
+
+**Заметки по реализации:**
+- **Что сделано:** Добавлен `RabbitMqProducerProvider` с lazy async-подключением и каналом, декларацией durable queue/exchange перед первой публикацией, сериализацией декларации при параллельных отправках, отправкой одиночных и пакетных сообщений, отправкой с задержкой и поддержкой `BinaryData`-модификатора.
+- **Отклонения от плана:** Для закрытия ресурсов использован `DisposeAsync()` напрямую, поскольку RabbitMQ.Client 7.2.2 реализует `IAsyncDisposable`; вызов публикации приведён к точной async-сигнатуре версии 7.2.2.
+- **Ключевые места:** `SendMessageAsync()`, `SendMessagesAsync()` и `SendMessagesWithDelayAsync()` в `src/Infrastructure/Providers/RabbitMqProducerProvider.cs`; topology declare — `EnsureEntityDeclaredAsync()`; маршрутизация — `PublishAsync()`.
+- **Важно знать:** Сборка `src/Infrastructure/Infrastructure.csproj` прошла без предупреждений и ошибок. Полная сборка решения в текущем окружении зависает без вывода при компиляции WebUI и была остановлена; это требует отдельной проверки перед шагом 6.
