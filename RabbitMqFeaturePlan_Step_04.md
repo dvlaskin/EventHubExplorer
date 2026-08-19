@@ -2,7 +2,7 @@
 
 _Файл: `RabbitMqFeaturePlan_Step_04.md`_
 
-**Статус:** ⬜ TODO
+**Статус:** ✅ DONE
 **Что:** Создать `RabbitMqConsumerProvider` — реализацию `IMessageConsumerProvider` на push-API (`IAsyncBasicConsumer`/`AsyncDefaultBasicConsumer`) с ручным подтверждением (`BasicAckAsync`), декларацией очереди/exchange и binding для Exchange.
 **Зачем:** FR-030/031/032/033/034/042. Получение в реальном времени с декомпрессией (`CompressingEncoding.DecodeMessage`) и ручным ack (аналог peek-lock + Complete у ServiceBus).
 **Файлы:**
@@ -220,3 +220,9 @@ public sealed class RabbitMqConsumerProvider : IMessageConsumerProvider
 - Queue mode: очередь декларируется (durable) и consume идёт с `autoAck: false`, после обработки — `BasicAckAsync`.
 - Exchange mode: exchange + queue + binding декларируются, consume из `QueueName`.
 - При обрыве соединения — лог ошибки, без падения circuit.
+
+**Заметки по реализации:**
+- **Что сделано:** Добавлен `RabbitMqConsumerProvider` с lazy async-подключением и каналом, push-consumer через `AsyncDefaultBasicConsumer`, ручным ACK после успешной обработки, декларированием durable queue/exchange и binding для Exchange.
+- **Отклонения от плана:** Для корректной остановки `StartReceiveMessageAsync` добавлен внутренний `TaskCompletionSource`, который разблокирует ожидание при `StopReceiveMessageAsync` или shutdown соединения. Тело сообщения копируется через `ToArray()` перед декодированием.
+- **Ключевые места:** `StartReceiveMessageAsync()` и `StopReceiveMessageAsync()` в `src/Infrastructure/Providers/RabbitMqConsumerProvider.cs`; topology — `PrepareEntityAsync()`; обработка и ACK — `RabbitMqAsyncConsumer.HandleBasicDeliverAsync()`.
+- **Важно знать:** `dotnet build EventHubExplorer.sln --no-restore` прошёл без предупреждений и ошибок. При ошибке обработки сообщение остаётся неподтверждённым, чтобы RabbitMQ мог применить свою политику redelivery.
