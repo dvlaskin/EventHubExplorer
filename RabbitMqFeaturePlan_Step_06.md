@@ -2,7 +2,7 @@
 
 _Файл: `RabbitMqFeaturePlan_Step_06.md`_
 
-**Статус:** ⬜ TODO
+**Статус:** ✅ DONE
 **Что:** Зарегистрировать `RabbitMqProducerFactory`/`RabbitMqConsumerFactory` в `InfrastructureRegistration.cs` как keyed-singleton по ключу `MessageBusType.RabbitMq`. Собрать решение.
 **Зачем:** FR-012 (страница `/rabbitmq/{id:guid}`) и все WebUI-потребители получат фабрики через `[Inject(Key = MessageBusType.RabbitMq)]`. Паритет с существующими тремя шинами.
 **Файлы:**
@@ -26,3 +26,9 @@ _Файл: `RabbitMqFeaturePlan_Step_06.md`_
 - `dotnet build EventHubExplorer.sln` — без ошибок и без предупреждений, связанных с новым кодом.
 - `dotnet run --project src/WebUI` — приложение стартует без исключений (keyed-DI регистрации валидны).
 - Проверка: `IOptionsMonitor<AppConfiguration>` уже настроен в `Program.cs` (`AddJsonFile` + `Configure<AppConfiguration>`), менять его не нужно.
+
+**Заметки по реализации:**
+- **Что сделано:** В `AddInfrastructureServices` (`src/Infrastructure/IoC/InfrastructureRegistration.cs` ~строка 32) после секции service bus добавлены две keyed-singleton регистрации: `IMessageProducerFactory → RabbitMqProducerFactory` и `IMessageConsumerFactory → RabbitMqConsumerFactory` по ключу `MessageBusType.RabbitMq`. Порядок секций соблюдён (event hub → storage queue → service bus → rabbit mq).
+- **Отклонения от плана:** Нет. Код совпадает с фрагментом из шага.
+- **Ключевые места:** `InfrastructureRegistration.AddInfrastructureServices()` в `src/Infrastructure/IoC/InfrastructureRegistration.cs` ~строки 32–33.
+- **Важно знать:** Ключ `MessageBusType.RabbitMq` совпадает с enum-значением из Шага 1 — `[Inject(Key = MessageBusType.RabbitMq)]` на странице найдёт фабрику. Критерий «приложение стартует без исключений» не проверен — запуск `dotnet run` пропущен пользователем; сборка решения прошла успешно (0 warning / 0 error).

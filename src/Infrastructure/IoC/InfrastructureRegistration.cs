@@ -29,6 +29,10 @@ public static class InfrastructureRegistration
         services.AddKeyedSingleton<IMessageProducerFactory, ServiceBusProducerFactory>(MessageBusType.ServiceBus);
         services.AddKeyedSingleton<IMessageConsumerFactory, ServiceBusConsumerFactory>(MessageBusType.ServiceBus);
 
+        // rabbit mq
+        services.AddKeyedSingleton<IMessageProducerFactory, RabbitMqProducerFactory>(MessageBusType.RabbitMq);
+        services.AddKeyedSingleton<IMessageConsumerFactory, RabbitMqConsumerFactory>(MessageBusType.RabbitMq);
+
         services.AddSingleton<IStorageClientFactory<BlobConfig, BlobContainerClient>, BlobStorageFactory>();
 
         return services;
