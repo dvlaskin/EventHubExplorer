@@ -2,7 +2,7 @@
 
 _Файл: `RabbitMqFeaturePlan_Step_07.md`_
 
-**Статус:** ⬜ TODO
+**Статус:** ✅ DONE
 **Что:** Создать страницу `/rabbitmq/{id:guid}` как точный клон `ServiceBus.razor` с заменой: ключ keyed-DI `MessageBusType.RabbitMq`, поиск конфига в `RabbitMqConfigs`, описание сущности для Queue/Exchange, иконка.
 **Зачем:** FR-012 (маршрут), G1/G2 (отправка/получение через UI), история (FR-024). Страница — интерфейс пользователя для работы с RabbitMQ.
 **Файлы:**
@@ -66,3 +66,9 @@ _Файл: `RabbitMqFeaturePlan_Step_07.md`_
 - `dotnet build EventHubExplorer.sln` без ошибок.
 - Переход на `/rabbitmq/{id}` (после добавления конфига в appConfig.json, Шаг 9) открывает страницу; отправка/получение работают.
 - Группа сообщений в UI: `sn {SequenceNumber}, routing key {PartitionId}` отображается корректно.
+
+**Заметки по реализации:**
+- **Что сделано:** Созданы `src/WebUI/Components/Pages/RabbitMq.razor` и `RabbitMq.razor.css` — клон `ServiceBus.razor` с подстановками: `@page "/rabbitmq/{id:guid}"`, заголовок `RabbitMQ - @title` с иконкой `bi-hdd-network-fill`, поиск конфига в `Config.CurrentValue.RabbitMqConfigs`, keyed-inject `[Inject(Key = MessageBusType.RabbitMq)]` для обеих фабрик, `ILogger<RabbitMq>`, `InputId="rabbitmq-layout-preset"`, описание сущности с условным блоком Exchange (`ExchangeType`, `RoutingKey`, `QueueName`), класс `.rabbitmq-entity`. В список сообщений добавлен routing key через `message.Item.PartitionId` (RabbitMqConsumerProvider мапит `PartitionId = routingKey`). Реализован FR-041: после завершения `await foreach` не по кнопке Stop показывается toast `Connection lost. Receiving stopped.`. Сборка `dotnet build EventHubExplorer.sln` — 0 warning / 0 error.
+- **Отклонения от плана:** Фрагмент плана использовал `receiverCts.IsCancellationRequested`, но `ResettableCts` (Application/Utils/ResettableCtsService.cs) не имеет такого свойства — исправлено на `receiverCts.Token.IsCancellationRequested`. В остальном код совпадает со спекуляцией шага.
+- **Ключевые места:** разметка + `@code` в `src/WebUI/Components/Pages/RabbitMq.razor` (~строки 1–330), FR-041 toast ~строка 287; `src/WebUI/Components/Pages/RabbitMq.razor.css`.
+- **Важно знать:** Страница пока недостижима из навигации — маршрут появится после Шага 9 (NavMenu + appConfig.json). `MessageBusType.RabbitMq` используется как keyed-DI ключ (паритет с другими шинами).
