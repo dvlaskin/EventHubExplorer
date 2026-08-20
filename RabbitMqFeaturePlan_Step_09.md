@@ -2,7 +2,7 @@
 
 _Файл: `RabbitMqFeaturePlan_Step_09.md`_
 
-**Статус:** ⬜ TODO
+**Статус:** ✅ DONE
 **Что:** Добавить секцию «RabbitMQ» в навигацию (`NavMenu.razor` + `.razor.cs`), карточку и бейдж на главную страницу (`Home.razor` + `.razor.css`), пример конфига в `Data/appConfig.json`.
 **Зачем:** FR-010 (секция в NavMenu), FR-011 (карточка на Home), FR-006 (сохранение в appConfig.json). Навигация — единственная точка входа на страницы шин.
 **Файлы:**
@@ -116,3 +116,9 @@ _Файл: `RabbitMqFeaturePlan_Step_09.md`_
 - В NavMenu появляется секция «RabbitMQ» со ссылками на конфиги; раскрывается при переходе на `/rabbitmq/...`.
 - На Home — бейдж и карточка RabbitMQ.
 - После `dotnet run --project src/WebUI` ссылки в NavMenu ведут на работающие страницы `/rabbitmq/{id}`.
+
+**Заметки по реализации:**
+- **Что сделано:** В `NavMenu.razor.cs` добавлены `RabbitMqConfigs`, `isRabbitMqExpanded`, `IsRabbitMqRouteActive` (`IsRouteActive("rabbitmq/")`), инициализация в `OnInitialized` и обновление в `OnChange`-колбэке, `ToggleRabbitMq()`, ветка раскрытия в `EnsureSectionExpandedForCurrentRoute()`. В `NavMenu.razor` добавлена секция «RabbitMQ» после Service Bus: toggle-кнопка с `aria-controls="rabbitmq-nav-group"`, `NavLink` на `/rabbitmq/{Id}` с глифом `bi-hdd-network-fill` и title `EntityName (ExchangeType)` для Exchange (по образцу ServiceBus). В `Home.razor` добавлен бейдж `bi-hdd-network-fill` в `hero-badges` и карточка `service-card--rabbitmq` в `services-grid`. В `Home.razor.css` добавлены `.service-card--rabbitmq:hover` и `.service-card--rabbitmq .service-icon` на токене `--color-danger` (различает RabbitMQ от eventhub/queue/servicebus, занявших secondary/success/primary). В `Data/appConfig.json` добавлена секция `RabbitMqConfigs` с двумя примерами: Queue (`EntityType: 0`) и Exchange Topic (`EntityType: 1, ExchangeType: 2, RoutingKey: orders.created, QueueName: order-created-queue`), поля соответствуют `RabbitMqConfig`. `dotnet build EventHubExplorer.sln` — 0 warning / 0 error; JSON провалидирован.
+- **Отклонения от плана:** Нет. Цвет `--color-danger` использован как предложено в плане.
+- **Ключевые места:** секция RabbitMQ ~строка 106 и `RabbitMqConfigs`/`ToggleRabbitMq`/`IsRabbitMqRouteActive` в `src/WebUI/Components/Layout/NavMenu.razor` / `NavMenu.razor.cs`; бейдж ~строка 18 и карточка ~строка 42 в `src/WebUI/Components/Pages/Home.razor`; `RabbitMqConfigs` в `src/WebUI/Data/appConfig.json`.
+- **Важно знать:** Префикс маршрута `"rabbitmq/"` уникален (не пересекается с `eventhub/`, `storagequeue/`, `servicebus/`, `configuration`). Секция меню обновляется автоматически через `IOptionsMonitor.OnChange` при сохранении конфига на странице Configuration (Шаг 8). Страница `/rabbitmq/{id:guid}` создана на Шаге 7.

@@ -102,6 +102,33 @@
                 </div>
             }
         </div>
+
+        <div class="nav-item px-3 mt-3">
+            <button type="button"
+                    class="nav-link nav-section-toggle @(IsRabbitMqRouteActive ? "nav-section-toggle--active" : string.Empty)"
+                    @onclick="ToggleRabbitMq"
+                    aria-expanded="@isRabbitMqExpanded"
+                    aria-controls="rabbitmq-nav-group">
+                <span class="nav-section-header">RabbitMQ</span>
+                <i class="bi @(isRabbitMqExpanded ? "bi-chevron-up" : "bi-chevron-down") nav-section-chevron" aria-hidden="true"></i>
+            </button>
+        </div>
+
+        <div id="rabbitmq-nav-group" hidden="@(!isRabbitMqExpanded)">
+            @foreach (var rbConfig in RabbitMqConfigs ?? Enumerable.Empty<RabbitMqConfig>())
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link nav-link--compact" href="@($"rabbitmq/{rbConfig.Id}")">
+                        <span class="icon">
+                            <i class="bi bi-hdd-network-fill" aria-hidden="true"></i>
+                        </span>
+                        <span class="text" title="@(rbConfig.EntityType == RabbitMqEntityType.Exchange ? $"{rbConfig.EntityName} ({rbConfig.ExchangeType})" : rbConfig.EntityName)">
+                            @rbConfig.Title
+                        </span>
+                    </NavLink>
+                </div>
+            }
+        </div>
         
         <div class="nav-item px-3 mt-3">
             <NavLink class="nav-link" href="configuration">
