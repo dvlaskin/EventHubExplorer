@@ -10,7 +10,7 @@ for Event Hubs,
 the [Azurite](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite)
 for StorageQueue,
 the [Service Bus emulator](https://learn.microsoft.com/en-us/azure/service-bus-messaging/overview-emulator)
-for Service Bus.
+for Service Bus. In addition to Azure services, there is also support for [RabbitMQ](https://www.rabbitmq.com/).
 
 
 <img src="./docs/assets/Screenshot_01.png" alt="HomePage" width="90%"/>
@@ -64,6 +64,21 @@ for Service Bus.
 * Format a message to JSON if it is a JSON string
 * Ability to decompress and decode a message after receiving
 * Receive messages from a **Queue** or a **Topic Subscription**
+
+### Sending Messages to RabbitMQ
+
+* Override GUID, DateTime values in a message before sending
+* Ability to compress and encode a message before sending
+* Send a **single message**
+* Send a **batch of messages**
+* Send a **batch of messages** with a **time delay** between each message
+* Supports both **Queue** and **Exchange** (direct/fanout/topic) entity types
+
+### Receiving Messages from RabbitMQ
+
+* Format a message to JSON if it is a JSON string
+* Ability to decompress and decode a message after receiving
+* Receive messages from a **Queue** or from a **Queue bound to an Exchange** (routing key)
 
 
 ## Example Connection Strings
@@ -183,6 +198,34 @@ Endpoint=sb://host.docker.internal;SharedAccessKeyName=RootManageSharedAccessKey
 Endpoint=sb://<NamespaceName>.servicebus.windows.net/;SharedAccessKeyName=<KeyName>;SharedAccessKey=<KeyValue>
 ```
 
+---
+
+### RabbitMQ (local Docker)
+
+Run RabbitMQ with Management UI:
+
+```
+docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:management
+```
+
+Management UI: http://localhost:15672 (default login: guest / guest)
+
+**Local default vhost (`/`):**
+```
+amqp://guest:guest@localhost:5672
+```
+
+**Custom vhost:**
+```
+amqp://guest:guest@localhost:5672/myvhost
+```
+
+**TLS (if configured on the broker):**
+```
+amqps://user:pass@hostname:5671/vhost
+```
+
+> **Note:** Queues and exchanges are declared automatically (durable) by the application when you send or start receiving. For Exchange entity type, specify the Routing Key and the Queue Name used to bind a queue for receiving.
 
 ## Requirements
 
@@ -191,6 +234,7 @@ Endpoint=sb://<NamespaceName>.servicebus.windows.net/;SharedAccessKeyName=<KeyNa
 * Blob Storage* 
 * Storage Queue*
 * Service Bus*
+* RabbitMQ*
   
 `*`- the service you want to use
 
