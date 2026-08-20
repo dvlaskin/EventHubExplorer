@@ -2,7 +2,7 @@
 
 _Файл: `RabbitMqFeaturePlan_Step_05.md`_
 
-**Статус:** ⬜ TODO
+**Статус:** ✅ DONE
 **Что:** Создать `RabbitMqProducerFactory` (реализация `IMessageProducerFactory`) и `RabbitMqConsumerFactory` (реализация `IMessageConsumerFactory`) — точные клоны ServiceBus-фабрик с подстановкой `RabbitMqConfig` и RabbitMQ-провайдеров.
 **Зачем:** FR-023 (форматтеры/gzip через `BaseMessageProducer`), сборка продюсера/консьюмера с pipeline. Фабрики — мост между keyed-DI и конкретными провайдерами.
 **Файлы:**
@@ -54,3 +54,9 @@ _Файл: `RabbitMqFeaturePlan_Step_05.md`_
 - `dotnet build EventHubExplorer.sln` без ошибок.
 - Фабрики используют `RabbitMqConfig`/`RabbitMq*Provider`, никаких ссылок на `ServiceBus*` внутри RabbitMq-фабрик.
 - Application-слой не изменён.
+
+**Заметки по реализации:**
+- **Что сделано:** Созданы `RabbitMqProducerFactory` и `RabbitMqConsumerFactory` — точные клоны ServiceBus-фабрик с подстановкой `RabbitMqConfig`, `RabbitMqProducerProvider`/`RabbitMqConsumerProvider` и `RabbitMqConfigs` из `AppConfiguration`. Producer выбирает `BytesMessageProducer` при gzip && !base64, иначе `StringMessageProducer`; Consumer собирает `EventHubConsumerService` с `ITextProcessingPipeline`.
+- **Отклонения от плана:** Нет — реализация построчно следует ServiceBus-фабрикам, как и задумано в шаге.
+- **Ключевые места:** `RabbitMqProducerFactory.CreateProducer()` в `src/Infrastructure/Factories/RabbitMqProducerFactory.cs` ~31; `RabbitMqConsumerFactory.CreateConsumer()` в `src/Infrastructure/Factories/RabbitMqConsumerFactory.cs` ~30.
+- **Важно знать:** В продюсере `GetActiveMessageFormatters` фильтрует `MessageFormatterType.BeforeSend` (`.ToArray()` + `.Contains`), в консьюмере — `AfterReceive` (`.ToHashSet()` + `.Contains`) — это легаси-паттерн кодовой базы, скопирован как есть, не рефакторился. Обе фабрики регистрируются ключом `MessageBusType.RabbitMq` на шаге 6.
