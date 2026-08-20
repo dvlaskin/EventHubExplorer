@@ -69,19 +69,6 @@ amqps://user:pass@hostname:5671/vhost
 * RabbitMQ*
 ```
 
-**4. Финальная проверка:**
-- `dotnet build EventHubExplorer.sln` — без ошибок и предупреждений.
-- `dotnet run --project src/WebUI`.
-- Smoke-тест по сценариям спецификации (раздел 4.2 / 12.3):
-  - Запустить `rabbitmq:management` в Docker.
-  - Configuration → вкладка RabbitMQ: добавить конфиг Queue, сохранить, проверить `Data/appConfig.json`.
-  - Отправить single/batch/delay в очередь → проверить Management UI (очередь, сообщения).
-  - Получить сообщения (Start/Stop) → JSON форматируется, gzip/base64 декодируется.
-  - Конфиг Exchange (topic): публикация с routing key, binding очереди, приём через привязанную очередь.
-  - Выключенный gzip + base64 — сбрасывается (FR-035).
-  - Недоступный брокер → toast с ошибкой, приложение не падает (FR-040).
-  - Регрессия: Event Hubs / Storage Queue / Service Bus страницы и конфиги работают (G6).
-
 **Критерии завершения:**
 - readme содержит полный раздел RabbitMQ (Features, docker run, AMQP URI, Requirements).
 - Решение собирается; все acceptance criteria из раздела 12.3 спецификации подтверждены ручной проверкой.

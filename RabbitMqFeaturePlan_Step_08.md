@@ -2,7 +2,7 @@
 
 _Файл: `RabbitMqFeaturePlan_Step_08.md`_
 
-**Статус:** ⬜ TODO
+**Статус:** ✅ DONE
 **Что:** Добавить четвёртую вкладку «RabbitMQ» на страницу `Configuration.razor` с CRUD: `AddNewRabbitMqConfig`/`RemoveRabbitMqConfig`, accordion-форма с условными полями Exchange (`ExchangeType`, `RoutingKey`, `QueueName`), валидацией по образцу ServiceBus (подсветка незаполненных обязательных полей), сбросом `UseBase64Coding` при выключенном gzip (FR-035).
 **Зачем:** FR-001..FR-006 (конфигурирование), FR-035 (неактивная комбинация base64 без gzip), сохранение в `Data/appConfig.json` через `AppConfigurationProvider`.
 **Файлы:**
@@ -95,3 +95,9 @@ _Файл: `RabbitMqFeaturePlan_Step_08.md`_
 - При `EntityType == Queue` поля Exchange скрыты; при `Exchange` — видны.
 - Выключение gzip сбрасывает base64 (FR-035).
 - Удаление конфига чистит историю сообщений.
+
+**Заметки по реализации:**
+- **Что сделано:** В `src/WebUI/Components/Pages/Configuration.razor` добавлена вкладка «RabbitMQ» (`config-tab` с иконкой `bi-hdd-network-fill` и badge `RabbitMqConfigs.Count`) после servicebus; в sticky-actions ветка `else if (activeTab == "rabbitmq")` → `AddNewRabbitMqConfig` (служебная ветка servicebus стала явной `else if`); блок контента `@if (activeTab == "rabbitmq")` с empty state «No RabbitMQ configured», accordion `id="rabbitMqAccordion"`, полями с префиксом `rmq-` (title, connection string, entity name/type, layout preset, gzip/base64, форматтеры, Remove); условные поля Exchange (`ExchangeType`, `RoutingKey`, `QueueName`) показываются при `EntityType == Exchange`; gzip `@bind:after` → `OnRabbitMqGzipCompressionChanged(rbConfig)` (FR-035: выключение gzip сбрасывает base64), Base64 `disabled="@(!rbConfig.UseGzipCompression)"`. В `@code` добавлены `AddNewRabbitMqConfig` (default `amqp://guest:guest@localhost:5672`, `EntityType = Queue`), `RemoveRabbitMqConfig` (чистит историю через `MessagesHistoryService.RemoveAllAsync`), `OnRabbitMqGzipCompressionChanged`; `LoadConfiguration()` дозаполняет `MessageFormatters` для `RabbitMqConfigs`. `dotnet build EventHubExplorer.sln` — 0 warning / 0 error. CSS-правки не потребовались — классы `.config-tab--active`/`.config-tab-badge` общие.
+- **Отклонения от плана:** Подсветка пустого `QueueName` (из поля Риски) не реализована — в кодовой базе нет существующего паттерна полевой подсветки (ServiceBus/StorageQueue не подсвечивают отдельные поля), а `isEmpty` (ConnectionString/EntityName) управляет раскрытием accordion как в других шинах. Сохранён паритет с ServiceBus.
+- **Ключевые места:** вкладка ~строка 77, sticky-actions ~строка 40, блок rabbitmq ~строка 407+, методы `AddNewRabbitMqConfig`/`RemoveRabbitMqConfig`/`OnRabbitMqGzipCompressionChanged` и обход `RabbitMqConfigs` в `LoadConfiguration()` в `src/WebUI/Components/Pages/Configuration.razor`.
+- **Важно знать:** `activeTab` по умолчанию остался `"eventhubs"`. Вкладка работает со Шага 1 (Domain типы); страница `/rabbitmq/{id}` уже создана на Шаге 7, конфиги можно будет сохранить в `Data/appConfig.json` уже сейчас.
