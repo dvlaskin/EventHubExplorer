@@ -1,3 +1,12 @@
+.message-receive-panel {
+    min-height: 0;
+}
+
+/* Fallback for Bootstrap missing utility - ensures flex child can shrink below content size */
+.message-receive-panel .min-height-0 {
+    min-height: 0;
+}
+
 .label-section {
     font-size: 0.78rem;
     font-weight: 700;
@@ -7,7 +16,9 @@
 }
 
 .receive-empty-state {
-    height: 150px;
+    flex: 1 1 auto;
+    min-height: 150px;
+    height: auto;
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-btn);
     background: rgba(255, 255, 255, 0.7);
@@ -26,9 +37,13 @@
 }
 
 ::deep .scrollable-list {
-    height: 150px;
+    flex: 1 1 0;
+    min-height: 150px;
+    height: 0;
+    max-height: 100%;
     margin-bottom: 0;
     overflow-y: auto;
+    overflow-x: hidden;
     display: block;
     padding-left: 0;
     border-radius: var(--radius-btn);
