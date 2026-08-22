@@ -17,7 +17,7 @@ public class RabbitMqProducerFactory : IMessageProducerFactory
     private readonly IOptionsMonitor<AppConfiguration> config;
     private readonly IServiceProvider serviceProvider;
 
-    
+
     public RabbitMqProducerFactory(
         ILogger<RabbitMqProducerFactory> logger,
         IOptionsMonitor<AppConfiguration> config,
@@ -29,7 +29,7 @@ public class RabbitMqProducerFactory : IMessageProducerFactory
         this.serviceProvider = serviceProvider;
     }
 
-    
+
     public IMessageProducerService CreateProducer(Guid configId)
     {
         // TODO: have same logic as other services can be base class
@@ -57,7 +57,7 @@ public class RabbitMqProducerFactory : IMessageProducerFactory
         );
     }
 
-    
+
     private ITextProcessingPipeline GetTextProcessingPipeline(RabbitMqConfig rabbitConfig)
     {
         // TODO: have same logic as other services can be base class

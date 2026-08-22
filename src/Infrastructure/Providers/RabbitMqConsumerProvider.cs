@@ -24,7 +24,7 @@ public sealed class RabbitMqConsumerProvider : IMessageConsumerProvider
     private volatile bool isProcessing;
     private volatile bool disposed;
 
-    
+
     public RabbitMqConsumerProvider(ILogger<RabbitMqConsumerProvider> logger, RabbitMqConfig config)
     {
         this.logger = logger;
@@ -33,7 +33,7 @@ public sealed class RabbitMqConsumerProvider : IMessageConsumerProvider
         channel = new Lazy<Task<IChannel>>(CreateChannelAsync);
     }
 
-    
+
     public async Task StartReceiveMessageAsync(
         Func<EventHubMessage, Task> onMessageReceived, CancellationToken cancellationToken
     )
@@ -130,11 +130,11 @@ public sealed class RabbitMqConsumerProvider : IMessageConsumerProvider
         await rabbitChannel.ExchangeDeclareAsync(
             exchange: config.EntityName, type: GetExchangeTypeString(config.ExchangeType), durable: true, autoDelete: false
         );
-        
+
         await rabbitChannel.QueueDeclareAsync(
             queue: config.QueueName, durable: true, exclusive: false, autoDelete: false
         );
-        
+
         await rabbitChannel.QueueBindAsync(
             queue: config.QueueName, exchange: config.EntityName, routingKey: config.RoutingKey ?? string.Empty
         );

@@ -16,7 +16,7 @@ public sealed class RabbitMqProducerProvider : IMessageProducerProvider
     private volatile bool declared;
     private bool disposed;
 
-    
+
     public RabbitMqProducerProvider(ILogger<RabbitMqProducerProvider> logger, RabbitMqConfig config)
     {
         this.logger = logger;
@@ -25,7 +25,7 @@ public sealed class RabbitMqProducerProvider : IMessageProducerProvider
         channel = new Lazy<Task<IChannel>>(CreateChannelAsync);
     }
 
-    
+
     public async Task SendMessageAsync(
         string message, Func<string, BinaryData>? messageModifier = null, CancellationToken cancellationToken = default
     )
@@ -55,7 +55,7 @@ public sealed class RabbitMqProducerProvider : IMessageProducerProvider
         }
 
         logger.LogInformation(
-            "Sent {MsgCount} messages to RabbitMQ {EntityType} {EntityName}", 
+            "Sent {MsgCount} messages to RabbitMQ {EntityType} {EntityName}",
             numberOfMessages, config.EntityType, config.EntityName
         );
     }
@@ -82,12 +82,12 @@ public sealed class RabbitMqProducerProvider : IMessageProducerProvider
         }
 
         logger.LogInformation(
-            "Sent all {MsgCount} messages to RabbitMQ {EntityType} {EntityName}", 
+            "Sent all {MsgCount} messages to RabbitMQ {EntityType} {EntityName}",
             numberOfMessages, config.EntityType, config.EntityName
         );
     }
 
-    
+
     private async Task<IConnection> CreateConnectionAsync()
     {
         logger.LogInformation("Creating RabbitMQ connection for {EntityName}", config.EntityName);
@@ -163,8 +163,8 @@ public sealed class RabbitMqProducerProvider : IMessageProducerProvider
     private void ValidateForExchange()
     {
         if (
-            config.EntityType == RabbitMqEntityType.Exchange 
-            && config.ExchangeType != RabbitMqExchangeType.Fanout 
+            config.EntityType == RabbitMqEntityType.Exchange
+            && config.ExchangeType != RabbitMqExchangeType.Fanout
             && string.IsNullOrWhiteSpace(config.RoutingKey)
         )
         {

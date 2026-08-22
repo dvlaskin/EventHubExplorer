@@ -16,7 +16,7 @@ public sealed class RabbitMqConsumerFactory : IMessageConsumerFactory
     private readonly IOptionsMonitor<AppConfiguration> config;
     private readonly IServiceProvider serviceProvider;
 
-    
+
     public RabbitMqConsumerFactory(
         ILogger<RabbitMqConsumerFactory> logger,
         IOptionsMonitor<AppConfiguration> config,
@@ -28,7 +28,7 @@ public sealed class RabbitMqConsumerFactory : IMessageConsumerFactory
         this.serviceProvider = serviceProvider;
     }
 
-    
+
     public IMessageConsumerService CreateConsumer(Guid configId)
     {
         // TODO: have same logic as other services can be base class
@@ -46,7 +46,7 @@ public sealed class RabbitMqConsumerFactory : IMessageConsumerFactory
         );
     }
 
-    
+
     private ITextProcessingPipeline GetTextProcessingPipeline(RabbitMqConfig rabbitConfig)
     {
         // TODO: have same logic as other services can be base class
