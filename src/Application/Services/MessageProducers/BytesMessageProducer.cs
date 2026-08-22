@@ -20,7 +20,7 @@ public class BytesMessageProducer : BaseMessageProducer<byte[]>
     {
         if (messageOptions is null || messageOptions.UseGzipCompression is false)
             throw new InvalidOperationException("Compression is disabled, incorrect MessageProducer is used");
-        
+
         return message.Compress();
     }
 

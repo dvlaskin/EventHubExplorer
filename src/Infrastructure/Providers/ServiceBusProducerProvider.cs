@@ -13,7 +13,7 @@ public sealed class ServiceBusProducerProvider : IMessageProducerProvider
     private readonly Lazy<ServiceBusSender> sender;
     private bool disposed;
 
-    
+
     public ServiceBusProducerProvider(ILogger<ServiceBusProducerProvider> logger, ServiceBusConfig config)
     {
         this.logger = logger;
@@ -22,7 +22,7 @@ public sealed class ServiceBusProducerProvider : IMessageProducerProvider
         sender = new Lazy<ServiceBusSender>(() => client.Value.CreateSender(config.EntityName));
     }
 
-    
+
     public async Task SendMessageAsync(
         string message, Func<string, BinaryData>? messageModifier = null, CancellationToken cancellationToken = default
     )
@@ -33,7 +33,7 @@ public sealed class ServiceBusProducerProvider : IMessageProducerProvider
 
         var sbMessage = new ServiceBusMessage(binaryData);
         await sender.Value.SendMessageAsync(sbMessage, cancellationToken);
-        
+
         logger.LogInformation("Single message sent to Service Bus {EntityType} {EntityName}", config.EntityType, config.EntityName);
     }
 
@@ -102,7 +102,7 @@ public sealed class ServiceBusProducerProvider : IMessageProducerProvider
 
             var sbMessage = new ServiceBusMessage(binaryData);
             await sender.Value.SendMessageAsync(sbMessage, cancellationToken);
-            
+
             logger.LogInformation("Message number {MessageNumber} from {TotalMessages} sent", i + 1, numberOfMessages);
 
             if (sendDelay != TimeSpan.Zero)
@@ -112,11 +112,11 @@ public sealed class ServiceBusProducerProvider : IMessageProducerProvider
         logger.LogInformation("Sent all {MsgCount} messages to Service Bus {EntityType} {EntityName}", numberOfMessages, config.EntityType, config.EntityName);
     }
 
-    
+
     private ServiceBusClient CreateClient()
     {
         logger.LogInformation("Creating ServiceBusClient for {EntityName}", config.EntityName);
-        
+
         var options = new ServiceBusClientOptions
         {
             TransportType = config.ConnectionString.Contains("UseDevelopmentEmulator=true")
@@ -150,7 +150,7 @@ public sealed class ServiceBusProducerProvider : IMessageProducerProvider
         }
 
         logger.LogInformation("ServiceBusProducerProvider is Disposed");
-        
+
         GC.SuppressFinalize(this);
         disposed = true;
     }

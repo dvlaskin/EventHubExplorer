@@ -33,10 +33,16 @@
                 <i class="bi bi-plus-lg me-1"></i>Add StorageQueue
             </button>
         }
-        else
+        else if (activeTab == "servicebus")
         {
             <button class="btn btn-primary" @onclick="AddNewServiceBusConfig">
                 <i class="bi bi-plus-lg me-1"></i>Add ServiceBus
+            </button>
+        }
+        else if (activeTab == "rabbitmq")
+        {
+            <button class="btn btn-primary" @onclick="AddNewRabbitMqConfig">
+                <i class="bi bi-plus-lg me-1"></i>Add RabbitMQ
             </button>
         }
         <button class="btn btn-success" @onclick="SaveConfiguration">
@@ -64,6 +70,12 @@
         <i class="bi bi-send-fill"></i>
         ServiceBus
         <span class="config-tab-badge">@(appConfiguration?.ServiceBusConfigs.Count ?? 0)</span>
+    </button>
+    <button class="config-tab @(activeTab == "rabbitmq" ? "config-tab--active" : "")"
+            @onclick='() => SetActiveTab("rabbitmq")'>
+        <i class="bi bi-hdd-network-fill"></i>
+        RabbitMQ
+        <span class="config-tab-badge">@(appConfiguration?.RabbitMqConfigs.Count ?? 0)</span>
     </button>
 </div>
 
@@ -391,6 +403,132 @@
             </div>
         }
     }
+
+    @if (activeTab == "rabbitmq")
+    {
+        @if (appConfiguration?.RabbitMqConfigs.Count == 0)
+        {
+            <div class="config-empty-state">
+                <i class="bi bi-hdd-network-fill config-empty-icon"></i>
+                <p class="config-empty-title">No RabbitMQ configured</p>
+                <p class="config-empty-hint">Click "Add RabbitMQ" to create your first connection.</p>
+            </div>
+        }
+        else
+        {
+            <div class="accordion" id="rabbitMqAccordion">
+                @for (var i = 0; i < appConfiguration?.RabbitMqConfigs.Count; i++)
+                {
+                    var index = i;
+                    var rbConfig = appConfiguration.RabbitMqConfigs[i];
+                    var isEmpty = string.IsNullOrWhiteSpace(rbConfig.ConnectionString) || string.IsNullOrWhiteSpace(rbConfig.EntityName);
+                    var titleInputId = $"rmq-title-{i}";
+                    var connectionStringInputId = $"rmq-connection-string-{i}";
+                    var entityNameInputId = $"rmq-entity-name-{i}";
+                    var entityTypeInputId = $"rmq-entity-type-{i}";
+                    var exchangeTypeInputId = $"rmq-exchange-type-{i}";
+                    var routingKeyInputId = $"rmq-routing-key-{i}";
+                    var queueNameInputId = $"rmq-queue-name-{i}";
+                    var useGzipInputId = $"rmq-use-gzip-{i}";
+                    var useBase64InputId = $"rmq-use-base64-{i}";
+                    var layoutPresetInputId = $"rmq-layout-preset-{i}";
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading-rmq-@i">
+                            <button class="accordion-button @(isEmpty ? "" : "collapsed")" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#collapse-rmq-@i" aria-expanded="@(isEmpty ? "true" : "false")" aria-controls="collapse-rmq-@i">
+                                @rbConfig.Title
+                            </button>
+                        </h2>
+                        <div id="collapse-rmq-@i" class="accordion-collapse collapse @(isEmpty ? "show" : "")" aria-labelledby="heading-rmq-@i"
+                             data-bs-parent="#rabbitMqAccordion">
+                            <div class="accordion-body">
+                                <div class="mb-3">
+                                    <label class="form-label" for="@titleInputId">Title</label>
+                                    <input id="@titleInputId" class="form-control" @bind="rbConfig.Title">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label" for="@connectionStringInputId">Connection String</label>
+                                    <input id="@connectionStringInputId" class="form-control" @bind="rbConfig.ConnectionString">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label" for="@entityNameInputId">Entity Name (Queue or Exchange)</label>
+                                    <input id="@entityNameInputId" class="form-control" @bind="rbConfig.EntityName">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label" for="@entityTypeInputId">Entity Type</label>
+                                    <select id="@entityTypeInputId" class="form-select" @bind="rbConfig.EntityType">
+                                        <option value="@RabbitMqEntityType.Queue">Queue</option>
+                                        <option value="@RabbitMqEntityType.Exchange">Exchange</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label" for="@layoutPresetInputId">Blocks layout</label>
+                                    <select id="@layoutPresetInputId" class="form-select" @bind="rbConfig.MessagePageLayout">
+                                        <option value="@MessagePageLayoutPreset.TopSendReceiveBottomPayload">Top: Send + Receive, Bottom: Payload</option>
+                                        <option value="@MessagePageLayoutPreset.LeftSendReceiveRightPayload">Left: Send + Receive, Right: Payload</option>
+                                        <option value="@MessagePageLayoutPreset.LeftSendRightReceiveBottomPayload">Left: Send, Right: Receive + Payload (50/50)</option>
+                                    </select>
+                                </div>
+
+                                @if (rbConfig.EntityType == RabbitMqEntityType.Exchange)
+                                {
+                                    <div class="mb-3">
+                                        <label class="form-label" for="@exchangeTypeInputId">Exchange Type</label>
+                                        <select id="@exchangeTypeInputId" class="form-select" @bind="rbConfig.ExchangeType">
+                                            <option value="@RabbitMqExchangeType.Direct">Direct</option>
+                                            <option value="@RabbitMqExchangeType.Fanout">Fanout</option>
+                                            <option value="@RabbitMqExchangeType.Topic">Topic</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" for="@routingKeyInputId">Routing Key</label>
+                                        <input id="@routingKeyInputId" class="form-control" @bind="rbConfig.RoutingKey">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" for="@queueNameInputId">Queue Name (for consuming)</label>
+                                        <input id="@queueNameInputId" class="form-control" @bind="rbConfig.QueueName">
+                                    </div>
+                                }
+
+                                <div class="mb-3">
+                                    <h6 class="config-section-label">Message encoding settings</h6>
+                                    <div class="form-check d-inline-block me-3">
+                                        <input id="@useGzipInputId" class="form-check-input" type="checkbox" @bind="rbConfig.UseGzipCompression"
+                                               @bind:after="@(() => OnGzipCompressionChanged(rbConfig))">
+                                        <label class="form-check-label" for="@useGzipInputId">Use Gzip Compression</label>
+                                    </div>
+                                    <div class="form-check d-inline-block">
+                                        <input id="@useBase64InputId" class="form-check-input" type="checkbox" @bind="rbConfig.UseBase64Coding"
+                                               disabled="@(!rbConfig.UseGzipCompression)">
+                                        <label class="form-check-label" for="@useBase64InputId">Use Base64 Coding</label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <h6 class="config-section-label">Message formatting settings</h6>
+                                    @{
+                                        var formatterIndex = 0;
+                                    }
+                                    @foreach (var formatter in rbConfig.MessageFormatters)
+                                    {
+                                        var formatterId = $"rmq-formatter-{i}-{formatterIndex++}";
+                                        <div class="form-check d-inline-block me-3">
+                                            <input id="@formatterId" class="form-check-input" type="checkbox"
+                                                   @bind:get="formatter.Value"
+                                                   @bind:set="(value) => rbConfig.MessageFormatters[formatter.Key] = value">
+                                            <label class="form-check-label" for="@formatterId">@formatter.Key</label>
+                                        </div>
+                                    }
+                                </div>
+
+                                <button class="btn btn-danger" @onclick="() => RemoveRabbitMqConfig(index)">Remove</button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
 </div>
 
 
@@ -450,6 +588,17 @@
                 sbConfig.MessageFormatters.TryAdd(msgFormatter.Name, false);
             }
         }
+
+        foreach (var rbConfig in appConfiguration.RabbitMqConfigs)
+        {
+            if (rbConfig.MessageFormatters.Count == MessageFormatters?.Count())
+                continue;
+
+            foreach (var msgFormatter in MessageFormatters ?? Enumerable.Empty<IMessageFormatter>())
+            {
+                rbConfig.MessageFormatters.TryAdd(msgFormatter.Name, false);
+            }
+        }
     }
 
     private async Task SaveConfiguration()
@@ -460,6 +609,7 @@
         await toast.ShowToast("Configuration saved", ToastType.Info);
     }
 
+    
     private void AddNewEventHubConfig()
     {
         appConfiguration?.EventHubsConfigs.Add(new EventHubConfig
@@ -498,7 +648,22 @@
             MessageFormatters = MessageFormatters?.ToDictionary(k => k.Name, v => false) ?? new Dictionary<string, bool>()
         });
     }
+    
+    private void AddNewRabbitMqConfig()
+    {
+        appConfiguration?.RabbitMqConfigs.Add(new RabbitMqConfig
+        {
+            Title = "New RabbitMQ",
+            ConnectionString = "amqp://guest:guest@localhost:5672",
+            EntityName = "",
+            EntityType = RabbitMqEntityType.Queue,
+            ExchangeType = RabbitMqExchangeType.Direct,
+            MessagePageLayout = MessagePageLayoutPreset.TopSendReceiveBottomPayload,
+            MessageFormatters = MessageFormatters?.ToDictionary(k => k.Name, v => false) ?? new Dictionary<string, bool>()
+        });
+    }
 
+    
     private void RemoveEventHubConfig(int index)
     {
         var configId = appConfiguration?.EventHubsConfigs[index].Id;
@@ -526,6 +691,17 @@
         appConfiguration?.ServiceBusConfigs.RemoveAt(index);
     }
 
+    private void RemoveRabbitMqConfig(int index)
+    {
+        var configId = appConfiguration?.RabbitMqConfigs[index].Id;
+        if (configId is not null)
+            MessagesHistoryService.RemoveAllAsync(configId.Value);
+
+        appConfiguration?.RabbitMqConfigs.RemoveAt(index);
+    }
+
+    
+    // TODO: refactor this code duplication
     private static void OnGzipCompressionChanged(EventHubConfig eventHub)
     {
         if (eventHub is { UseGzipCompression: false, UseBase64Coding: true })
@@ -544,6 +720,14 @@
         if (sbConfig is { UseGzipCompression: false, UseBase64Coding: true })
         {
             sbConfig.UseBase64Coding = false;
+        }
+    }
+    
+    private static void OnGzipCompressionChanged(RabbitMqConfig rbConfig)
+    {
+        if (rbConfig is { UseGzipCompression: false, UseBase64Coding: true })
+        {
+            rbConfig.UseBase64Coding = false;
         }
     }
 }

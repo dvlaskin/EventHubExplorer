@@ -11,7 +11,7 @@ public class ServiceBusConfig : IFormattingConfig
     public required string EntityName { get; set; }
     public ServiceBusEntityType EntityType { get; set; }
     public string? SubscriptionName { get; set; }
-    
+
     public bool UseGzipCompression { get; set; }
     public bool UseBase64Coding { get; set; }
     public Dictionary<string, bool> MessageFormatters { get; set; } = new();

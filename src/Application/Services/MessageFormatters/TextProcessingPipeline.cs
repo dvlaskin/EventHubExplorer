@@ -12,20 +12,20 @@ public class TextProcessingPipeline : ITextProcessingPipeline
     {
         this.logger = logger;
     }
-    
-    
+
+
     public void AddFormatters(IReadOnlyList<IMessageFormatter> messageFormatters)
     {
         formatters.AddRange(messageFormatters);
     }
-    
+
     public string? Process(string? input)
     {
         if (string.IsNullOrWhiteSpace(input))
             return input;
-            
+
         var result = input;
-        
+
         foreach (var formatter in formatters)
         {
             try
@@ -37,7 +37,7 @@ public class TextProcessingPipeline : ITextProcessingPipeline
                 logger.LogError(ex, "Error while processing text: {Message}", ex.Message);
             }
         }
-        
+
         return result;
     }
 }

@@ -11,14 +11,15 @@ using Microsoft.Extensions.Options;
 
 namespace Infrastructure.Factories;
 
-public class MessageProducerFactory : IMessageProducerFactory
+public class RabbitMqProducerFactory : IMessageProducerFactory
 {
-    private readonly ILogger<MessageProducerFactory> logger;
+    private readonly ILogger<RabbitMqProducerFactory> logger;
     private readonly IOptionsMonitor<AppConfiguration> config;
     private readonly IServiceProvider serviceProvider;
 
-    public MessageProducerFactory(
-        ILogger<MessageProducerFactory> logger,
+
+    public RabbitMqProducerFactory(
+        ILogger<RabbitMqProducerFactory> logger,
         IOptionsMonitor<AppConfiguration> config,
         IServiceProvider serviceProvider
     )
@@ -28,45 +29,49 @@ public class MessageProducerFactory : IMessageProducerFactory
         this.serviceProvider = serviceProvider;
     }
 
+
     public IMessageProducerService CreateProducer(Guid configId)
     {
-        logger.LogInformation("Creating producer for configId: {ConfigId}", configId);
-        var eventHubConfig = config.CurrentValue.EventHubsConfigs.First(x => x.Id == configId);
-        var ehProducerProvider = ActivatorUtilities.CreateInstance<EventHubProducerProvider>(
-            serviceProvider, eventHubConfig
+        // TODO: have same logic as other services can be base class
+        logger.LogInformation("Creating producer for RabbitMQ configId: {ConfigId}", configId);
+        var rabbitConfig = config.CurrentValue.RabbitMqConfigs.First(x => x.Id == configId);
+        var rabbitProducerProvider = ActivatorUtilities.CreateInstance<RabbitMqProducerProvider>(
+            serviceProvider, rabbitConfig
         );
-        var textProcessingPipeline = GetTextProcessingPipeline(eventHubConfig);
+        var textProcessingPipeline = GetTextProcessingPipeline(rabbitConfig);
 
         var msgOptions = new MessageOptions
         {
-            UseGzipCompression = eventHubConfig.UseGzipCompression,
-            UseBase64Coding = eventHubConfig.UseBase64Coding,
+            UseGzipCompression = rabbitConfig.UseGzipCompression,
+            UseBase64Coding = rabbitConfig.UseBase64Coding,
             TextProcessingPipeline = textProcessingPipeline
         };
 
         if (msgOptions is { UseGzipCompression: true, UseBase64Coding: false })
             return ActivatorUtilities.CreateInstance<BytesMessageProducer>(
-                serviceProvider, ehProducerProvider, msgOptions
+                serviceProvider, rabbitProducerProvider, msgOptions
             );
 
         return ActivatorUtilities.CreateInstance<StringMessageProducer>(
-            serviceProvider, ehProducerProvider, msgOptions
+            serviceProvider, rabbitProducerProvider, msgOptions
         );
     }
 
 
-    private ITextProcessingPipeline GetTextProcessingPipeline(EventHubConfig eventHubConfig)
+    private ITextProcessingPipeline GetTextProcessingPipeline(RabbitMqConfig rabbitConfig)
     {
-        var activeMessageFormatters = GetActiveMessageFormatters(eventHubConfig);
+        // TODO: have same logic as other services can be base class
+        var activeMessageFormatters = GetActiveMessageFormatters(rabbitConfig);
         var textProcessingPipeline = serviceProvider.GetRequiredService<ITextProcessingPipeline>();
         textProcessingPipeline.AddFormatters(activeMessageFormatters);
 
         return textProcessingPipeline;
     }
 
-    private IMessageFormatter[] GetActiveMessageFormatters(EventHubConfig eventHubConfig)
+    private IMessageFormatter[] GetActiveMessageFormatters(RabbitMqConfig rabbitConfig)
     {
-        var ehMessageFormattersNames = eventHubConfig
+        // TODO: have same logic as other services can be base class
+        var messageFormattersNames = rabbitConfig
             .MessageFormatters
             .Where(x => x.Value)
             .Select(s => s.Key)
@@ -76,7 +81,7 @@ public class MessageProducerFactory : IMessageProducerFactory
             .GetServices<IMessageFormatter>()
             .Where(w =>
                 w.Type == MessageFormatterType.BeforeSend
-                && ehMessageFormattersNames.Contains(w.Name)
+                && messageFormattersNames.Contains(w.Name)
             ).ToArray();
 
         return messageFormattersList;

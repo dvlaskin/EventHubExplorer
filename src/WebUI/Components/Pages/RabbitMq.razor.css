@@ -1,0 +1,32 @@
+/* ── Page title ──────────────────────────────────────────── */
+
+.page-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    background: var(--gradient-hero);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 28px;
+    color: #fff;
+    font-size: 1.15rem;
+    font-weight: 700;
+    padding: 0.55rem 1.4rem;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    box-shadow: 0 4px 16px rgba(5, 39, 103, 0.25);
+    margin-bottom: 1.25rem;
+    letter-spacing: -0.2px;
+}
+
+.page-title i {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+.rabbitmq-entity {
+    margin-bottom: 0.5rem;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

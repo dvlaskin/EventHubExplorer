@@ -16,20 +16,20 @@ public class CircularBuffer<T> : IEnumerable<T>
     {
         if (maxSize <= 0)
             throw new ArgumentException("The size of the buffer must be greater than 0", nameof(maxSize));
-            
+
         this.maxSize = maxSize;
         buffer = new T[maxSize];
     }
 
-    public int Count 
-    { 
-        get 
-        { 
-            lock (lockObj) 
-            { 
-                return count; 
-            } 
-        } 
+    public int Count
+    {
+        get
+        {
+            lock (lockObj)
+            {
+                return count;
+            }
+        }
     }
 
     public int TotalAddedCount
@@ -42,18 +42,18 @@ public class CircularBuffer<T> : IEnumerable<T>
             }
         }
     }
-    
+
     public int Capacity => maxSize;
 
-    public bool IsFull 
-    { 
-        get 
-        { 
-            lock (lockObj) 
-            { 
-                return count == maxSize; 
-            } 
-        } 
+    public bool IsFull
+    {
+        get
+        {
+            lock (lockObj)
+            {
+                return count == maxSize;
+            }
+        }
     }
 
     /// <summary>
@@ -75,7 +75,7 @@ public class CircularBuffer<T> : IEnumerable<T>
                 // buffer is full, move head (delete the oldest element)
                 head = (head + 1) % maxSize;
             }
-            
+
             totalAddedCount++;
         }
     }
@@ -107,10 +107,10 @@ public class CircularBuffer<T> : IEnumerable<T>
     {
         if (totalAddedCount <= maxSize)
             return index;
-        
+
         return totalAddedCount - (maxSize - index);
     }
-    
+
     /// <summary>
     /// Get the latest element
     /// </summary>

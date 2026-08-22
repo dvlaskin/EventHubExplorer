@@ -20,7 +20,7 @@ public class StringMessageProducer : BaseMessageProducer<string>
     {
         if (messageOptions is null || messageOptions.UseGzipCompression is false)
             return message;
-        
+
         return message.Compress().EncodeBase64();
     }
 

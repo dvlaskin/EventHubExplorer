@@ -1,0 +1,360 @@
+@page "/rabbitmq/{id:guid}"
+@using Application.Utils
+@using Domain.Configs
+@using Domain.Enums
+@using Domain.Helpers
+@using Domain.Interfaces.Factories
+@using Domain.Interfaces.Providers
+@using Domain.Interfaces.Services
+@using Domain.Models
+@using Microsoft.Extensions.Options
+@rendermode InteractiveServer
+@inject IJSRuntime JsRuntime
+@inject IFileStorageProvider<AppConfiguration> ConfigurationProvider
+@implements IAsyncDisposable
+
+<PageTitle>RabbitMQ - @title</PageTitle>
+
+<h3 class="page-title"><i class="bi bi-hdd-network-fill"></i> @title</h3>
+@if (config is not null)
+{
+    var entityDescription = $"{config.EntityType}: {config.EntityName}";
+    if (config.EntityType == RabbitMqEntityType.Exchange)
+    {
+        entityDescription += $" ({config.ExchangeType}, routing key: {config.RoutingKey}, queue: {config.QueueName})";
+    }
+
+    <div class="rabbitmq-entity text-muted" title="@entityDescription">@entityDescription</div>
+}
+
+<MessageLayoutPresetSelector InputId="rabbitmq-layout-preset"
+                             @bind-Value="currentLayoutPreset"
+                             OnAfterChange="SaveLayoutPreferenceAsync" />
+
+<MessagePageLayout LayoutPreset="@currentLayoutPreset">
+    <SendArea>
+        <MessageSendPanel MessageToSend="@messageToSend"
+                          MessageToSendChanged="@(value => messageToSend = value)"
+                          MessagesHistory="@messagesHistoryList"
+                          ShowHistory="@showMessageHistory"
+                          ShowHistoryChanged="@(value => showMessageHistory = value)"
+                          StretchMessageInput="@(currentLayoutPreset == MessagePageLayoutPreset.LeftSendRightReceiveBottomPayload)"
+                          NumberToSend="@numberMessagesToSend"
+                          NumberToSendChanged="@(value => numberMessagesToSend = value)"
+                          Delay="@delayToSend"
+                          DelayChanged="@(value => delayToSend = value)"
+                          DelayTimeUnit="@delayTimeUnit"
+                          DelayTimeUnitChanged="@(value => delayTimeUnit = value)"
+                          SendLabel="Send Message"
+                          OnSend="SendMessage"
+                          OnToggleHistory="ToggleMessageHistory"
+                          OnSelectMessage="SelectMessage"
+                          OnRemoveFromHistory="RemoveFromHistory" />
+    </SendArea>
+    <ReceiveArea>
+        <MessageReceivePanel IsProcessing="@isProcessing"
+                             HasMessages="@(receivedMessages.Count > 0)"
+                             ReceiveLabel="Received Messages"
+                             OnStartReceive="StartReceiveMessages"
+                             OnStopReceive="StopReceiveMessages"
+                             OnClearMessages="ClearMessages">
+            <MessageList>
+                <ul id="events-list" class="list-group scrollable-list" @ref="listElement">
+                    @foreach (var message in receivedMessages.Index())
+                    {
+                        var activeClass = selectedIndex.HasValue && selectedIndex.Value == message.Index ? " active" : "";
+                        var messageString = message.Item.Message?.Length > 20
+                            ? message.Item.Message[..20] + "..."
+                            : message.Item.Message;
+                        <li class=@($"list-group-item{ activeClass }")>
+                            <button type="button" class="message-list-item-button" @onclick="() => OnMessageSelected(message.Index)">
+                                @($"{receivedMessages.GetVirtualIndex(message.Index) + 1} -> sn {message.Item.SequenceNumber}, routing key {message.Item.PartitionId}, enqueued {message.Item.EnqueuedTime.ToString("yyyyMMdd HH:mm:ss")}, message: {messageString}")
+                            </button>
+                        </li>
+                    }
+                </ul>
+            </MessageList>
+        </MessageReceivePanel>
+    </ReceiveArea>
+    <BodyArea>
+        <MessageBodyPanel Content="@receivedMessage" />
+    </BodyArea>
+</MessagePageLayout>
+
+<!-- Toast Notification -->
+<ToastNotification @ref="toast"/>
+
+
+@code {
+    [Inject] private ILogger<RabbitMq>? Logger { get; set; }
+    [Inject] private IOptionsMonitor<AppConfiguration>? Config { get; set; }
+    [Inject(Key = MessageBusType.RabbitMq)] private IMessageProducerFactory? MessageProducerFactory { get; set; }
+    [Inject(Key = MessageBusType.RabbitMq)] private IMessageConsumerFactory? MessageConsumerFactory { get; set; }
+    [Inject] private IMessageHistory<Guid, List<string>>? MessagesHistoryService { get; set; }
+    
+    [Parameter] public Guid Id { get; set; }
+    
+    private ElementReference listElement;
+    private ToastNotification? toast;
+    private IMessageProducerService? messageProducer;
+    private IMessageConsumerService? messageConsumer;
+
+    private RabbitMqConfig? config;
+    private string? title;
+    private string? messageToSend;
+    private uint numberMessagesToSend = 1;
+    private int delayToSend;
+    private string delayTimeUnit = DelayTimeUnit.Second;
+    private bool showMessageHistory;
+    private List<string> messagesHistoryList = [];
+    private const byte MAX_HISTORY_MESSAGES = 10;
+    private string? receivedMessage;
+    private bool isProcessing;
+    private int? selectedIndex;
+    private MessagePageLayoutPreset currentLayoutPreset;
+    private readonly CircularBuffer<EventHubMessage> receivedMessages = new(50);
+    private readonly ResettableCts receiverCts = new();
+    private readonly ResettableCts delayedSenderCts = new();
+
+    protected override void OnInitialized()
+    {
+        config = Config?.CurrentValue.RabbitMqConfigs.FirstOrDefault(w => w.Id == Id);
+        title = config?.Title ?? "unknown rabbitmq";
+        currentLayoutPreset = config?.MessagePageLayout ?? MessagePageLayoutPreset.TopSendReceiveBottomPayload;
+    }
+
+    private async Task SaveLayoutPreferenceAsync()
+    {
+        try
+        {
+            var appConfiguration = await ConfigurationProvider.GetDataAsync() ?? new AppConfiguration();
+            var rabbitConfig = appConfiguration.RabbitMqConfigs.FirstOrDefault(w => w.Id == Id)
+                                   ?? throw new InvalidOperationException($"RabbitMQ configuration with id '{Id}' was not found.");
+
+            rabbitConfig.MessagePageLayout = currentLayoutPreset;
+            await ConfigurationProvider.SaveDataAsync(appConfiguration);
+        }
+        catch (Exception ex)
+        {
+            DisplayErrorMessage(ex, "Error saving page layout preference");
+        }
+    }
+
+    private void InitializeMessageProducer()
+    {
+        try
+        {
+            messageProducer ??= MessageProducerFactory?.CreateProducer(Id);
+        }
+        catch (Exception ex)
+        {
+            DisplayErrorMessage(ex, "Error creating message producer");
+        }
+    }
+    
+    private void InitializeMessageConsumer()
+    {
+        try
+        {
+            messageConsumer ??= MessageConsumerFactory?.CreateConsumer(Id);
+        }
+        catch (Exception ex)
+        {
+            DisplayErrorMessage(ex, "Error creating message consumer");
+        }
+    }
+
+    
+    private async Task SendMessage()
+    {
+        InitializeMessageProducer();
+
+        if (messageProducer is null)
+        {
+            Logger?.LogWarning("Message Producer is null, cannot send message");
+            return;
+        }
+        
+        try
+        {
+            var delayTimeSpan = delayTimeUnit == DelayTimeUnit.Millisecond
+                ? TimeSpan.FromMilliseconds(delayToSend) 
+                : TimeSpan.FromSeconds(delayToSend);
+            
+            await messageProducer
+                .SendMessagesAsync(
+                    messageToSend, 
+                    numberMessagesToSend, 
+                    delayTimeSpan,
+                    delayedSenderCts.Token
+                ); 
+            
+            if (!string.IsNullOrWhiteSpace(messageToSend) && !messagesHistoryList.Contains(messageToSend))
+            {
+                if (MAX_HISTORY_MESSAGES > 0)
+                {
+                    while (messagesHistoryList.Count >= MAX_HISTORY_MESSAGES)
+                    {
+                        await RemoveFromHistory(messagesHistoryList[0]);
+                    }
+                }
+                
+                messagesHistoryList.Add(messageToSend);
+                if (MessagesHistoryService is not null) 
+                    await MessagesHistoryService.AddMessageAsync(Id, messageToSend).ConfigureAwait(false);
+            }
+            
+            _ = toast?.ShowToast("Messages sent successfully").ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            DisplayErrorMessage(ex, "Error sending message");
+        }
+        
+        numberMessagesToSend = 1;
+        delayToSend = 0;
+    }
+
+    private async Task ToggleMessageHistory()
+    {
+        showMessageHistory = !showMessageHistory;
+
+        if (showMessageHistory && messagesHistoryList.Count == 0 && MessagesHistoryService is not null)
+        {
+            var history = await MessagesHistoryService.GetHistoryAsync(Id).ConfigureAwait(false);
+            messagesHistoryList.Clear();
+            messagesHistoryList.AddRange(history);
+        }
+        
+        if (showMessageHistory && messagesHistoryList.Count == 0)
+            showMessageHistory = false;
+        
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void SelectMessage(string message)
+    {
+        messageToSend = message;
+        showMessageHistory = false;
+    }
+
+    private async Task RemoveFromHistory(string message)
+    {
+        messagesHistoryList.Remove(message);
+        if (MessagesHistoryService is not null)
+            await MessagesHistoryService.RemoveMessageAsync(Id, message);
+        
+        if (!messagesHistoryList.Any())
+        {
+            showMessageHistory = false;
+        }
+    }
+    
+    
+    private async Task StartReceiveMessages()
+    {
+        try
+        {
+            InitializeMessageConsumer();
+            if (messageConsumer is null)
+            {
+                Logger?.LogWarning("Message Consumer is null, cannot start receive messages");
+                return;
+            }
+            
+            isProcessing = !isProcessing;
+            
+            Logger?.LogInformation("Start Receive Messages");
+            
+            receiverCts.Reset();
+
+            try
+            {
+                await foreach (var message in  messageConsumer.StartReceiveMessageAsync(receiverCts.Token))
+                {
+                    if (!isProcessing)
+                        return;
+                    
+                    receivedMessages.Add(message);
+                    receivedMessage = receivedMessages[^1].Message;
+                    
+                    await InvokeAsync(StateHasChanged);
+                    
+                    await ScrollToBottom();
+                }
+                
+                if (!receiverCts.Token.IsCancellationRequested)
+                {
+                    _ = toast?.ShowToast("Connection lost. Receiving stopped.", ToastType.Error, TimeSpan.FromSeconds(10));
+                }
+            }
+            catch (Exception ex) when(ex is not OperationCanceledException)
+            {
+                DisplayErrorMessage(ex, "Error while receiving messages");
+            }
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+    
+    private async Task StopReceiveMessages()
+    {
+        receiverCts.Cancel();
+        isProcessing = !isProcessing;
+        
+        Logger?.LogInformation("Stop Receive Messages");
+        
+        if (messageConsumer is not null)
+            await messageConsumer.StopReceiveMessageAsync();
+    }
+    
+    
+    private void ClearMessages()
+    {
+        receivedMessages.Clear();
+    }
+    
+    private async Task ScrollToBottom()
+    {
+        await JsRuntime.InvokeVoidAsync("scrollToBottom", listElement);
+    }
+
+    private void OnMessageSelected(int index)
+    {
+        selectedIndex = index;
+        receivedMessage = receivedMessages[index].Message;
+    }
+
+    private void DisplayErrorMessage(Exception ex, string infoMessage)
+    {
+        Logger?.LogError(ex, "{InfoMessage}: {Message}", infoMessage, ex.Message);
+        _ = toast?.ShowToast($"{infoMessage}: {ex.Message}", ToastType.Error, TimeSpan.FromSeconds(10));
+    }
+    
+
+    public async ValueTask DisposeAsync()
+    {
+        // Cancel any pending operations first
+        receiverCts.Cancel();
+        delayedSenderCts.Cancel();
+        
+        // Dispose of services
+        if (messageProducer is not null)
+            await messageProducer.DisposeAsync();
+        
+        if (messageConsumer is not null)
+            await messageConsumer.DisposeAsync();
+        
+        // Dispose of cancellation tokens
+        receiverCts.Dispose();
+        delayedSenderCts.Dispose();
+        
+        // Clear collections
+        receivedMessages.Clear();
+        messagesHistoryList.Clear();
+        
+        GC.SuppressFinalize(this);
+    }
+}
