@@ -18,8 +18,8 @@ public static class InfrastructureRegistration
         services.AddSingleton<IFileStorageProvider<MessagesHistory>, MessageHistoryProvider>();
 
         // event hub
-        services.AddKeyedSingleton<IMessageProducerFactory, MessageProducerFactory>(MessageBusType.EventHub);
-        services.AddKeyedSingleton<IMessageConsumerFactory, MessageConsumerFactory>(MessageBusType.EventHub);
+        services.AddKeyedSingleton<IMessageProducerFactory, EventHubProducerFactory>(MessageBusType.EventHub);
+        services.AddKeyedSingleton<IMessageConsumerFactory, EventHubConsumerFactory>(MessageBusType.EventHub);
 
         // storage queue
         services.AddKeyedSingleton<IMessageProducerFactory, StorageQueueProducerFactory>(MessageBusType.StorageQueue);

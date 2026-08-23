@@ -10,7 +10,7 @@ using Microsoft.Extensions.Options;
 
 namespace Infrastructure.Factories;
 
-public class StorageQueueConsumerFactory : IMessageConsumerFactory
+public sealed class StorageQueueConsumerFactory : IMessageConsumerFactory
 {
     private readonly ILogger<StorageQueueConsumerFactory> logger;
     private readonly IOptionsMonitor<AppConfiguration> config;
@@ -38,7 +38,7 @@ public class StorageQueueConsumerFactory : IMessageConsumerFactory
 
         var textProcessingPipeline = GetTextProcessingPipeline(queueConfig);
 
-        return ActivatorUtilities.CreateInstance<EventHubConsumerService>(
+        return ActivatorUtilities.CreateInstance<MessageConsumerService>(
             serviceProvider, queueConsumerProvider, textProcessingPipeline
         );
     }

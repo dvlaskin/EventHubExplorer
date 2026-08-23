@@ -23,7 +23,7 @@ public sealed class EventHubConsumerProviderWithoutStorage : IMessageConsumerPro
         this.config = config;
     }
 
-    public async Task StartReceiveMessageAsync(Func<EventHubMessage, Task> onMessageReceived, CancellationToken cancellationToken)
+    public async Task StartReceiveMessageAsync(Func<MessageRecord, Task> onMessageReceived, CancellationToken cancellationToken)
     {
         needToStop = false;
         var options = new EventHubConsumerClientOptions
@@ -52,7 +52,7 @@ public sealed class EventHubConsumerProviderWithoutStorage : IMessageConsumerPro
             if (needToStop)
                 break;
 
-            var msgData = new EventHubMessage
+            var msgData = new MessageRecord
             {
                 Message = CompressingEncoding.DecodeMessage(partitionEvent.Data.Body, config),
                 PartitionId = partitionEvent.Partition.PartitionId,

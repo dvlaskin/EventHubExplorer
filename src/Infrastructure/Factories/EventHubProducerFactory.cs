@@ -1,9 +1,9 @@
-using Application.Services;
+using Application.Services.MessageProducers;
 using Domain.Configs;
 using Domain.Enums;
 using Domain.Interfaces.Factories;
-using Domain.Interfaces.Providers;
 using Domain.Interfaces.Services;
+using Domain.Models;
 using Infrastructure.Providers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -11,14 +11,14 @@ using Microsoft.Extensions.Options;
 
 namespace Infrastructure.Factories;
 
-public class MessageConsumerFactory : IMessageConsumerFactory
+public sealed class EventHubProducerFactory : IMessageProducerFactory
 {
-    private readonly ILogger<MessageConsumerFactory> logger;
+    private readonly ILogger<EventHubProducerFactory> logger;
     private readonly IOptionsMonitor<AppConfiguration> config;
     private readonly IServiceProvider serviceProvider;
 
-    public MessageConsumerFactory(
-        ILogger<MessageConsumerFactory> logger,
+    public EventHubProducerFactory(
+        ILogger<EventHubProducerFactory> logger,
         IOptionsMonitor<AppConfiguration> config,
         IServiceProvider serviceProvider
     )
@@ -28,30 +28,30 @@ public class MessageConsumerFactory : IMessageConsumerFactory
         this.serviceProvider = serviceProvider;
     }
 
-    public IMessageConsumerService CreateConsumer(Guid configId)
+    public IMessageProducerService CreateProducer(Guid configId)
     {
-        logger.LogInformation("Creating consumer for configId: {ConfigId}", configId);
+        logger.LogInformation("Creating producer for configId: {ConfigId}", configId);
         var eventHubConfig = config.CurrentValue.EventHubsConfigs.First(x => x.Id == configId);
-
-        IMessageConsumerProvider ehConsumerProvider = eventHubConfig.UseCheckpoints
-            ? CreateConsumerWithStorage(eventHubConfig)
-            : CreateConsumerWithoutStorage(eventHubConfig);
-
+        var ehProducerProvider = ActivatorUtilities.CreateInstance<EventHubProducerProvider>(
+            serviceProvider, eventHubConfig
+        );
         var textProcessingPipeline = GetTextProcessingPipeline(eventHubConfig);
 
-        return ActivatorUtilities.CreateInstance<EventHubConsumerService>(
-                serviceProvider, ehConsumerProvider, textProcessingPipeline
+        var msgOptions = new MessageOptions
+        {
+            UseGzipCompression = eventHubConfig.UseGzipCompression,
+            UseBase64Coding = eventHubConfig.UseBase64Coding,
+            TextProcessingPipeline = textProcessingPipeline
+        };
+
+        if (msgOptions is { UseGzipCompression: true, UseBase64Coding: false })
+            return ActivatorUtilities.CreateInstance<BytesMessageProducer>(
+                serviceProvider, ehProducerProvider, msgOptions
+            );
+
+        return ActivatorUtilities.CreateInstance<StringMessageProducer>(
+            serviceProvider, ehProducerProvider, msgOptions
         );
-    }
-
-    private EventHubConsumerProviderWithStorage CreateConsumerWithStorage(EventHubConfig eventHubConfig)
-    {
-        return ActivatorUtilities.CreateInstance<EventHubConsumerProviderWithStorage>(serviceProvider, eventHubConfig);
-    }
-
-    private EventHubConsumerProviderWithoutStorage CreateConsumerWithoutStorage(EventHubConfig eventHubConfig)
-    {
-        return ActivatorUtilities.CreateInstance<EventHubConsumerProviderWithoutStorage>(serviceProvider, eventHubConfig);
     }
 
 
@@ -70,12 +70,12 @@ public class MessageConsumerFactory : IMessageConsumerFactory
             .MessageFormatters
             .Where(x => x.Value)
             .Select(s => s.Key)
-            .ToHashSet();
+            .ToArray();
 
         var messageFormattersList = serviceProvider
             .GetServices<IMessageFormatter>()
             .Where(w =>
-                w.Type == MessageFormatterType.AfterReceive
+                w.Type == MessageFormatterType.BeforeSend
                 && ehMessageFormattersNames.Contains(w.Name)
             ).ToArray();
 

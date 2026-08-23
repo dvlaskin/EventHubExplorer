@@ -11,7 +11,7 @@ using Microsoft.Extensions.Options;
 
 namespace Infrastructure.Factories;
 
-public class RabbitMqProducerFactory : IMessageProducerFactory
+public sealed class RabbitMqProducerFactory : IMessageProducerFactory
 {
     private readonly ILogger<RabbitMqProducerFactory> logger;
     private readonly IOptionsMonitor<AppConfiguration> config;

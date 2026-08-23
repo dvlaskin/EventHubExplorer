@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Factories;
 
-public class BlobStorageFactory : IStorageClientFactory<BlobConfig, BlobContainerClient>
+public sealed class BlobStorageFactory : IStorageClientFactory<BlobConfig, BlobContainerClient>
 {
     private readonly ILogger<BlobStorageFactory> logger;
 

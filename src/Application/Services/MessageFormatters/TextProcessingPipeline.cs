@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Application.Services.MessageFormatters;
 
-public class TextProcessingPipeline : ITextProcessingPipeline
+public sealed class TextProcessingPipeline : ITextProcessingPipeline
 {
     private readonly ILogger<TextProcessingPipeline> logger;
     private readonly List<IMessageFormatter> formatters = [];

@@ -41,7 +41,7 @@ public sealed class RabbitMqConsumerFactory : IMessageConsumerFactory
 
         var textProcessingPipeline = GetTextProcessingPipeline(rabbitConfig);
 
-        return ActivatorUtilities.CreateInstance<EventHubConsumerService>(
+        return ActivatorUtilities.CreateInstance<MessageConsumerService>(
             serviceProvider, rabbitConsumerProvider, textProcessingPipeline
         );
     }

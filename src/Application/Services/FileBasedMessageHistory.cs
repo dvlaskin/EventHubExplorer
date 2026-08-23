@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Application.Services;
 
-public class FileBasedMessageHistory : IMessageHistory<Guid, List<string>>
+public sealed class FileBasedMessageHistory : IMessageHistory<Guid, List<string>>
 {
     private readonly ILogger<FileBasedMessageHistory> logger;
     private readonly IFileStorageProvider<MessagesHistory> messagesStorageProvider;
