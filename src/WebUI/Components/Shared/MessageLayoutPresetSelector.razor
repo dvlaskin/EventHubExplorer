@@ -13,7 +13,11 @@
                         aria-label="@preset.Description"
                         aria-pressed="@isActive"
                         @onclick="() => HandlePresetChangedAsync(preset.Preset)">
-                    <span class="layout-preset-preview @preset.PreviewClass" aria-hidden="true"></span>
+                    <img src="@preset.ImageSrc"
+                         alt=""
+                         class="layout-preset-preview"
+                         aria-hidden="true"
+                         loading="lazy" />
                     <span class="layout-preset-caption">@preset.Caption</span>
                 </button>
             }
@@ -28,19 +32,19 @@
             MessagePageLayoutPreset.TopSendReceiveBottomPayload,
             "Top | Bottom",
             "Top: Send/Receive | Bottom: Payload",
-            "layout-preset-preview--top-bottom"
+            "layout_01.png"
         ),
         new(
             MessagePageLayoutPreset.LeftSendReceiveRightPayload,
             "Left | Right",
             "Left: Send/Receive | Right: Payload",
-            "layout-preset-preview--left-right"
+            "layout_02.png"
         ),
         new(
             MessagePageLayoutPreset.LeftSendRightReceiveBottomPayload,
             "Split",
             "Left: Send | Right: Receive/Payload",
-            "layout-preset-preview--split"
+            "layout_03.png"
         )
     ];
 
@@ -70,6 +74,6 @@
         MessagePageLayoutPreset Preset,
         string Caption,
         string Description,
-        string PreviewClass
+        string ImageSrc
     );
 }

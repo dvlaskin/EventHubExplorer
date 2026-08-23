@@ -66,7 +66,7 @@ Use it against **production Azure** or fully **offline with emulators** (`eventh
 <p align="center">
   <img src="./docs/assets/Screenshot_03.png" alt="EventHubPage" width="90%"/>
 </p>
-<p align="center"><em>Event Hub</em></p>
+<p align="center"><em>Message Hub</em></p>
 
 ---
 
