@@ -2,7 +2,7 @@ using Domain.Interfaces.Services;
 
 namespace Domain.Models;
 
-public class MessageOptions
+public sealed class MessageOptions
 {
     public bool UseGzipCompression { get; set; }
 

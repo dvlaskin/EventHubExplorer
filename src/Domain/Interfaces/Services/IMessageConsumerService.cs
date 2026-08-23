@@ -4,6 +4,6 @@ namespace Domain.Interfaces.Services;
 
 public interface IMessageConsumerService : IAsyncDisposable
 {
-    IAsyncEnumerable<EventHubMessage> StartReceiveMessageAsync(CancellationToken cancellationToken = default);
+    IAsyncEnumerable<MessageRecord> StartReceiveMessageAsync(CancellationToken cancellationToken = default);
     Task StopReceiveMessageAsync();
 }

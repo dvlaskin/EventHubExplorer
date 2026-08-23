@@ -15,7 +15,7 @@ public sealed class ServiceBusConsumerProvider : IMessageConsumerProvider
     private readonly Lazy<ServiceBusClient> client;
     private readonly Lazy<ServiceBusReceiver> receiver;
 
-    private Func<EventHubMessage, Task>? runMessageProcessing;
+    private Func<MessageRecord, Task>? runMessageProcessing;
     private volatile bool isProcessing;
     private volatile bool disposed;
 
@@ -29,7 +29,7 @@ public sealed class ServiceBusConsumerProvider : IMessageConsumerProvider
     }
 
 
-    public async Task StartReceiveMessageAsync(Func<EventHubMessage, Task> onMessageReceived, CancellationToken cancellationToken)
+    public async Task StartReceiveMessageAsync(Func<MessageRecord, Task> onMessageReceived, CancellationToken cancellationToken)
     {
         runMessageProcessing = onMessageReceived;
         isProcessing = true;
@@ -69,7 +69,7 @@ public sealed class ServiceBusConsumerProvider : IMessageConsumerProvider
                     if (!isProcessing)
                         break;
 
-                    var msgData = new EventHubMessage
+                    var msgData = new MessageRecord
                     {
                         Message = CompressingEncoding.DecodeMessage(message.Body, config),
                         EnqueuedTime = message.EnqueuedTime,

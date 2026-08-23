@@ -14,7 +14,7 @@ public sealed class StorageQueueConsumerProvider : IMessageConsumerProvider
     private readonly StorageQueueConfig config;
 
     private QueueClient? queueClient;
-    private Func<EventHubMessage, Task>? runMessageProcessing;
+    private Func<MessageRecord, Task>? runMessageProcessing;
     private volatile bool isProcessing;
     private volatile bool disposed;
 
@@ -24,7 +24,7 @@ public sealed class StorageQueueConsumerProvider : IMessageConsumerProvider
         this.config = config;
     }
 
-    public async Task StartReceiveMessageAsync(Func<EventHubMessage, Task> onMessageReceived, CancellationToken cancellationToken)
+    public async Task StartReceiveMessageAsync(Func<MessageRecord, Task> onMessageReceived, CancellationToken cancellationToken)
     {
         CreateQueueClientIfNotExist();
 
@@ -62,7 +62,7 @@ public sealed class StorageQueueConsumerProvider : IMessageConsumerProvider
                     if (!isProcessing)
                         break;
 
-                    var msgData = new EventHubMessage
+                    var msgData = new MessageRecord
                     {
                         Message = CompressingEncoding.DecodeMessage(message.Body, config),
                         EnqueuedTime = message.InsertedOn ?? DateTimeOffset.UtcNow

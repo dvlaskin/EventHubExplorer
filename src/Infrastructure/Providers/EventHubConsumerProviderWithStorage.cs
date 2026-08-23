@@ -18,7 +18,7 @@ public sealed class EventHubConsumerProviderWithStorage : IMessageConsumerProvid
 
     private BlobContainerClient? storageClient;
     private EventProcessorClient? eventProcessorClient;
-    private Func<EventHubMessage, Task>? runMessageProcessing;
+    private Func<MessageRecord, Task>? runMessageProcessing;
     private volatile bool disposed;
 
 
@@ -34,7 +34,7 @@ public sealed class EventHubConsumerProviderWithStorage : IMessageConsumerProvid
     }
 
 
-    public async Task StartReceiveMessageAsync(Func<EventHubMessage, Task> onMessageReceived, CancellationToken cancellationToken)
+    public async Task StartReceiveMessageAsync(Func<MessageRecord, Task> onMessageReceived, CancellationToken cancellationToken)
     {
         CreateBlobStorageClientIfNotExist();
         CreateEventProcessorClientIfNotExist();
@@ -105,7 +105,7 @@ public sealed class EventHubConsumerProviderWithStorage : IMessageConsumerProvid
 
     private async Task OnProcessEventAsync(ProcessEventArgs eventArgs)
     {
-        var msgData = new EventHubMessage
+        var msgData = new MessageRecord
         {
             Message = CompressingEncoding.DecodeMessage(eventArgs.Data.Body, config),
             PartitionId = eventArgs.Partition.PartitionId,

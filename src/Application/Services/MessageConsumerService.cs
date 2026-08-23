@@ -7,22 +7,21 @@ using Microsoft.Extensions.Logging;
 
 namespace Application.Services;
 
-public class EventHubConsumerService : IMessageConsumerService
+public sealed class MessageConsumerService : IMessageConsumerService
 {
-    private readonly ILogger<EventHubConsumerService> logger;
+    private readonly ILogger<MessageConsumerService> logger;
     private readonly IMessageConsumerProvider messageConsumerProvider;
     private readonly ITextProcessingPipeline textProcessingPipeline;
 
-    private readonly Channel<EventHubMessage> channel = Channel
-        .CreateBounded<EventHubMessage>(new BoundedChannelOptions(100)
-        {
-            FullMode = BoundedChannelFullMode.Wait
-        });
+    private readonly Channel<MessageRecord> channel = Channel
+        .CreateBounded<MessageRecord>(
+            new BoundedChannelOptions(100) { FullMode = BoundedChannelFullMode.Wait }
+        );
     private bool isProcessing;
 
 
-    public EventHubConsumerService(
-        ILogger<EventHubConsumerService> logger,
+    public MessageConsumerService(
+        ILogger<MessageConsumerService> logger,
         IMessageConsumerProvider messageConsumerProvider,
         ITextProcessingPipeline textProcessingPipeline
     )
@@ -33,7 +32,7 @@ public class EventHubConsumerService : IMessageConsumerService
     }
 
 
-    public async IAsyncEnumerable<EventHubMessage> StartReceiveMessageAsync(
+    public async IAsyncEnumerable<MessageRecord> StartReceiveMessageAsync(
         [EnumeratorCancellation] CancellationToken cancellationToken = default
     )
     {
@@ -78,6 +77,6 @@ public class EventHubConsumerService : IMessageConsumerService
         await StopReceiveMessageAsync();
         await messageConsumerProvider.DisposeAsync();
         GC.SuppressFinalize(this);
-        logger.LogInformation("EventHubConsumerService is Disposed");
+        logger.LogInformation("MessageConsumerService is Disposed");
     }
 }

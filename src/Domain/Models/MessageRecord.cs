@@ -1,6 +1,6 @@
 namespace Domain.Models;
 
-public class EventHubMessage
+public sealed class MessageRecord
 {
     public string? Message { get; set; }
     public DateTimeOffset EnqueuedTime { get; set; }

@@ -4,7 +4,7 @@ using Domain.Models;
 
 namespace Application.Services.MessageProducers;
 
-public class BytesMessageProducer : BaseMessageProducer<byte[]>
+public sealed class BytesMessageProducer : BaseMessageProducer<byte[]>
 {
     private readonly MessageOptions? messageOptions;
 

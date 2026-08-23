@@ -2,7 +2,7 @@ using Domain.Models;
 
 namespace Infrastructure.Providers.FileStorageProviders;
 
-public class MessageHistoryProvider : BaseFileStorageProvider<MessagesHistory>
+public sealed class MessageHistoryProvider : BaseFileStorageProvider<MessagesHistory>
 {
     private const string ConfigPath = "Data/messagesHistory.json";
 

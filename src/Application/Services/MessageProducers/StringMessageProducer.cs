@@ -4,7 +4,7 @@ using Domain.Models;
 
 namespace Application.Services.MessageProducers;
 
-public class StringMessageProducer : BaseMessageProducer<string>
+public sealed class StringMessageProducer : BaseMessageProducer<string>
 {
     private readonly MessageOptions? messageOptions;
 

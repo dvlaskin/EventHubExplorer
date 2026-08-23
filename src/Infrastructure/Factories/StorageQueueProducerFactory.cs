@@ -11,7 +11,7 @@ using Microsoft.Extensions.Options;
 
 namespace Infrastructure.Factories;
 
-public class StorageQueueProducerFactory : IMessageProducerFactory
+public sealed class StorageQueueProducerFactory : IMessageProducerFactory
 {
     private readonly ILogger<StorageQueueProducerFactory> logger;
     private readonly IOptionsMonitor<AppConfiguration> config;

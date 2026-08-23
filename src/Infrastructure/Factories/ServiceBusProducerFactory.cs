@@ -11,7 +11,7 @@ using Microsoft.Extensions.Options;
 
 namespace Infrastructure.Factories;
 
-public class ServiceBusProducerFactory : IMessageProducerFactory
+public sealed class ServiceBusProducerFactory : IMessageProducerFactory
 {
     private readonly ILogger<ServiceBusProducerFactory> logger;
     private readonly IOptionsMonitor<AppConfiguration> config;
