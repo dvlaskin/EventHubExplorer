@@ -5,6 +5,8 @@ using Domain.Interfaces.Factories;
 using Domain.Interfaces.Providers;
 using Domain.Models;
 using Infrastructure.Factories;
+using Infrastructure.Factories.Consumers;
+using Infrastructure.Factories.Producers;
 using Infrastructure.Providers.FileStorageProviders;
 using Microsoft.Extensions.DependencyInjection;
 
