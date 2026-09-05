@@ -16,7 +16,7 @@ public sealed class EventHubProducerProvider : IMessageProducerProvider
     public EventHubProducerProvider(ILogger<EventHubProducerProvider> logger, EventHubConfig config)
     {
         this.logger = logger;
-        producerClient = new Lazy<EventHubProducerClient>(CreateProducerExist(config));
+        producerClient = new Lazy<EventHubProducerClient>(CreateProducer(config));
     }
 
 
@@ -96,7 +96,7 @@ public sealed class EventHubProducerProvider : IMessageProducerProvider
     }
 
 
-    private EventHubProducerClient CreateProducerExist(EventHubConfig config)
+    private EventHubProducerClient CreateProducer(EventHubConfig config)
     {
         logger.LogInformation("Creating producer, EventHubName: {EventHubName}", config.Name);
 
