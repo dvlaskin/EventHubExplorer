@@ -1,6 +1,6 @@
 # План: OutgoingMessage — Properties сообщений для всех шин
 _Создан: 2026-09-04_
-_Статус: В РАБОТЕ (Шаг 2 из 7 выполнен)_
+_Статус: В РАБОТЕ (Шаг 3 из 7 выполнен)_
 _Источник: `Spec_OutgoingMessage.md` v1.1 (Approved, OQ-1..OQ-3 resolved)_
 
 ## Цель
@@ -118,7 +118,7 @@ public static class MessageProducerProviderObsoleteExtensions
 ---
 
 ### Шаг 3: Маппинг свойств в `EventHubProducerProvider` + `ServiceBusProducerProvider`
-**Статус:** ⬜ TODO
+**Статус:** ✅ DONE
 **Что:** Реализовать 3 новых метода в обоих провайдерах: encode тела через `MessageModifier ?? BinaryData.FromString(Message)`, скопировать `Properties` в нативное поле, сохранить batch/delay логику.
 **Зачем:** G1 + FR-003/FR-004 — главная ценность фичи для EventHub-инженеров; ServiceBus — ближайший аналог по SDK-семантике, удобно делать парой.
 **Файлы:** `src/Infrastructure/Providers/EventHubProducerProvider.cs`, `src/Infrastructure/Providers/ServiceBusProducerProvider.cs`
@@ -141,6 +141,12 @@ private static EventData CreateEventData(OutgoingMessage message)
 - ServiceBus, аналогичный helper `CreateServiceBusMessage(OutgoingMessage)` с `new ServiceBusMessage(binaryData)` + цикл по `ApplicationProperties.TryAdd(k, v)` + та же обертка ошибок. Batch-логика `CreateMessageBatchAsync`/`TryAddMessage`/пересоздание батча — без изменений.
 - Не мутировать `message.Properties`; не логировать значения выше Debug.
 - Верификация: `dotnet build src/Infrastructure/Infrastructure.csproj` (RabbitMQ/StorageQueue еще красные — нормально до шага 4).
+
+**Заметки по реализации:**
+- **Что сделано:** Оба провайдера переведены на 3 новых метода на `OutgoingMessage`; добавлены private static helpers `CreateEventData` (EventHub, `EventData.Properties`) и `CreateServiceBusMessage` (ServiceBus, `ApplicationProperties`) с копированием `Properties` через `TryAdd` в try/catch → `InvalidOperationException("Failed to map property '{key}'.")`; batch/delay/`TryAdd`-фолбэк без изменений; логи `Information` только с `{PropertyCount}` без значений.
+- **Отклонения от плана:** Нет. Параметр `CancellationToken` переименован в `ct` по сигнатуре интерфейса из шага 2.
+- **Ключевые места:** `EventHubProducerProvider.CreateEventData()` в `src/Infrastructure/Providers/EventHubProducerProvider.cs`; `ServiceBusProducerProvider.CreateServiceBusMessage()` в `src/Infrastructure/Providers/ServiceBusProducerProvider.cs`
+- **Важно знать:** `dotnet build src/Infrastructure/Infrastructure.csproj` частично красный как ожидалось: 6× CS0535 только в RabbitMQ/StorageQueue (было 12×), EventHub/ServiceBus компилируются; повторная проверка типов в провайдерах не нужна — allowlist уже enforced в `OutgoingMessage`.
 
 ---
 

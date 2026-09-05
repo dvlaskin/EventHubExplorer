@@ -1,6 +1,7 @@
 using Azure.Messaging.ServiceBus;
 using Domain.Configs;
 using Domain.Interfaces.Providers;
+using Domain.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Providers;
@@ -24,36 +25,27 @@ public sealed class ServiceBusProducerProvider : IMessageProducerProvider
 
 
     public async Task SendMessageAsync(
-        string message, Func<string, BinaryData>? messageModifier = null, CancellationToken cancellationToken = default
+        OutgoingMessage message, CancellationToken ct = default
     )
     {
-        var binaryData = messageModifier is null
-            ? BinaryData.FromString(message)
-            : messageModifier(message);
+        var sbMessage = CreateServiceBusMessage(message);
+        await sender.Value.SendMessageAsync(sbMessage, ct);
 
-        var sbMessage = new ServiceBusMessage(binaryData);
-        await sender.Value.SendMessageAsync(sbMessage, cancellationToken);
-
-        logger.LogInformation("Single message sent to Service Bus {EntityType} {EntityName}", config.EntityType, config.EntityName);
+        logger.LogInformation("Single message sent to Service Bus {EntityType} {EntityName} with {PropertyCount} properties", config.EntityType, config.EntityName, message.Properties?.Count ?? 0);
     }
 
     public async Task SendMessagesAsync(
-        string message,
-        Func<string, BinaryData>? messageModifier = null,
+        OutgoingMessage message,
         uint numberOfMessages = 1,
-        CancellationToken cancellationToken = default
+        CancellationToken ct = default
     )
     {
-        var messageBatch = await sender.Value.CreateMessageBatchAsync(cancellationToken);
+        var messageBatch = await sender.Value.CreateMessageBatchAsync(ct);
         try
         {
             for (var i = 0; i < numberOfMessages; i++)
             {
-                var binaryData = messageModifier is null
-                    ? BinaryData.FromString(message)
-                    : messageModifier(message);
-
-                var sbMessage = new ServiceBusMessage(binaryData);
+                var sbMessage = CreateServiceBusMessage(message);
 
                 if (messageBatch.TryAddMessage(sbMessage))
                     continue;
@@ -63,10 +55,10 @@ public sealed class ServiceBusProducerProvider : IMessageProducerProvider
                     throw new InvalidOperationException("The message is too large and cannot be sent");
                 }
 
-                await sender.Value.SendMessagesAsync(messageBatch, cancellationToken);
+                await sender.Value.SendMessagesAsync(messageBatch, ct);
                 messageBatch.Dispose();
 
-                messageBatch = await sender.Value.CreateMessageBatchAsync(cancellationToken);
+                messageBatch = await sender.Value.CreateMessageBatchAsync(ct);
                 if (!messageBatch.TryAddMessage(sbMessage))
                 {
                     throw new InvalidOperationException("The message is too large and cannot be sent");
@@ -75,10 +67,10 @@ public sealed class ServiceBusProducerProvider : IMessageProducerProvider
 
             if (messageBatch.Count > 0)
             {
-                await sender.Value.SendMessagesAsync(messageBatch, cancellationToken);
+                await sender.Value.SendMessagesAsync(messageBatch, ct);
             }
 
-            logger.LogInformation("Sent {MsgCount} messages to Service Bus {EntityType} {EntityName}", numberOfMessages, config.EntityType, config.EntityName);
+            logger.LogInformation("Sent {MsgCount} messages to Service Bus {EntityType} {EntityName} with {PropertyCount} properties", numberOfMessages, config.EntityType, config.EntityName, message.Properties?.Count ?? 0);
         }
         finally
         {
@@ -87,31 +79,52 @@ public sealed class ServiceBusProducerProvider : IMessageProducerProvider
     }
 
     public async Task SendMessagesWithDelayAsync(
-        string message,
-        Func<string, BinaryData>? messageModifier = null,
+        OutgoingMessage message,
         uint numberOfMessages = 1,
         TimeSpan sendDelay = default,
-        CancellationToken cancellationToken = default
+        CancellationToken ct = default
     )
     {
         for (var i = 0; i < numberOfMessages; i++)
         {
-            var binaryData = messageModifier is null
-                ? BinaryData.FromString(message)
-                : messageModifier(message);
-
-            var sbMessage = new ServiceBusMessage(binaryData);
-            await sender.Value.SendMessageAsync(sbMessage, cancellationToken);
+            var sbMessage = CreateServiceBusMessage(message);
+            await sender.Value.SendMessageAsync(sbMessage, ct);
 
             logger.LogInformation("Message number {MessageNumber} from {TotalMessages} sent", i + 1, numberOfMessages);
 
             if (sendDelay != TimeSpan.Zero)
-                await Task.Delay(sendDelay, cancellationToken);
+                await Task.Delay(sendDelay, ct);
         }
 
-        logger.LogInformation("Sent all {MsgCount} messages to Service Bus {EntityType} {EntityName}", numberOfMessages, config.EntityType, config.EntityName);
+        logger.LogInformation("Sent all {MsgCount} messages to Service Bus {EntityType} {EntityName} with {PropertyCount} properties", numberOfMessages, config.EntityType, config.EntityName, message.Properties?.Count ?? 0);
     }
 
+
+    private static ServiceBusMessage CreateServiceBusMessage(OutgoingMessage message)
+    {
+        var binaryData = message.MessageModifier is null
+            ? BinaryData.FromString(message.Message)
+            : message.MessageModifier(message.Message);
+
+        var sbMessage = new ServiceBusMessage(binaryData);
+
+        if (message.Properties is null || message.Properties.Count == 0)
+            return sbMessage;
+
+        foreach (var (key, value) in message.Properties)
+        {
+            try
+            {
+                sbMessage.ApplicationProperties.TryAdd(key, value);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to map property '{key}'.", ex);
+            }
+        }
+
+        return sbMessage;
+    }
 
     private ServiceBusClient CreateClient()
     {
