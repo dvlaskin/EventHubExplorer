@@ -1,6 +1,6 @@
 # План: OutgoingMessage — Properties сообщений для всех шин
 _Создан: 2026-09-04_
-_Статус: В РАБОТЕ (Шаг 4 из 7 выполнен)_
+_Статус: В РАБОТЕ (Шаг 5 из 7 выполнен)_
 _Источник: `Spec_OutgoingMessage.md` v1.1 (Approved, OQ-1..OQ-3 resolved)_
 
 ## Цель
@@ -176,7 +176,7 @@ if (message.Properties is { Count: > 0 })
 ---
 
 ### Шаг 5: Application-слой — `IMessageProducerService` + `BaseMessageProducer`
-**Статус:** ⬜ TODO
+**Статус:** ✅ DONE
 **Что:** Добавить опциональный `IReadOnlyDictionary<string, object>? properties = null` в сервис и собирать `OutgoingMessage` с существующим `CreateMessageModifier()` как `MessageModifier`.
 **Зачем:** Пробросить свойства от UI до провайдера без изменения диспетча single/batch/delayed (FR-007); `MessageModifier` переиспользует gzip/base64/pipeline как сегодня.
 **Файлы:** `src/Domain/Interfaces/Services/IMessageProducerService.cs`, `src/Application/Services/MessageProducers/BaseMessageProducer.cs`
@@ -198,6 +198,12 @@ else await ...SendMessagesWithDelayAsync(envelope, numberOfMessages, delayToSend
 - `using Domain.Models;` уже есть в `BaseMessageProducer.cs`; добавить в интерфейс.
 - Ошибки `MessageModifier` пробрасывать без обертки (ответственность Application, §11 спеки).
 - Верификация: `dotnet build EventHubExplorer.sln` без новых warnings кроме ожидаемых `[Obsolete]` (если страницы еще на старом сервисе — ок); ручной прогон отправки без свойств работает как раньше.
+
+**Заметки по реализации:**
+- **Что сделано:** В `IMessageProducerService.SendMessagesAsync` добавлен опциональный `IReadOnlyDictionary<string, object>? properties = null` перед `cancellationToken`; `BaseMessageProducer.SendMessagesAsync` собирает `new OutgoingMessage(messageText, CreateMessageModifier(), properties)` после раннего return на пустой ввод и диспетчит single/batch/delayed через новые методы провайдера без изменений логики; наследники `StringMessageProducer`/`BytesMessageProducer` не тронуты; ошибки `MessageModifier` идут без обертки.
+- **Отклонения от плана:** Нет в коде. Но верификация шага неточна (зафиксировано по решению заказчика «строго по плану» от 2026-09-05): вставка `properties` перед CT ломает 4 позиционных вызова страниц — `dotnet build EventHubExplorer.sln` сейчас красный с 4× CS1503 в `EventHub/ServiceBus/RabbitMq/StorageQueue.razor` (4-й аргумент `CancellationToken` попадает в `properties`). Это ожидаемое переходное состояние, чинится в шаге 7. Побочный плюс: 3× CS0618 из `BaseMessageProducer` исчезли (шиммы больше не используются); Domain/Application/Infrastructure компилируются с 0 warnings.
+- **Ключевые места:** `IMessageProducerService.SendMessagesAsync()` в `src/Domain/Interfaces/Services/IMessageProducerService.cs`; `BaseMessageProducer.SendMessagesAsync()` в `src/Application/Services/MessageProducers/BaseMessageProducer.cs`
+- **Важно знать:** Сигнатура сервиса теперь 5 параметров (4 бизнес + CT) — исключение из правила «≤3 параметра», разрешено спекой; провайдерный долг «≤3» при этом закрыт. Ручной прогон без свойств до шага 7 невозможен из-за CS1503 — гнать после шага 7.
 
 ---
 

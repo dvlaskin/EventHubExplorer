@@ -13,7 +13,7 @@ public sealed class StorageQueueProducerProvider : IMessageProducerProvider
     private readonly StorageQueueConfig config;
     private readonly Lazy<QueueClient> queueClient;
 
-    
+
     public StorageQueueProducerProvider(ILogger<StorageQueueProducerProvider> logger, StorageQueueConfig config)
     {
         this.logger = logger;
@@ -21,7 +21,7 @@ public sealed class StorageQueueProducerProvider : IMessageProducerProvider
         queueClient = new Lazy<QueueClient>(CreateQueueClient);
     }
 
-    
+
     public async Task SendMessageAsync(OutgoingMessage message, CancellationToken ct = default)
     {
         LogPropertiesIgnored(message);
@@ -64,16 +64,16 @@ public sealed class StorageQueueProducerProvider : IMessageProducerProvider
         logger.LogInformation("Sent all {MsgCount} messages to queue {QueueName}", numberOfMessages, config.QueueName);
     }
 
-    
+
     private void LogPropertiesIgnored(OutgoingMessage message)
     {
         if (message.Properties is { Count: > 0 })
             logger.LogWarning(
-                "Storage Queue {QueueName} does not support properties — ignoring {PropertyCount} properties.", 
+                "Storage Queue {QueueName} does not support properties — ignoring {PropertyCount} properties.",
                 config.QueueName, message.Properties.Count
             );
     }
-    
+
     private static BinaryData CreateMessageContent(OutgoingMessage message)
     {
         return message.MessageModifier is null
@@ -99,7 +99,7 @@ public sealed class StorageQueueProducerProvider : IMessageProducerProvider
         var client = queueServiceClient.GetQueueClient(config.QueueName);
 
         return client.Exists() is { HasValue: true, Value: true }
-            ? client 
+            ? client
             : throw new InvalidOperationException($"Queue {config.QueueName} does not exist");
     }
 

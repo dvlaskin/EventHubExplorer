@@ -35,7 +35,7 @@ public sealed class RabbitMqProducerProvider : IMessageProducerProvider
 
         await PublishAsync(rabbitChannel, binaryData.ToMemory(), message.Properties, ct);
         logger.LogInformation(
-            "Single message sent to RabbitMQ {EntityType} {EntityName} with {PropertyCount} properties", 
+            "Single message sent to RabbitMQ {EntityType} {EntityName} with {PropertyCount} properties",
             config.EntityType, config.EntityName, message.Properties?.Count ?? 0
         );
     }
@@ -174,8 +174,8 @@ public sealed class RabbitMqProducerProvider : IMessageProducerProvider
 
     private static BinaryData CreateMessage(OutgoingMessage message)
     {
-        return message.MessageModifier is null 
-            ? BinaryData.FromString(message.Message) 
+        return message.MessageModifier is null
+            ? BinaryData.FromString(message.Message)
             : message.MessageModifier(message.Message);
     }
 
