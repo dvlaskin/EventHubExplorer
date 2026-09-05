@@ -1,6 +1,6 @@
 # План: OutgoingMessage — Properties сообщений для всех шин
 _Создан: 2026-09-04_
-_Статус: Approved (подтвержден пользователем; обновлен: без DIM — шиммы через extensions)_
+_Статус: В РАБОТЕ (Шаг 2 из 7 выполнен)_
 _Источник: `Spec_OutgoingMessage.md` v1.1 (Approved, OQ-1..OQ-3 resolved)_
 
 ## Цель
@@ -20,10 +20,10 @@ _Источник: `Spec_OutgoingMessage.md` v1.1 (Approved, OQ-1..OQ-3 resolved
 
 Цепочка `Blazor page → IMessageProducerService → BaseMessageProducer → IMessageProducerProvider → шина` сохраняется. Меняется только payload между звеньями:
 
-1. **Domain:** два новых файла — `MessagePropertiesLimits` (константы 30/256/256, единственный источник лимитов) и `OutgoingMessage` (sealed record: `Body` + `Properties` + `BodyEncoder`, валидация в конструкторе, defensive copy словаря).
-2. **Domain-контракт (без DIM):** `IMessageProducerProvider` содержит ТОЛЬКО 3 новых метода на `OutgoingMessage` (≤3 параметров каждый, без дефолтных реализаций). Старые `(string message, Func<string, BinaryData>?)` перегрузки НЕ остаются в интерфейсе — они переезжают в отдельный `static class MessageProducerProviderObsoleteExtensions` с `[Obsolete]` extension-методами, упаковывающими аргументы в `OutgoingMessage(Properties: null)` и делегирующими новым методам интерфейса. Провайдеры реализуют только новый контракт.
+1. **Domain:** два новых файла — `MessagePropertiesLimits` (константы 30/256/256, единственный источник лимитов) и `OutgoingMessage` (sealed record: `Message` + `MessageModifier` + `Properties`, валидация в конструкторе, defensive copy словаря).
+2. **Domain-контракт (без DIM):** `IMessageProducerProvider` содержит ТОЛЬКО 3 новых метода на `OutgoingMessage` (≤3 параметров каждый, без дефолтных реализаций). Старые `(string message, Func<string, BinaryData>?)` перегрузки НЕ остаются в интерфейсе — они переезжают в отдельный `static class MessageProducerProviderObsoleteExtensions` с `[Obsolete]` extension-методами, упаковывающими аргументы в `new OutgoingMessage(message, messageModifier)` (`Properties` по умолчанию null) и делегирующими новым методам интерфейса. Провайдеры реализуют только новый контракт.
 3. **Infrastructure:** каждый провайдер добавляет private helper `ApplyProperties`/`BuildNativeMessage` и вызывает его во всех 3 методах внутри существующего цикла/batching (`TryAdd` логика не меняется). RabbitMQ маппит в `BasicProperties.Headers`; StorageQueue только логирует warning.
-4. **Application:** `IMessageProducerService.SendMessagesAsync` + `BaseMessageProducer.SendMessagesAsync` принимают опциональный `IReadOnlyDictionary<string, object>? properties`, собирают `new OutgoingMessage(messageText, properties, CreateMessageModifier())`, диспетч single/batch/delayed как сегодня.
+4. **Application:** `IMessageProducerService.SendMessagesAsync` + `BaseMessageProducer.SendMessagesAsync` принимают опциональный `IReadOnlyDictionary<string, object>? properties`, собирают `new OutgoingMessage(messageText, CreateMessageModifier(), properties)`, диспетч single/batch/delayed как сегодня.
 5. **WebUI:** новый shared-компонент `MessagePropertiesEditor.razor` (`IDictionary<string,string>` binding, `IsExpanded=false` по умолчанию, inline-валидация по `MessagePropertiesLimits`, лимит строк 30). 4 страницы (`EventHub/ServiceBus/RabbitMq/StorageQueue.razor`) хранят `Dictionary<string,string>`, конвертируют в `Dictionary<string,object>` при вызове сервиса. StorageQueue показывает статический hint.
 
 SDK-типы не протекают в Domain/Application: валидация — только по allowlist (`string, byte[], int, long, double, bool, Guid, DateTimeOffset`), ошибки маппинга оборачиваются в `InvalidOperationException` с контекстом, сырые SDK-исключения наружу не пробрасываются.
@@ -33,7 +33,7 @@ SDK-типы не протекают в Domain/Application: валидация �
 | Файл | Тип изменения | Описание |
 |------|---------------|----------|
 | `src/Domain/Models/MessagePropertiesLimits.cs` | СОЗДАТЬ | `static class` с `MaxPairs=30`, `MaxKeyLength=256`, `MaxValueLength=256` |
-| `src/Domain/Models/OutgoingMessage.cs` | СОЗДАТЬ | `sealed record OutgoingMessage(Body, Properties?, BodyEncoder?)` + валидация + defensive copy |
+| `src/Domain/Models/OutgoingMessage.cs` | СОЗДАТЬ | `sealed record OutgoingMessage(Message, MessageModifier?, Properties?)` + валидация + defensive copy |
 | `src/Domain/Interfaces/Providers/IMessageProducerProvider.cs` | ИЗМЕНИТЬ | Заменить 3 старые сигнатуры на 3 новых метода на `OutgoingMessage`; БЕЗ дефолтных реализаций |
 | `src/Domain/Interfaces/Providers/MessageProducerProviderObsoleteExtensions.cs` | СОЗДАТЬ | `static class` с 3 `[Obsolete]` extension-методами старых перегрузок, делегирующими новым методам |
 | `src/Infrastructure/Providers/EventHubProducerProvider.cs` | ИЗМЕНИТЬ | Helper `ApplyProperties(EventData, Properties)` × 3 метода; лог Information с количеством |
@@ -51,7 +51,7 @@ SDK-типы не протекают в Domain/Application: валидация �
 ## Шаги
 
 ### Шаг 1: Создать Domain-типы `MessagePropertiesLimits` + `OutgoingMessage`
-**Статус:** ⬜ TODO
+**Статус:** ✅ DONE
 **Что:** Создать `src/Domain/Models/MessagePropertiesLimits.cs` (константы) и `src/Domain/Models/OutgoingMessage.cs` (sealed record с валидацией на границе).
 **Зачем:** Это фундамент, от которого зависят интерфейс, провайдеры, Application и UI-валидация; лимиты в одном месте (FR-011).
 **Файлы:** `src/Domain/Models/MessagePropertiesLimits.cs`, `src/Domain/Models/OutgoingMessage.cs`
@@ -59,17 +59,23 @@ SDK-типы не протекают в Domain/Application: валидация �
 **Риски:** Спорные типы (float, DateTime) — запретить изначально, разрешить только allowlist из FR-008 (`string, byte[], int, long, double, bool, Guid, DateTimeOffset`); переполнение лимитов — `ArgumentException` до обращения к шине.
 **Детали реализации:**
 - `MessagePropertiesLimits`: `public static class` с `public const int MaxPairs = 30; MaxKeyLength = 256; MaxValueLength = 256;` Неймспейс `Domain.Models`, file-scoped namespace как в `MessageRecord.cs`.
-- `OutgoingMessage`: `public sealed record OutgoingMessage(string Body, IReadOnlyDictionary<string, object>? Properties = null, Func<string, BinaryData>? BodyEncoder = null)`. Явный конструктор с валидацией (primary ctor + тело):
-  - `Body is null` → `ArgumentNullException(nameof(Body))` (пустая строка допустима — фильтрация `IsNullOrWhiteSpace` остается в `BaseMessageProducer`).
+- `OutgoingMessage`: `public sealed record OutgoingMessage(string Message, Func<string, BinaryData>? MessageModifier = null, IReadOnlyDictionary<string, object>? Properties = null)`. Явный конструктор с валидацией (primary ctor + тело):
+  - `Message is null` → `ArgumentNullException(nameof(Message))` (пустая строка допустима — фильтрация `IsNullOrWhiteSpace` остается в `BaseMessageProducer`).
   - `Properties` != null: `Count > MaxPairs` → `ArgumentException("Too many properties (max 30).")`; для каждой пары: ключ null/empty/whitespace → `ArgumentException("Invalid message property: key must be a non-empty string.")`; `key.Length > MaxKeyLength` → `ArgumentException`; значение null → `ArgumentException` (null-значения запрещены, т.к. `EventData.Properties` их не принимает); проверка типа по allowlist, иначе `ArgumentException("Property '{key}' has unsupported type '{type}'.")`; если значение `string` и `Length > MaxValueLength` → `ArgumentException`.
   - Defensive copy: сохранить `new Dictionary<string, object>(Properties)` (или `ReadOnlyDictionary`) чтобы провайдеры не могли мутировать входной словарь и ссылка не хранилась.
   - XML-doc комментарии для record и параметров (стиль проекта — см. AGENTS.md).
 - Верификация: `dotnet build src/Domain/Domain.csproj` успешен.
 
+**Заметки по реализации:**
+- **Что сделано:** Созданы `MessagePropertiesLimits` (30/256/256) и `OutgoingMessage` (sealed record, валидация allowlist + лимитов в конструкторе, defensive copy через `ReadOnlyDictionary`, XML-doc). `dotnet build src/Domain/Domain.csproj` — 0 warnings, 0 errors.
+- **Отклонения от плана:** Defensive copy через `ReadOnlyDictionary(new Dictionary(...))` вместо голого `Dictionary` — строже (защита от каста к `Dictionary`); валидация вынесена в `ValidateProperties`/`ValidateSingleProperty` для лимита ~20 строк/метод по ai-code-standards.
+- **Ключевые места:** `MessagePropertiesLimits` в `src/Domain/Models/MessagePropertiesLimits.cs`; `OutgoingMessage.ctor` в `src/Domain/Models/OutgoingMessage.cs`
+- **Важно знать:** `float`/`DateTime` запрещены на границе (только allowlist); пустой `Message` допустим, фильтрация остается в `BaseMessageProducer`. Имена полей приведены к существующей терминологии провайдеров: `Message` / `MessageModifier` (переименование пользователя от 2026-09-05, порядок ctor: `Message, MessageModifier, Properties`).
+
 ---
 
 ### Шаг 2: Заменить контракт `IMessageProducerProvider` + `[Obsolete]` extension-шиммы (без DIM)
-**Статус:** ⬜ TODO
+**Статус:** ✅ DONE
 **Что:** Заменить 3 старые сигнатуры интерфейса на 3 новых метода на `OutgoingMessage` (без дефолтных реализаций); создать `MessageProducerProviderObsoleteExtensions` — `static class` с 3 `[Obsolete]` extension-методами старых перегрузок, делегирующими новым.
 **Зачем:** Единый шинно-независимый контракт (G2), закрытие долга «4 параметра», обратная совместимость для внешних потребителей (FR-012, риск из §14 спеки) — без default interface methods, по требованию заказчика.
 **Файлы:** `src/Domain/Interfaces/Providers/IMessageProducerProvider.cs`, `src/Domain/Interfaces/Providers/MessageProducerProviderObsoleteExtensions.cs`
@@ -88,26 +94,32 @@ public static class MessageProducerProviderObsoleteExtensions
 {
     [Obsolete("Use the OutgoingMessage overload. Will be removed in a future release.")]
     public static Task SendMessageAsync(this IMessageProducerProvider provider, string message, Func<string, BinaryData>? messageModifier = null, CancellationToken cancellationToken = default)
-        => provider.SendMessageAsync(new OutgoingMessage(message, null, messageModifier), cancellationToken);
+        => provider.SendMessageAsync(new OutgoingMessage(message, messageModifier), cancellationToken);
 
     [Obsolete("Use the OutgoingMessage overload. Will be removed in a future release.")]
     public static Task SendMessagesAsync(this IMessageProducerProvider provider, string message, Func<string, BinaryData>? messageModifier = null, uint numberOfMessages = 1, CancellationToken cancellationToken = default)
-        => provider.SendMessagesAsync(new OutgoingMessage(message, null, messageModifier), numberOfMessages, cancellationToken);
+        => provider.SendMessagesAsync(new OutgoingMessage(message, messageModifier), numberOfMessages, cancellationToken);
 
     [Obsolete("Use the OutgoingMessage overload. Will be removed in a future release.")]
     public static Task SendMessagesWithDelayAsync(this IMessageProducerProvider provider, string message, Func<string, BinaryData>? messageModifier = null, uint numberOfMessages = 1, TimeSpan sendDelay = default, CancellationToken cancellationToken = default)
-        => provider.SendMessagesWithDelayAsync(new OutgoingMessage(message, null, messageModifier), numberOfMessages, sendDelay, cancellationToken);
+        => provider.SendMessagesWithDelayAsync(new OutgoingMessage(message, messageModifier), numberOfMessages, sendDelay, cancellationToken);
 }
 ```
 - `using Domain.Models;` в обоих файлах; неймспейс интерфейса `Domain.Interfaces.Providers` без изменений.
 - Каждый новый метод интерфейса — строго ≤3 параметров (стандарт кода из G3). Никаких тел методов в интерфейсе.
 - Верификация: `dotnet build src/Domain/Domain.csproj`; существующие 4 провайдера при этом НЕ компилируются (ожидаемо — чинятся в шагах 3–4).
 
+**Заметки по реализации:**
+- **Что сделано:** Интерфейс заменен на 3 метода на `OutgoingMessage` без тел (без DIM); создан `MessageProducerProviderObsoleteExtensions` с 3 `[Obsolete]` extension-шиммами (`new OutgoingMessage(message, messageModifier)`, `Properties` по умолчанию null). `dotnet build src/Domain/Domain.csproj` — 0 warnings, 0 errors.
+- **Отклонения от плана:** Нет. Уточнение по лимиту параметров: `SendMessagesWithDelayAsync` имеет 4 параметра с `CancellationToken` (3 бизнес-параметра + CT) — CT не считается, долг «4 параметра» закрыт (было 4 бизнес + CT).
+- **Ключевые места:** `IMessageProducerProvider` и `MessageProducerProviderObsoleteExtensions` в `src/Domain/Interfaces/Providers/`
+- **Важно знать:** Полный `dotnet build EventHubExplorer.sln` ожидаемо красный: 12× CS0535 в 4 провайдерах (чинятся в шагах 3–4); `BaseMessageProducer` уже резолвится через шиммы — 3× CS0618 warning, ошибок нет. Это подтверждает работу шиммов.
+
 ---
 
 ### Шаг 3: Маппинг свойств в `EventHubProducerProvider` + `ServiceBusProducerProvider`
 **Статус:** ⬜ TODO
-**Что:** Реализовать 3 новых метода в обоих провайдерах: encode тела через `BodyEncoder ?? BinaryData.FromString(Body)`, скопировать `Properties` в нативное поле, сохранить batch/delay логику.
+**Что:** Реализовать 3 новых метода в обоих провайдерах: encode тела через `MessageModifier ?? BinaryData.FromString(Message)`, скопировать `Properties` в нативное поле, сохранить batch/delay логику.
 **Зачем:** G1 + FR-003/FR-004 — главная ценность фичи для EventHub-инженеров; ServiceBus — ближайший аналог по SDK-семантике, удобно делать парой.
 **Файлы:** `src/Infrastructure/Providers/EventHubProducerProvider.cs`, `src/Infrastructure/Providers/ServiceBusProducerProvider.cs`
 **Зависит от:** Шаг 2
@@ -117,7 +129,7 @@ public static class MessageProducerProviderObsoleteExtensions
 ```csharp
 private static EventData CreateEventData(OutgoingMessage message)
 {
-    var data = message.BodyEncoder is null ? new EventData(message.Body) : new EventData(message.BodyEncoder(message.Body));
+    var data = message.MessageModifier is null ? new EventData(message.Message) : new EventData(message.MessageModifier(message.Message));
     if (message.Properties is not null)
         foreach (var (k, v) in message.Properties)
             try { data.Properties.TryAdd(k, v); }
@@ -140,24 +152,24 @@ private static EventData CreateEventData(OutgoingMessage message)
 **Зависит от:** Шаг 2 (параллелен шагу 3 по коду, но выполняется после него чтобы build чинить по частям)
 **Риски:** Сигнатура `BasicPublishAsync` с headers зависит от версии `RabbitMQ.Client` — перед кодированием проверить в Solution фактическую версию и поле (`IBasicProperties.Headers` vs `BasicProperties` в v7); UI передает только string, но провайдер обязан принять весь allowlist — сложное отклонять уже на границе (в `OutgoingMessage`), здесь только копия.
 **Детали реализации:**
-- RabbitMQ: расширить `PublishAsync(IChannel, ReadOnlyMemory<byte>, IReadOnlyDictionary<string,object>?, CancellationToken)` — внутри создать `BasicProperties` (конкретный класс по версии SDK), скопировать `Headers = new Dictionary<string, object?>(properties)` (копия на публикацию, не хранить ссылку), передать в `BasicPublishAsync(..., basicProperties: props, ...)`. `CreateMessage(OutgoingMessage)` возвращает `BinaryData` через `BodyEncoder ?? FromString`. Все 3 метода прокидывают `message.Properties`. Логи — количество свойств, без значений.
+- RabbitMQ: расширить `PublishAsync(IChannel, ReadOnlyMemory<byte>, IReadOnlyDictionary<string,object>?, CancellationToken)` — внутри создать `BasicProperties` (конкретный класс по версии SDK), скопировать `Headers = new Dictionary<string, object?>(properties)` (копия на публикацию, не хранить ссылку), передать в `BasicPublishAsync(..., basicProperties: props, ...)`. `CreateMessage(OutgoingMessage)` возвращает `BinaryData` через `MessageModifier ?? FromString`. Все 3 метода прокидывают `message.Properties`. Логи — количество свойств, без значений.
 - StorageQueue: в начале каждого из 3 методов:
 ```csharp
 if (message.Properties is { Count: > 0 })
     logger.LogWarning("Storage Queue {QueueName} does not support properties — ignoring {PropertyCount} properties ({Keys}).", config.QueueName, message.Properties.Count, string.Join(",", message.Properties.Keys));
 ```
-  Далее существующий код отправки тела без изменений (encode через `BodyEncoder ?? FromString`). Без исключений.
+  Далее существующий код отправки тела без изменений (encode через `MessageModifier ?? FromString`). Без исключений.
 - Верификация: `dotnet build EventHubExplorer.sln` успешен полностью (все 4 провайдера против нового интерфейса, старые вызовы из Application пока идут через `[Obsolete]`-шиммы с warnings — допустимо до шага 5).
 
 ---
 
 ### Шаг 5: Application-слой — `IMessageProducerService` + `BaseMessageProducer`
 **Статус:** ⬜ TODO
-**Что:** Добавить опциональный `IReadOnlyDictionary<string, object>? properties = null` в сервис и собирать `OutgoingMessage` с существующим `CreateMessageModifier()` как `BodyEncoder`.
-**Зачем:** Пробросить свойства от UI до провайдера без изменения диспетча single/batch/delayed (FR-007); `BodyEncoder` переиспользует gzip/base64/pipeline как сегодня.
+**Что:** Добавить опциональный `IReadOnlyDictionary<string, object>? properties = null` в сервис и собирать `OutgoingMessage` с существующим `CreateMessageModifier()` как `MessageModifier`.
+**Зачем:** Пробросить свойства от UI до провайдера без изменения диспетча single/batch/delayed (FR-007); `MessageModifier` переиспользует gzip/base64/pipeline как сегодня.
 **Файлы:** `src/Domain/Interfaces/Services/IMessageProducerService.cs`, `src/Application/Services/MessageProducers/BaseMessageProducer.cs`
 **Зависит от:** Шаги 3–4 (провайдеры готовы принимать envelope)
-**Риски:** `messageText` null — как сегодня ранний return (валидация `Body not null` в record не конфликтует, т.к. сервис не создает envelope для пустого ввода); `StringMessageProducer`/`BytesMessageProducer` наследники не меняются (только базовый класс).
+**Риски:** `messageText` null — как сегодня ранний return (валидация `Message not null` в record не конфликтует, т.к. сервис не создает envelope для пустого ввода); `StringMessageProducer`/`BytesMessageProducer` наследники не меняются (только базовый класс).
 **Детали реализации:**
 ```csharp
 // IMessageProducerService
@@ -166,13 +178,13 @@ Task SendMessagesAsync(string? messageText, uint numberOfMessages = 1, TimeSpan?
 ```csharp
 // BaseMessageProducer.SendMessagesAsync
 if (string.IsNullOrWhiteSpace(messageText)) return;
-var envelope = new OutgoingMessage(messageText, properties, CreateMessageModifier());
+var envelope = new OutgoingMessage(messageText, CreateMessageModifier(), properties);
 if (numberOfMessages <= 1) await messageProducerProvider.SendMessageAsync(envelope, cancellationToken)...
 else if (delayToSend is null || ...) await ...SendMessagesAsync(envelope, numberOfMessages, cancellationToken)...
 else await ...SendMessagesWithDelayAsync(envelope, numberOfMessages, delayToSend.Value, cancellationToken)...
 ```
 - `using Domain.Models;` уже есть в `BaseMessageProducer.cs`; добавить в интерфейс.
-- Ошибки `BodyEncoder` пробрасывать без обертки (ответственность Application, §11 спеки).
+- Ошибки `MessageModifier` пробрасывать без обертки (ответственность Application, §11 спеки).
 - Верификация: `dotnet build EventHubExplorer.sln` без новых warnings кроме ожидаемых `[Obsolete]` (если страницы еще на старом сервисе — ок); ручной прогон отправки без свойств работает как раньше.
 
 ---
