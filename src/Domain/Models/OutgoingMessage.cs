@@ -7,25 +7,25 @@ namespace Domain.Models;
 /// </summary>
 public sealed record OutgoingMessage
 {
-    public string Message { get; init; }
-    public Func<string, BinaryData>? MessageModifier { get; init; }
-    public IReadOnlyDictionary<string, object>? Properties { get; init; }
+    public string Message { get; }
+    public Func<string, BinaryData>? MessageModifier { get; }
+    public IReadOnlyDictionary<string, object>? Properties { get; }
 
 
     public OutgoingMessage(
-        string Message,
-        Func<string, BinaryData>? MessageModifier = null,
-        IReadOnlyDictionary<string, object>? Properties = null
+        string message, 
+        Func<string, BinaryData>? messageModifier = null, 
+        IReadOnlyDictionary<string, object>? properties = null
     )
     {
-        ArgumentNullException.ThrowIfNull(Message);
-        ValidateProperties(Properties);
+        ArgumentNullException.ThrowIfNull(message);
+        ValidateProperties(properties);
 
-        this.Message = Message;
-        this.MessageModifier = MessageModifier;
-        this.Properties = Properties is null
+        this.Message = message;
+        this.MessageModifier = messageModifier;
+        this.Properties = properties is null
             ? null
-            : new ReadOnlyDictionary<string, object>(new Dictionary<string, object>(Properties));
+            : new ReadOnlyDictionary<string, object>(new Dictionary<string, object>(properties));
     }
 
 

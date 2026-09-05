@@ -146,15 +146,30 @@ public sealed class RabbitMqProducerProvider : IMessageProducerProvider
             ? config.EntityName
             : config.RoutingKey ?? string.Empty;
 
-        var basicProperties = new BasicProperties();
+
         if (properties is { Count: > 0 })
-            basicProperties.Headers = properties.ToDictionary(kv => kv.Key, kv => (object?)kv.Value);
+        {
+            var basicProperties = new BasicProperties
+            {
+                Headers = properties.ToDictionary(kv => kv.Key, kv => (object?)kv.Value)
+            };
+
+            await rabbitChannel.BasicPublishAsync(
+                exchange: exchange,
+                routingKey: routingKey,
+                mandatory: false,
+                basicProperties: basicProperties,
+                body: body,
+                cancellationToken: ct
+            );
+            
+            return;
+        }
 
         await rabbitChannel.BasicPublishAsync(
             exchange: exchange,
             routingKey: routingKey,
             mandatory: false,
-            basicProperties: basicProperties,
             body: body,
             cancellationToken: ct
         );
