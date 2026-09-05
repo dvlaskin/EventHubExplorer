@@ -21,9 +21,7 @@ public sealed class EventHubProducerProvider : IMessageProducerProvider
     }
 
 
-    public async Task SendMessageAsync(
-        OutgoingMessage message, CancellationToken ct = default
-    )
+    public async Task SendMessageAsync(OutgoingMessage message, CancellationToken ct = default)
     {
         var eventData = CreateEventData(message);
 
@@ -31,11 +29,7 @@ public sealed class EventHubProducerProvider : IMessageProducerProvider
         logger.LogInformation("The single message sent with {PropertyCount} properties", message.Properties?.Count ?? 0);
     }
 
-    public async Task SendMessagesAsync(
-        OutgoingMessage message,
-        uint numberOfMessages = 1,
-        CancellationToken ct = default
-    )
+    public async Task SendMessagesAsync(OutgoingMessage message, uint numberOfMessages = 1, CancellationToken ct = default)
     {
         var eventBatch = await producerClient.Value.CreateBatchAsync(ct);
         try
@@ -67,10 +61,7 @@ public sealed class EventHubProducerProvider : IMessageProducerProvider
     }
 
     public async Task SendMessagesWithDelayAsync(
-        OutgoingMessage message,
-        uint numberOfMessages = 1,
-        TimeSpan sendDelay = default,
-        CancellationToken ct = default
+        OutgoingMessage message, uint numberOfMessages = 1, TimeSpan sendDelay = default, CancellationToken ct = default
     )
     {
         for (var num = 0; num < numberOfMessages; num++)

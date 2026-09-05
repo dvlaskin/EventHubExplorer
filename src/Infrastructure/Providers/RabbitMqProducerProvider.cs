@@ -1,6 +1,7 @@
 using Domain.Configs;
 using Domain.Enums;
 using Domain.Interfaces.Providers;
+using Domain.Models;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 
@@ -26,46 +27,38 @@ public sealed class RabbitMqProducerProvider : IMessageProducerProvider
     }
 
 
-    public async Task SendMessageAsync(
-        string message, Func<string, BinaryData>? messageModifier = null, CancellationToken cancellationToken = default
-    )
+    public async Task SendMessageAsync(OutgoingMessage message, CancellationToken ct = default)
     {
         ValidateForExchange();
         var rabbitChannel = await GetChannelAsync();
-        var binaryData = CreateMessage(message, messageModifier);
+        var binaryData = CreateMessage(message);
 
-        await PublishAsync(rabbitChannel, binaryData.ToMemory(), cancellationToken);
-        logger.LogInformation("Single message sent to RabbitMQ {EntityType} {EntityName}", config.EntityType, config.EntityName);
+        await PublishAsync(rabbitChannel, binaryData.ToMemory(), message.Properties, ct);
+        logger.LogInformation(
+            "Single message sent to RabbitMQ {EntityType} {EntityName} with {PropertyCount} properties", 
+            config.EntityType, config.EntityName, message.Properties?.Count ?? 0
+        );
     }
 
-    public async Task SendMessagesAsync(
-        string message,
-        Func<string, BinaryData>? messageModifier = null,
-        uint numberOfMessages = 1,
-        CancellationToken cancellationToken = default
-    )
+    public async Task SendMessagesAsync(OutgoingMessage message, uint numberOfMessages = 1, CancellationToken ct = default)
     {
         ValidateForExchange();
         var rabbitChannel = await GetChannelAsync();
 
         for (var i = 0; i < numberOfMessages; i++)
         {
-            var binaryData = CreateMessage(message, messageModifier);
-            await PublishAsync(rabbitChannel, binaryData.ToMemory(), cancellationToken);
+            var binaryData = CreateMessage(message);
+            await PublishAsync(rabbitChannel, binaryData.ToMemory(), message.Properties, ct);
         }
 
         logger.LogInformation(
-            "Sent {MsgCount} messages to RabbitMQ {EntityType} {EntityName}",
-            numberOfMessages, config.EntityType, config.EntityName
+            "Sent {MsgCount} messages to RabbitMQ {EntityType} {EntityName} with {PropertyCount} properties",
+            numberOfMessages, config.EntityType, config.EntityName, message.Properties?.Count ?? 0
         );
     }
 
     public async Task SendMessagesWithDelayAsync(
-        string message,
-        Func<string, BinaryData>? messageModifier = null,
-        uint numberOfMessages = 1,
-        TimeSpan sendDelay = default,
-        CancellationToken cancellationToken = default
+        OutgoingMessage message, uint numberOfMessages = 1, TimeSpan sendDelay = default, CancellationToken ct = default
     )
     {
         ValidateForExchange();
@@ -73,17 +66,17 @@ public sealed class RabbitMqProducerProvider : IMessageProducerProvider
 
         for (var i = 0; i < numberOfMessages; i++)
         {
-            var binaryData = CreateMessage(message, messageModifier);
-            await PublishAsync(rabbitChannel, binaryData.ToMemory(), cancellationToken);
+            var binaryData = CreateMessage(message);
+            await PublishAsync(rabbitChannel, binaryData.ToMemory(), message.Properties, ct);
             logger.LogInformation("Message number {MessageNumber} from {TotalMessages} sent", i + 1, numberOfMessages);
 
             if (sendDelay != TimeSpan.Zero)
-                await Task.Delay(sendDelay, cancellationToken);
+                await Task.Delay(sendDelay, ct);
         }
 
         logger.LogInformation(
-            "Sent all {MsgCount} messages to RabbitMQ {EntityType} {EntityName}",
-            numberOfMessages, config.EntityType, config.EntityName
+            "Sent all {MsgCount} messages to RabbitMQ {EntityType} {EntityName} with {PropertyCount} properties",
+            numberOfMessages, config.EntityType, config.EntityName, message.Properties?.Count ?? 0
         );
     }
 
@@ -144,19 +137,26 @@ public sealed class RabbitMqProducerProvider : IMessageProducerProvider
         }
     }
 
-    private async Task PublishAsync(IChannel rabbitChannel, ReadOnlyMemory<byte> body, CancellationToken cancellationToken)
+    private async Task PublishAsync(
+        IChannel rabbitChannel, ReadOnlyMemory<byte> body, IReadOnlyDictionary<string, object>? properties, CancellationToken ct
+    )
     {
         var exchange = config.EntityType == RabbitMqEntityType.Queue ? string.Empty : config.EntityName;
         var routingKey = config.EntityType == RabbitMqEntityType.Queue
             ? config.EntityName
             : config.RoutingKey ?? string.Empty;
 
+        var basicProperties = new BasicProperties();
+        if (properties is { Count: > 0 })
+            basicProperties.Headers = properties.ToDictionary(kv => kv.Key, kv => (object?)kv.Value);
+
         await rabbitChannel.BasicPublishAsync(
             exchange: exchange,
             routingKey: routingKey,
             mandatory: false,
+            basicProperties: basicProperties,
             body: body,
-            cancellationToken: cancellationToken
+            cancellationToken: ct
         );
     }
 
@@ -172,9 +172,11 @@ public sealed class RabbitMqProducerProvider : IMessageProducerProvider
         }
     }
 
-    private static BinaryData CreateMessage(string message, Func<string, BinaryData>? messageModifier)
+    private static BinaryData CreateMessage(OutgoingMessage message)
     {
-        return messageModifier is null ? BinaryData.FromString(message) : messageModifier(message);
+        return message.MessageModifier is null 
+            ? BinaryData.FromString(message.Message) 
+            : message.MessageModifier(message.Message);
     }
 
     private static string GetExchangeTypeString(RabbitMqExchangeType type) => type switch

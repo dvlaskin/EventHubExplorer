@@ -1,6 +1,6 @@
 # План: OutgoingMessage — Properties сообщений для всех шин
 _Создан: 2026-09-04_
-_Статус: В РАБОТЕ (Шаг 3 из 7 выполнен)_
+_Статус: В РАБОТЕ (Шаг 4 из 7 выполнен)_
 _Источник: `Spec_OutgoingMessage.md` v1.1 (Approved, OQ-1..OQ-3 resolved)_
 
 ## Цель
@@ -151,7 +151,7 @@ private static EventData CreateEventData(OutgoingMessage message)
 ---
 
 ### Шаг 4: Маппинг свойств в `RabbitMqProducerProvider` + игнор в `StorageQueueProducerProvider`
-**Статус:** ⬜ TODO
+**Статус:** ✅ DONE
 **Что:** RabbitMQ — проброс `Properties` в `BasicProperties.Headers`; StorageQueue — warning-лог и отправка только тела во всех 3 методах.
 **Зачем:** FR-005/FR-006 + G4: закрыть контракт для всех 4 шин, чтобы интерфейс компилировался целиком.
 **Файлы:** `src/Infrastructure/Providers/RabbitMqProducerProvider.cs`, `src/Infrastructure/Providers/StorageQueueProducerProvider.cs`
@@ -166,6 +166,12 @@ if (message.Properties is { Count: > 0 })
 ```
   Далее существующий код отправки тела без изменений (encode через `MessageModifier ?? FromString`). Без исключений.
 - Верификация: `dotnet build EventHubExplorer.sln` успешен полностью (все 4 провайдера против нового интерфейса, старые вызовы из Application пока идут через `[Obsolete]`-шиммы с warnings — допустимо до шага 5).
+
+**Заметки по реализации:**
+- **Что сделано:** `RabbitMqProducerProvider` переведен на 3 новых метода на `OutgoingMessage`; `PublishAsync` расширен до `(IChannel, ReadOnlyMemory<byte>, IReadOnlyDictionary<string,object>?, CancellationToken)` — внутри `new BasicProperties()` + копия `Headers` на каждую публикацию, передача в `BasicPublishAsync(..., basicProperties: props, ...)`; `CreateMessage(OutgoingMessage)` возвращает `BinaryData` через `MessageModifier ?? FromString`; логи только с `{PropertyCount}`. `StorageQueueProducerProvider` переведен на 3 новых метода: warning с ключами без значений в начале каждого метода, далее отправка только тела без изменений, без исключений.
+- **Отклонения от плана:** Warning-дубликация StorageQueue вынесена в private helper `LogPropertiesIgnored(OutgoingMessage)` вместо 3 inline-копий (DRY по ai-code-standards, вызывается в начале каждого метода как в плане); копия headers через `ToDictionary(kv => kv.Key, kv => (object?)kv.Value)` вместо `new Dictionary<string, object?>(properties)` — убран warning CS8620 nullability (`Headers` в v7 — `IDictionary<string, object?>`); параметр `CancellationToken` именован `ct` по сигнатуре интерфейса из шага 2.
+- **Ключевые места:** `RabbitMqProducerProvider.PublishAsync()` / `CreateMessage()` в `src/Infrastructure/Providers/RabbitMqProducerProvider.cs`; `StorageQueueProducerProvider.LogPropertiesIgnored()` в `src/Infrastructure/Providers/StorageQueueProducerProvider.cs`
+- **Важно знать:** Проверена фактическая версия `RabbitMQ.Client 7.2.2`: `CreateBasicProperties` удален, `BasicProperties` создается напрямую, сигнатура `BasicPublishAsync<TProperties>(exchange, routingKey, mandatory, basicProperties, body, ...)` подтверждена по документации; `dotnet build EventHubExplorer.sln` — 0 errors, только 3 ожидаемых CS0618 из `BaseMessageProducer` (шиммы, чинятся в шаге 5).
 
 ---
 

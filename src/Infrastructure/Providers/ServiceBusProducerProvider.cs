@@ -24,9 +24,7 @@ public sealed class ServiceBusProducerProvider : IMessageProducerProvider
     }
 
 
-    public async Task SendMessageAsync(
-        OutgoingMessage message, CancellationToken ct = default
-    )
+    public async Task SendMessageAsync(OutgoingMessage message, CancellationToken ct = default)
     {
         var sbMessage = CreateServiceBusMessage(message);
         await sender.Value.SendMessageAsync(sbMessage, ct);
@@ -34,11 +32,7 @@ public sealed class ServiceBusProducerProvider : IMessageProducerProvider
         logger.LogInformation("Single message sent to Service Bus {EntityType} {EntityName} with {PropertyCount} properties", config.EntityType, config.EntityName, message.Properties?.Count ?? 0);
     }
 
-    public async Task SendMessagesAsync(
-        OutgoingMessage message,
-        uint numberOfMessages = 1,
-        CancellationToken ct = default
-    )
+    public async Task SendMessagesAsync(OutgoingMessage message, uint numberOfMessages = 1, CancellationToken ct = default)
     {
         var messageBatch = await sender.Value.CreateMessageBatchAsync(ct);
         try
@@ -79,10 +73,7 @@ public sealed class ServiceBusProducerProvider : IMessageProducerProvider
     }
 
     public async Task SendMessagesWithDelayAsync(
-        OutgoingMessage message,
-        uint numberOfMessages = 1,
-        TimeSpan sendDelay = default,
-        CancellationToken ct = default
+        OutgoingMessage message, uint numberOfMessages = 1, TimeSpan sendDelay = default, CancellationToken ct = default
     )
     {
         for (var i = 0; i < numberOfMessages; i++)
