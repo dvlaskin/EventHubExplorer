@@ -1,0 +1,131 @@
+@using Domain.Models
+
+<div class="message-properties-editor mb-3">
+    <button type="button"
+            class="btn btn-link btn-sm p-0"
+            aria-expanded="@IsExpanded"
+            aria-controls="@editorId"
+            @onclick="ToggleExpanded">
+        @(IsExpanded ? $"Hide properties ({EntryCount})" : $"Properties ({EntryCount})")
+    </button>
+
+    @if (IsExpanded)
+    {
+        <div id="@editorId" class="mt-2">
+            @if (Entries.Count > 0)
+            {
+                <ul class="list-group list-unstyled mb-2">
+                    @foreach (var key in Entries.Keys.ToList())
+                    {
+                        <li class="list-group-item d-flex align-items-center gap-2 py-1">
+                            <span class="fw-semibold text-break">@key</span>
+                            <input class="form-control form-control-sm flex-grow-1"
+                                   value="@Entries[key]"
+                                   aria-label="Value for property @key"
+                                   @onchange="(ChangeEventArgs e) => UpdateValueAsync(key, e.Value?.ToString())" />
+                            <button type="button"
+                                    class="btn btn-link btn-sm text-danger p-0"
+                                    aria-label="Remove property @key"
+                                    @onclick="() => RemoveAsync(key)">
+                                Remove
+                            </button>
+                        </li>
+                    }
+                </ul>
+            }
+
+            <div class="d-flex align-items-center gap-2">
+                <input class="form-control form-control-sm"
+                       placeholder="Key"
+                       aria-label="New property key"
+                       @bind="newKey" />
+                <input class="form-control form-control-sm"
+                       placeholder="Value"
+                       aria-label="New property value"
+                       @bind="newValue" />
+                <button type="button"
+                        class="btn btn-outline-primary btn-sm"
+                        @onclick="AddAsync">
+                    Add
+                </button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="text-danger mt-1" role="alert">@errorMessage</div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private readonly string editorId = $"message-properties-{Guid.NewGuid():N}";
+    private string newKey = string.Empty;
+    private string newValue = string.Empty;
+    private string? errorMessage;
+
+    [Parameter] public IDictionary<string, string> Value { get; set; } = new Dictionary<string, string>();
+    [Parameter] public EventCallback<IDictionary<string, string>> ValueChanged { get; set; }
+    [Parameter] public bool IsExpanded { get; set; }
+
+    private IDictionary<string, string> Entries => Value;
+    private int EntryCount => Value.Count;
+
+    private void ToggleExpanded() => IsExpanded = !IsExpanded;
+
+    private async Task AddAsync()
+    {
+        errorMessage = ValidateNewEntry(newKey, newValue);
+        if (errorMessage is not null)
+            return;
+
+        Entries[newKey.Trim()] = newValue;
+        newKey = string.Empty;
+        newValue = string.Empty;
+        await ValueChanged.InvokeAsync(Value);
+    }
+
+    private async Task UpdateValueAsync(string key, string? value)
+    {
+        var updated = value ?? string.Empty;
+
+        if (updated.Length > MessagePropertiesLimits.MaxValueLength)
+        {
+            errorMessage = $"Value exceeds {MessagePropertiesLimits.MaxValueLength} characters.";
+            return;
+        }
+
+        errorMessage = null;
+        Entries[key] = updated;
+        await ValueChanged.InvokeAsync(Value);
+    }
+
+    private Task RemoveAsync(string key)
+    {
+        errorMessage = null;
+        Entries.Remove(key);
+        return ValueChanged.InvokeAsync(Value);
+    }
+
+    private string? ValidateNewEntry(string key, string value)
+    {
+        if (Entries.Count >= MessagePropertiesLimits.MaxPairs)
+            return $"Too many properties (max {MessagePropertiesLimits.MaxPairs}).";
+
+        if (string.IsNullOrWhiteSpace(key))
+            return "Key must be a non-empty string.";
+
+        var trimmedKey = key.Trim();
+
+        if (Entries.ContainsKey(trimmedKey))
+            return $"Duplicate key '{trimmedKey}'.";
+
+        if (trimmedKey.Length > MessagePropertiesLimits.MaxKeyLength)
+            return $"Key exceeds {MessagePropertiesLimits.MaxKeyLength} characters.";
+
+        if (value.Length > MessagePropertiesLimits.MaxValueLength)
+            return $"Value exceeds {MessagePropertiesLimits.MaxValueLength} characters.";
+
+        return null;
+    }
+}

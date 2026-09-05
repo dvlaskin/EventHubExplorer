@@ -1,6 +1,6 @@
 # План: OutgoingMessage — Properties сообщений для всех шин
 _Создан: 2026-09-04_
-_Статус: В РАБОТЕ (Шаг 5 из 7 выполнен)_
+_Статус: В РАБОТЕ (Шаг 6 из 7 выполнен)_
 _Источник: `Spec_OutgoingMessage.md` v1.1 (Approved, OQ-1..OQ-3 resolved)_
 
 ## Цель
@@ -208,7 +208,7 @@ else await ...SendMessagesWithDelayAsync(envelope, numberOfMessages, delayToSend
 ---
 
 ### Шаг 6: Shared-компонент `MessagePropertiesEditor`
-**Статус:** ⬜ TODO
+**Статус:** ✅ DONE
 **Что:** Создать переиспользуемый Blazor-компонент: свернутая по умолчанию key-value таблица с add/update/remove и inline-валидацией по `MessagePropertiesLimits`.
 **Зачем:** FR-010 + G5: компактный ввод свойств, один компонент на все страницы, лимиты читаются только из Domain (FR-011).
 **Файлы:** `src/WebUI/Components/Shared/MessagePropertiesEditor.razor` (+ опционально `.razor.css` в стиле соседних компонентов)
@@ -219,6 +219,12 @@ else await ...SendMessagesWithDelayAsync(envelope, numberOfMessages, delayToSend
 - Строки: `key`/`value` inputs + кнопки add/remove; при add/update/remove вызывать `ValueChanged`. Inline-валидация: ключ пустой/whitespace, дубликат, `key.Length > MessagePropertiesLimits.MaxKeyLength`, `value.Length > MessagePropertiesLimits.MaxValueLength`, `Value.Count >= MaxPairs` → понятное сообщение, строка отклоняется («Too many properties (max 30).» и т.д. по §11).
 - Стиль — Bootstrap-классы как в `MessageSendPanel.razor`; пустое начальное состояние; таблица растет по мере добавления.
 - Верификация: `dotnet build src/WebUI/WebUI.csproj`; открыть любую страницу — редактор свернут и пуст; развернуть — add/edit/remove работают без перезагрузки и без потери текста.
+
+**Заметки по реализации:**
+- **Что сделано:** Создан `MessagePropertiesEditor.razor` — параметры `Value` / `ValueChanged` / `IsExpanded=false`; кнопка-заголовок `Properties (N)` / `Hide properties (N)` с `aria-expanded` и `aria-controls`; существующие пары — key как текст + редактируемый value + кнопка Remove с текстом и aria-label; новая пара — key/value inputs + Add; inline-ошибки (`role="alert"`) по `MessagePropertiesLimits` из Domain: пустой ключ, `Duplicate key`, 30/256-лимиты; каждый add/update/remove вызывает `ValueChanged`; Bootstrap-классы как в `MessageSendPanel.razor`, без отдельного `.razor.css`.
+- **Отклонения от плана:** Ключи существующих строк нередактируемы (только value) — переименование ключа mid-typing в словаре дало бы промежуточные невалидные состояния; update = правка value, что покрывает «add/update/remove без потери текста». `.razor.css` не создан (опция плана, Bootstrap достаточно). Верификация сборкой частично: компонент компилируется чисто, но `dotnet build src/WebUI` остается красным из-за 4× CS1503 из шага 5 (чинятся в шаге 7) — новых ошибок/warnings от компонента нет.
+- **Ключевые места:** `MessagePropertiesEditor` в `src/WebUI/Components/Shared/MessagePropertiesEditor.razor` (автоимпорт через `WebUI.Components.Shared` в `_Imports.razor`)
+- **Важно знать:** `Value` мутируется по той же ссылке + `ValueChanged` для ре-рендера родителя; поля ввода новой пары локальны и сбрасываются только при успешном add; value-правки идут через `value` + `@onchange` (без ре-рендера на каждое нажатие).
 
 ---
 
