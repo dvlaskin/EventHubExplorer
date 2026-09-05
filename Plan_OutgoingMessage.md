@@ -1,6 +1,6 @@
 # План: OutgoingMessage — Properties сообщений для всех шин
 _Создан: 2026-09-04_
-_Статус: В РАБОТЕ (Шаг 6 из 7 выполнен)_
+_Статус: ЗАВЕРШЕНО ✅_
 _Источник: `Spec_OutgoingMessage.md` v1.1 (Approved, OQ-1..OQ-3 resolved)_
 
 ## Цель
@@ -229,7 +229,7 @@ else await ...SendMessagesWithDelayAsync(envelope, numberOfMessages, delayToSend
 ---
 
 ### Шаг 7: Подключить редактор на 4 страницах + hint StorageQueue
-**Статус:** ⬜ TODO
+**Статус:** ✅ DONE
 **Что:** На `EventHub/ServiceBus/RabbitMq/StorageQueue.razor`: хранить `Dictionary<string,string>`, рендерить `MessagePropertiesEditor`, конвертировать в `Dictionary<string,object>` и передавать в `IMessageProducerService.SendMessagesAsync`; на StorageQueue добавить статический hint.
 **Зачем:** End-to-end замыкание (Phase 3 milestone спеки): свойства доходят от UI до шины; FR-013 — явное предупреждение про StorageQueue.
 **Файлы:** `src/WebUI/Components/Pages/EventHub.razor`, `src/WebUI/Components/Pages/ServiceBus.razor`, `src/WebUI/Components/Pages/RabbitMq.razor`, `src/WebUI/Components/Pages/StorageQueue.razor`
@@ -241,6 +241,12 @@ else await ...SendMessagesWithDelayAsync(envelope, numberOfMessages, delayToSend
 - В `SendMessage()`: построить `IReadOnlyDictionary<string,object>? props = messageProperties.Count == 0 ? null : messageProperties.ToDictionary(kv => kv.Key, kv => (object)kv.Value);` и вызвать `SendMessagesAsync(messageToSend, numberMessagesToSend, delayTimeSpan, props, delayedSenderCts.Token)`.
 - Проверить остальные 3 страницы имеют тот же `SendMessage`-паттерн (структура идентична `EventHub.razor:158-206`) — применить аналогично.
 - Верификация: `dotnet build EventHubExplorer.sln` зеленный; ручной прогон: EventHub со свойствами → консумер видит пары; пустые свойства → как раньше; StorageQueue со свойствами → warning в логах + успешный toast + hint виден.
+
+**Заметки по реализации:**
+- **Что сделано:** На всех 4 страницах по единому шаблону: поле `messageProperties`, `<MessagePropertiesEditor @bind-Value="messageProperties" />` в `SendArea` после `MessageSendPanel`, конвертация в `Dictionary<string,object>` только в момент Send (`null` при пустом словаре — поведение без свойств бит-в-бит), 5-аргументный вызов сервиса; на StorageQueue добавлен статический hint `form-text`. Существующие `@bind` истории/задержек не тронуты. `dotnet build EventHubExplorer.sln` — 0 warnings, 0 errors (4× CS1503 из шага 5 закрыты).
+- **Отклонения от плана:** Тип поля — `IDictionary<string,string>` вместо `Dictionary<string,string>` из шаблона: комбинация `IDictionary`-параметр компонента (шаг 6) + `Dictionary`-поле + `@bind-Value` не компилируется (`EventCallback<T>` инвариантен, CS1503 в генерированном коде). Разметка `@bind-Value` и конвертация — строго по шаблону. `[Obsolete]`-шиммы больше никем не используются → 0 warnings вместо ожидаемых (критерий «компилируются с warning» выполнен тривиально — шиммы на месте и валидны).
+- **Ключевые места:** `SendMessage()` + `SendArea` в `EventHub.razor`, `ServiceBus.razor`, `RabbitMq.razor`, `StorageQueue.razor` (структура идентична, правки по одному шаблону)
+- **Важно знать:** Ручной end-to-end прогон из верификации (консумер видит пары, warning StorageQueue, toast) не выполнялся — требует живой инфраструктуры шин; выполнить перед демо.
 
 ## Открытые вопросы
 

@@ -49,7 +49,8 @@
                           OnSend="SendMessage"
                           OnToggleHistory="ToggleMessageHistory"
                           OnSelectMessage="SelectMessage"
-                          OnRemoveFromHistory="RemoveFromHistory" />
+                           OnRemoveFromHistory="RemoveFromHistory" />
+        <MessagePropertiesEditor @bind-Value="messageProperties" />
     </SendArea>
     <ReceiveArea>
         <MessageReceivePanel IsProcessing="@isProcessing"
@@ -102,6 +103,7 @@
     private RabbitMqConfig? config;
     private string? title;
     private string? messageToSend;
+    private IDictionary<string, string> messageProperties = new Dictionary<string, string>();
     private uint numberMessagesToSend = 1;
     private int delayToSend;
     private string delayTimeUnit = DelayTimeUnit.Second;
@@ -181,11 +183,16 @@
                 ? TimeSpan.FromMilliseconds(delayToSend) 
                 : TimeSpan.FromSeconds(delayToSend);
             
+            IReadOnlyDictionary<string, object>? props = messageProperties.Count == 0
+                ? null
+                : messageProperties.ToDictionary(kv => kv.Key, kv => (object)kv.Value);
+
             await messageProducer
                 .SendMessagesAsync(
                     messageToSend, 
                     numberMessagesToSend, 
                     delayTimeSpan,
+                    props,
                     delayedSenderCts.Token
                 ); 
             
