@@ -17,7 +17,9 @@ public static class InfrastructureRegistration
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services)
     {
         services.AddSingleton<IFileStorageProvider<AppConfiguration>, AppConfigurationProvider>();
-        services.AddSingleton<IFileStorageProvider<MessagesHistory>, MessageHistoryProvider>();
+        services.AddSingleton<MessageHistoryProvider>();
+        services.AddSingleton<IFileStorageProvider<MessagesHistory>>(sp => sp.GetRequiredService<MessageHistoryProvider>());
+        services.AddSingleton<IMessageHistoryStorageProvider>(sp => sp.GetRequiredService<MessageHistoryProvider>());
 
         // event hub
         services.AddKeyedSingleton<IMessageProducerFactory, EventHubProducerFactory>(MessageBusType.EventHub);

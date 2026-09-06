@@ -57,7 +57,7 @@ public sealed class MessageHistoryRecordListConverter : JsonConverter<List<Messa
         writer.WriteEndArray();
     }
 
-    
+
     private static MessageHistoryRecord? ReadRecord(
         ref Utf8JsonReader reader, JsonSerializerOptions options, DateTimeOffset migratedAt
     )

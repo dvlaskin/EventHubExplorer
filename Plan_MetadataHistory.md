@@ -1,6 +1,6 @@
 # План: История метаданных сообщений (Properties) с привязкой к записи истории
 _Создан: 2026-09-06_
-_Статус: В РАБОТЕ (Шаг 2 из 5 выполнен)_
+_Статус: В РАБОТЕ (Шаг 3 из 5 выполнен)_
 _SELF-REVIEW: 2026-09-06 — проверены консистентность (обзор/таблица/шаги), полнота покрытия FR-001…FR-034 и G1…G4, точность имён/путей по данным 3 суб-агентов, направление зависимостей, атомарность шагов; исправлены: противоречие атрибут-vs-опции, дефолт Version 0-vs-2 (критично для FR-032), DIP для .bak-метода, graceful-путь битого JSON на всех мутациях, границы Шаг 2/3. Критических ошибок не осталось._
 _Спецификация: `Spec_MetadataHistory.md` v0.1_
 
@@ -97,7 +97,7 @@ _Спецификация: `Spec_MetadataHistory.md` v0.1_
 ---
 
 ### Шаг 3: Переписать сервисный слой (контракт + CRUD + миграция + .bak)
-**Статус:** ⬜ TODO
+**Статус:** ✅ DONE
 **Что:** Удалить `IMessageHistory<Guid,List<string>>`, ввести `IMessageHistoryService`, полностью переписать `FileBasedMessageHistory`: CRUD по `Id`, валидация по `MessagePropertiesLimits`, order-independent no-diff, дедуп по телу + eviction 10, однократный миграционный persist с `.bak`-циклом (FR-034), graceful-путь битого JSON (FR-033), structured-логи без тел/значений.
 **Зачем:** Ядро фичи: вся файловая логика в одном месте, UI становится тонким; сегодняшние дедуп/лимит живут в 4 страницах копипастом — переезд в сервис устраняет рассинхрон (см. риски).
 **Файлы:** `src/Domain/Interfaces/Services/IMessageHistory.cs` (удалить), `src/Domain/Interfaces/Services/IMessageHistoryService.cs` (создать), `src/Domain/Interfaces/Providers/IMessageHistoryStorageProvider.cs` (создать — узкое расширение под `.bak`-метод Шага 2), `src/Application/Services/FileBasedMessageHistory.cs`, `src/Application/IoC/ApplicationRegistration.cs`
@@ -122,6 +122,12 @@ _Спецификация: `Spec_MetadataHistory.md` v0.1_
 - Логи: `Getting message history {ConfigId}` (Information), миграция, skip-no-diff; НИКОГДА тела/значения. Сырые `IOException/JsonException` в UI не пробрасывать как тосты — только дружелюбное сообщение на UI-слое (Шаг 4-5).
 - Ограничения: функции ≤ ~20 строк (разбить на `ValidateProperties`, `AreEqual`, `Clone`, `EnsureMigratedAsync`, `SaveWithBackupIfMigratingAsync`), ≤ 3 параметров, guard clauses сверху, без `catch {}` (только типизированные `catch (JsonException)` / `catch (IOException)` с логом).
 - Верификация: `dotnet build src/Application/Application.csproj` + `src/Domain` + `src/Infrastructure` зелёные; страницы и `Configuration.razor` красные (ожидаемо до Шагов 4-5).
+
+**Заметки по реализации:**
+- **Что сделано:** Удалён `IMessageHistory.cs`; созданы `IMessageHistoryService` (5 методов с XML-доками) и `IMessageHistoryStorageProvider : IFileStorageProvider<MessagesHistory>` с `SaveMigratedAsync`; `FileBasedMessageHistory` полностью переписан (CRUD по `Id`, глубокие копии наружу, валидация по `MessagePropertiesLimits`, order-independent no-diff с логом skip, дедуп по точному телу ordinal, eviction oldest-first до 10, однократный миграционный persist через `.bak`-метод, graceful-путь битого JSON во всех методах без записи, structured-логи только с `ConfigId/MessageId/counts`); `MessageHistoryProvider` реализует новый интерфейс; DI: `MessageHistoryProvider` как Singleton с форвардингом на оба абстракта, `IMessageHistoryService → FileBasedMessageHistory`. Сборки Domain/Infrastructure/Application: 0 warnings/errors.
+- **Отклонения от плана:** Три мелких. (1) `InfrastructureRegistration` регистрирует `MessageHistoryProvider` как Singleton с форвардингом на `IFileStorageProvider<MessagesHistory>` + `IMessageHistoryStorageProvider` (один инстанс вместо двух) — поведение для существующих резолвов сохранено. (2) `AddMessageAsync` при дедупе возвращает копию существующей записи без записи (вместо null) — сохраняет гарантию G4 и на сервисе. (3) Graceful-путь и catch-фильтры покрывают также `UnauthorizedAccessException` (консистентно с `SaveMigratedAsync` Шага 2), сырые исключения при `Save` логируются и пробрасываются типизированными для дружелюбных тостов Шага 5.
+- **Ключевые места:** `FileBasedMessageHistory` в `src/Application/Services/FileBasedMessageHistory.cs`; `IMessageHistoryService` в `src/Domain/Interfaces/Services/IMessageHistoryService.cs`; `IMessageHistoryStorageProvider` в `src/Domain/Interfaces/Providers/IMessageHistoryStorageProvider.cs`; форвардинг DI в `src/Infrastructure/IoC/InfrastructureRegistration.cs`
+- **Важно знать:** WebUI (4 pages + `Configuration.razor`) красен by design до Шагов 4–5 (старый generic удалён); мутации legacy-данных идут одним миграционным save через `.bak`-метод (1 write).
 
 ---
 

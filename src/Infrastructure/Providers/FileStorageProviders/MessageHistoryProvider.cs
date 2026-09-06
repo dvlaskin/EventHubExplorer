@@ -1,9 +1,10 @@
 using System.Text.Json;
+using Domain.Interfaces.Providers;
 using Domain.Models;
 
 namespace Infrastructure.Providers.FileStorageProviders;
 
-public sealed class MessageHistoryProvider : BaseFileStorageProvider<MessagesHistory>
+public sealed class MessageHistoryProvider : BaseFileStorageProvider<MessagesHistory>, IMessageHistoryStorageProvider
 {
     private const string ConfigPath = "Data/messagesHistory.json";
     private const string BackupExtension = ".bak";
@@ -19,14 +20,14 @@ public sealed class MessageHistoryProvider : BaseFileStorageProvider<MessagesHis
         Converters = { new MessageHistoryRecordListConverter() },
     };
 
-    
+
     protected override string DataFilePath => ConfigPath;
 
     protected override JsonSerializerOptions GetReadOptions() => ReadOptions;
 
     protected override JsonSerializerOptions GetWriteOptions() => WriteOptions;
 
-    
+
     /// <summary>
     /// Persists migrated history with a backup cycle: copy to <c>.bak</c>, save with
     /// <c>Version = 2</c>, verify by re-reading, then delete the backup.

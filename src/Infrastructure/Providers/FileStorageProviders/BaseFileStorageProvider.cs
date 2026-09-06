@@ -10,7 +10,7 @@ public abstract class BaseFileStorageProvider<T> : IFileStorageProvider<T>, IDis
     private readonly SemaphoreSlim semaphore = new(1, 1);
     private string? dataDirectoryPath = null;
 
-    
+
     public async Task<T?> GetDataAsync()
     {
         await semaphore.WaitAsync();
@@ -58,8 +58,8 @@ public abstract class BaseFileStorageProvider<T> : IFileStorageProvider<T>, IDis
 
     protected virtual JsonSerializerOptions GetReadOptions() => new();
     protected virtual JsonSerializerOptions GetWriteOptions() => new() { WriteIndented = true };
-    
-    
+
+
     protected virtual void Dispose(bool disposing)
     {
         if (disposed)
