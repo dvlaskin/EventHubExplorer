@@ -1,6 +1,6 @@
 # План: История метаданных сообщений (Properties) с привязкой к записи истории
 _Создан: 2026-09-06_
-_Статус: В РАБОТЕ (Шаг 1 из 5 выполнен)_
+_Статус: В РАБОТЕ (Шаг 2 из 5 выполнен)_
 _SELF-REVIEW: 2026-09-06 — проверены консистентность (обзор/таблица/шаги), полнота покрытия FR-001…FR-034 и G1…G4, точность имён/путей по данным 3 суб-агентов, направление зависимостей, атомарность шагов; исправлены: противоречие атрибут-vs-опции, дефолт Version 0-vs-2 (критично для FR-032), DIP для .bak-метода, graceful-путь битого JSON на всех мутациях, границы Шаг 2/3. Критических ошибок не осталось._
 _Спецификация: `Spec_MetadataHistory.md` v0.1_
 
@@ -74,7 +74,7 @@ _Спецификация: `Spec_MetadataHistory.md` v0.1_
 ---
 
 ### Шаг 2: Добавить двуформатный JSON-конвертер и чтение legacy
-**Статус:** ⬜ TODO
+**Статус:** ✅ DONE
 **Что:** Создать `MessageHistoryRecordListConverter : JsonConverter<List<MessageHistoryRecord>>`, подключить его только к пайплайну истории, проверить чтение старого файла (`src/WebUI/Data/messagesHistory.json`, формат `{Messages:{guid:[string]}}` без `Version`, тела с `\u0022`-эскейпами) без записи.
 **Зачем:** FR-030/031: файл должен открываться в обоих форматах; запись — всегда только новый формат.
 **Файлы:** `src/Infrastructure/Providers/FileStorageProviders/MessageHistoryRecordListConverter.cs`, `src/Infrastructure/Providers/FileStorageProviders/MessageHistoryProvider.cs` (override опций + метод миграционного save с `.bak`-циклом FR-034), `src/Infrastructure/Providers/FileStorageProviders/BaseFileStorageProvider.cs` (только если понадобится `virtual` хук опций), `src/Infrastructure/IoC/InfrastructureRegistration.cs` (регистрация расширения под `.bak`-метод, если вводится новый интерфейс)
@@ -87,6 +87,12 @@ _Спецификация: `Spec_MetadataHistory.md` v0.1_
 - `.bak`-метод (FR-034, здесь же, т.к. это Infrastructure): напр. `Task SaveMigratedAsync(MessagesHistory data)` — внутри: `File.Copy(json → .bak)` → `SaveDataAsync(Version=2)` → контрольный `GetDataAsync` + проверка `Version==2` → удалить `.bak`; при неуспехе — восстановить из `.bak`, `.bak` сохранить, бросить типизированное исключение (сервис залогирует + покажет дружелюбную ошибку, файл новым не считается). Весь файловый код — только здесь, сервис в `System.IO` не ходит. Контракт метода — через узкий `IMessageHistoryStorageProvider : IFileStorageProvider<MessagesHistory>` (объявляется в Шаге 3 в Domain, реализуется здесь).
 - `CreatedAt` для всех legacy-записей одного чтения — одно значение `DateTimeOffset.UtcNow` на весь `Read` списка (порядок списка = порядок JSON, FR-031).
 - Верификация: временный ручной тест — скопировать реальный `src/WebUI/Data/messagesHistory.json` во временную папку, прочитать через провайдер: все непустые тела на месте в том же порядке, `Properties` пустые, `Id` уникальны, исключений нет. Записи в файл на этом шаге быть не должно.
+
+**Заметки по реализации:**
+- **Что сделано:** Создан `MessageHistoryRecordListConverter` (string→legacy-запись с единым `migratedAt` на весь `Read`, object→разбор с дефолтами, `Null`/пустые строки/неизвестные токены пропускаются; `Write` — только объекты); в `BaseFileStorageProvider` добавлены `protected virtual GetReadOptions()/GetWriteOptions()` (дефолт = прежнее поведение, `AppConfigurationProvider` не затронут); `MessageHistoryProvider` overridит обе опции с конвертером (`WriteIndented=true` сохранён) + публичный `SaveMigratedAsync` с `.bak`-циклом (backup → save `Version=2` → контрольный re-read → delete `.bak`; при неуспехе — restore, `.bak` сохраняется, `IOException`). Сборка Infrastructure: 0 warnings, 0 ошибок в своих файлах.
+- **Отклонения от плана:** Два. (1) Ручной тест чтением через провайдер не выполнялся — по просьбе пользователя без внешних скриптов/временных проектов; корректность чтения проверена инспекцией + компиляцией. (2) `IMessageHistoryStorageProvider` здесь не вводился и регистрация в `InfrastructureRegistration` не менялась — интерфейс создаётся в Шаге 3 (там же регистрация), `SaveMigratedAsync` пока конкретный метод провайдера. Записи в файл на этом шаге нет.
+- **Ключевые места:** `MessageHistoryRecordListConverter` в `src/Infrastructure/Providers/FileStorageProviders/MessageHistoryRecordListConverter.cs`; хуки в `BaseFileStorageProvider.cs:14-17`; `SaveMigratedAsync` в `MessageHistoryProvider.cs`
+- **Важно знать:** `src/Application/Services/FileBasedMessageHistory.cs` красен (5 ошибок, старый `List<string>`) — by design до Шага 3; self-review закалил парсинг не-строковых `Id/Body/Properties/CreatedAt` в новых объектах (fallback вместо `InvalidOperationException`).
 
 ---
 
