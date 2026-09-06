@@ -162,7 +162,7 @@ public sealed class RabbitMqProducerProvider : IMessageProducerProvider
                 body: body,
                 cancellationToken: ct
             );
-            
+
             return;
         }
 

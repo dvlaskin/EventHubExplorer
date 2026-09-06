@@ -1,6 +1,6 @@
 # План: История метаданных сообщений (Properties) с привязкой к записи истории
 _Создан: 2026-09-06_
-_Статус: Готов к реализации_
+_Статус: В РАБОТЕ (Шаг 1 из 5 выполнен)_
 _SELF-REVIEW: 2026-09-06 — проверены консистентность (обзор/таблица/шаги), полнота покрытия FR-001…FR-034 и G1…G4, точность имён/путей по данным 3 суб-агентов, направление зависимостей, атомарность шагов; исправлены: противоречие атрибут-vs-опции, дефолт Version 0-vs-2 (критично для FR-032), DIP для .bak-метода, graceful-путь битого JSON на всех мутациях, границы Шаг 2/3. Критических ошибок не осталось._
 _Спецификация: `Spec_MetadataHistory.md` v0.1_
 
@@ -53,7 +53,7 @@ _Спецификация: `Spec_MetadataHistory.md` v0.1_
 ## Шаги
 
 ### Шаг 1: Ввести доменную модель записей истории
-**Статус:** ⬜ TODO
+**Статус:** ✅ DONE
 **Что:** Создать `MessageHistoryRecord`, расширить `MessagesHistory` полем `Version` и новым типом словаря. Конвертер и `.bak`-метод появятся в Шагах 2–3 — в этом шаге только модель, без ссылок на Infrastructure.
 **Зачем:** Без стабильного `Id` per-запись невозможны identity-по-`Id`, привязка properties 1:1 и стабильная миграция.
 **Файлы:** `src/Domain/Models/MessageHistoryRecord.cs`, `src/Domain/Models/MessagesHistory.cs`
@@ -64,6 +64,12 @@ _Спецификация: `Spec_MetadataHistory.md` v0.1_
 - `MessagesHistory`: добавить `int Version { get; set; } = 0;`, сменить `Messages` на `Dictionary<Guid, List<MessageHistoryRecord>>`. КРИТИЧНО: дефолт именно `0`, а не `2` — `System.Text.Json` оставляет инициализатор нетронутым при отсутствии поля в JSON, поэтому legacy-файл без `Version` с дефолтом `2` никогда не определился бы как legacy и миграция (FR-032) не триггерилась бы. Новый формат всегда пишется с `Version = 2` (выставляет сервис/провайдер при save). Никаких `[JsonConverter]`-атрибутов в Domain (направление зависимостей!). Подключение конвертера — только через опции в `MessageHistoryProvider` (Шаг 2).
 - Ограничения процесса: типы — `sealed`, nullable enable соблюдён, без логики сериализации в Domain.
 - Верификация: `dotnet build src/Domain/Domain.csproj` — зелёный; `new MessagesHistory()` имеет `Version == 0`, после выставления `Version = 2` сериализуется дефолтным `System.Text.Json` в `{"Version":2,"Messages":{}}`.
+
+**Заметки по реализации:**
+- **Что сделано:** Создан `MessageHistoryRecord` (sealed, `Id/Body/Properties/CreatedAt` с XML-доками, `Properties = new()` никогда не null), `MessagesHistory` переведён на `Dictionary<Guid, List<MessageHistoryRecord>>` + `Version = 0` с XML-доками; `dotnet build src/Domain` — 0 warnings/errors.
+- **Отклонения от плана:** Нет. Проверено инспекцией кода без скриптов по просьбе пользователя (сериализация `System.Text.Json` оставляет инициализатор `0` при отсутствии поля — миграция FR-032 триггерится).
+- **Ключевые места:** `MessageHistoryRecord` в `src/Domain/Models/MessageHistoryRecord.cs`; `MessagesHistory.Version/Messages` в `src/Domain/Models/MessagesHistory.cs`
+- **Важно знать:** Downstream (провайдер/сервис/UI) пока красный by design до Шагов 2–5; `Version = 2` выставляют сервис/провайдер при save (Шаги 2–3).
 
 ---
 

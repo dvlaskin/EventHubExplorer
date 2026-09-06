@@ -13,8 +13,8 @@ public sealed record OutgoingMessage
 
 
     public OutgoingMessage(
-        string message, 
-        Func<string, BinaryData>? messageModifier = null, 
+        string message,
+        Func<string, BinaryData>? messageModifier = null,
         IReadOnlyDictionary<string, object>? properties = null
     )
     {
