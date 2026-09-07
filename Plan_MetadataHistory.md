@@ -1,6 +1,6 @@
 # План: История метаданных сообщений (Properties) с привязкой к записи истории
 _Создан: 2026-09-06_
-_Статус: В РАБОТЕ (Шаг 3 из 5 выполнен)_
+_Статус: В РАБОТЕ (Шаг 4 из 5 выполнен)_
 _SELF-REVIEW: 2026-09-06 — проверены консистентность (обзор/таблица/шаги), полнота покрытия FR-001…FR-034 и G1…G4, точность имён/путей по данным 3 суб-агентов, направление зависимостей, атомарность шагов; исправлены: противоречие атрибут-vs-опции, дефолт Version 0-vs-2 (критично для FR-032), DIP для .bak-метода, graceful-путь битого JSON на всех мутациях, границы Шаг 2/3. Критических ошибок не осталось._
 _Спецификация: `Spec_MetadataHistory.md` v0.1_
 
@@ -132,7 +132,7 @@ _Спецификация: `Spec_MetadataHistory.md` v0.1_
 ---
 
 ### Шаг 4: Перевести `MessageSendPanel` на записи с `Id`
-**Статус:** ⬜ TODO
+**Статус:** ✅ DONE
 **Что:** Заменить `List<string> MessagesHistory` на `IReadOnlyList<MessageHistoryRecord>`, коллбеки `EventCallback<string>` → `EventCallback<Guid>`, рендер превью из `Body`, сохранить вёрстку/`aria`/стили.
 **Зачем:** Панель — единственная точка дропдауна истории; без неё страницы не смогут работать с `Id`.
 **Файлы:** `src/WebUI/Components/Shared/MessageSendPanel.razor`
@@ -143,6 +143,12 @@ _Спецификация: `Spec_MetadataHistory.md` v0.1_
 - Рендер: `@foreach (var record in MessagesHistory)` с `@key="record.Id"`; кнопка выбора показывает `Preview(record.Body)` (первые ~50 символов: `>50 → [..45]...`, как сегодня), кнопка удаления вызывает `OnRemoveFromHistory.InvokeAsync(record.Id)`.
 - Пустой `Body` (не должен прийти из сервиса, но защита): превью `"(empty)"`, без исключения.
 - Верификация: `dotnet build src/WebUI` всё ещё красный только на 4 страницах (ожидаемо); панель сама компилируется; визуально дропдаун не изменился кроме `@key`.
+
+**Заметки по реализации:**
+- **Что сделано:** `MessageSendPanel.razor` переведён на `IReadOnlyList<MessageHistoryRecord>` + `EventCallback<Guid>` для select/remove; добавлен `@using Domain.Models`; рендер через `@foreach (var record ...)` с `@key="record.Id"`, превью из `record.Body` (`>50 → [..45]...`), пустой/null `Body` → `"(empty)"` без исключения; вёрстка/`aria`/стили и остальные параметры без изменений.
+- **Отклонения от плана:** Нет.
+- **Ключевые места:** `MessageSendPanel` параметры/рендер в `src/WebUI/Components/Shared/MessageSendPanel.razor:1,25-40,88,107-108`; `TrimHistoryMessage(MessageHistoryRecord?)` в `src/WebUI/Components/Shared/MessageSendPanel.razor:154-160`
+- **Важно знать:** 4 страницы + `Configuration.razor` красные by design до Шага 5 (старый `IMessageHistory<,>`); `dotnet build EventHubExplorer.sln` — 0 warnings, 5 ошибок только в страницах (ожидаемо), ошибок в самой панели нет.
 
 ---
 
