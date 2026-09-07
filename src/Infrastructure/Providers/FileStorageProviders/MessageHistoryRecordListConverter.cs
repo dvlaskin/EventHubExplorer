@@ -185,8 +185,17 @@ public sealed class MessageHistoryRecordListConverter : JsonConverter<List<Messa
             return new Dictionary<string, string>();
         }
 
-        return JsonSerializer.Deserialize<Dictionary<string, string>>(ref reader, options)
-            ?? new Dictionary<string, string>();
+        try
+        {
+            return JsonSerializer.Deserialize<Dictionary<string, string>>(ref reader, options)
+                ?? new Dictionary<string, string>();
+        }
+        catch (JsonException)
+        {
+            // Non-string property values (hand-edited file): keep the body, drop the props
+            // of this single entry instead of failing the whole history file.
+            return new Dictionary<string, string>();
+        }
     }
 
     private static DateTimeOffset ReadCreatedAt(ref Utf8JsonReader reader, DateTimeOffset fallback)

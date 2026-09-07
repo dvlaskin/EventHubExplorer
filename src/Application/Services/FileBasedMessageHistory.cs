@@ -60,10 +60,23 @@ public sealed class FileBasedMessageHistory : IMessageHistoryService
 
         ValidateProperties(properties);
 
-        var fullHistory = await LoadFullHistoryAsync();
-
-        if (fullHistory is null)
+        // Missing file (GetDataAsync returns null) means fresh history: start new.
+        // Unreadable file (JsonException/IOException) means corrupt: no-op without wiping.
+        MessagesHistory fullHistory;
+        try
+        {
+            fullHistory = await messagesStorageProvider.GetDataAsync() ?? new MessagesHistory();
+        }
+        catch (JsonException ex)
+        {
+            logger.LogError(ex, "Message history could not be parsed, starting fresh.");
             return null;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            logger.LogError(ex, "Message history unreadable, starting fresh.");
+            return null;
+        }
 
         var history = GetOrCreateHistory(fullHistory, configId);
         var existing = FindByBody(history, body);
@@ -315,7 +328,9 @@ public sealed class FileBasedMessageHistory : IMessageHistoryService
         {
             Id = source.Id,
             Body = source.Body,
-            Properties = new Dictionary<string, string>(source.Properties),
+            Properties = source.Properties is null
+                ? new Dictionary<string, string>()
+                : new Dictionary<string, string>(source.Properties),
             CreatedAt = source.CreatedAt,
         };
     }
