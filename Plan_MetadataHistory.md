@@ -1,6 +1,6 @@
 # План: История метаданных сообщений (Properties) с привязкой к записи истории
 _Создан: 2026-09-06_
-_Статус: В РАБОТЕ (Шаг 4 из 5 выполнен)_
+_Статус: ЗАВЕРШЕНО ✅_
 _SELF-REVIEW: 2026-09-06 — проверены консистентность (обзор/таблица/шаги), полнота покрытия FR-001…FR-034 и G1…G4, точность имён/путей по данным 3 суб-агентов, направление зависимостей, атомарность шагов; исправлены: противоречие атрибут-vs-опции, дефолт Version 0-vs-2 (критично для FR-032), DIP для .bak-метода, graceful-путь битого JSON на всех мутациях, границы Шаг 2/3. Критических ошибок не осталось._
 _Спецификация: `Spec_MetadataHistory.md` v0.1_
 
@@ -153,7 +153,7 @@ _Спецификация: `Spec_MetadataHistory.md` v0.1_
 ---
 
 ### Шаг 5: Перевести 4 bus-страницы на `selectedMessageId` + in-memory properties
-**Статус:** ⬜ TODO
+**Статус:** ✅ DONE
 **Что:** Во всех 4 страницах (`EventHub`, `ServiceBus`, `RabbitMq`, `StorageQueue`) заменить `List<string> messagesHistoryList` на `List<MessageHistoryRecord>`, добавить `selectedMessageId: Guid?` + in-memory snapshot properties, реализовать резолв FR-022 и сравнение на `Send`, обновить `Toggle/Select/Remove`, сохранить `MAX_HISTORY_MESSAGES=10` как клиентский пред-чек (источник истины — сервис), сохранить хинт StorageQueue про игнор properties.
 **Зачем:** G1/G2: выбор записи подставляет тело+properties; правки до `Send` — только память; повторный `Send` без диффа — 0 writes.
 **Файлы:** `src/WebUI/Components/Pages/EventHub.razor`, `ServiceBus.razor`, `RabbitMq.razor`, `StorageQueue.razor`
@@ -177,6 +177,12 @@ _Спецификация: `Spec_MetadataHistory.md` v0.1_
 - `Configuration.razor`: убедиться, что `RemoveAllAsync(configId)` компилируется без изменений (сигнатура та же); fire-and-forget оставить как есть.
 - Ограничения: новые приватные методы ≤ ~20 строк (`FindRecord`, `PropertiesEqual`, `SnapshotProperties`), guard clauses, без `catch {}`; тосты ошибок — дружелюбные, без тел/значений и без сырых `IOException/JsonException`.
 - Верификация: `dotnet build EventHubExplorer.sln` зелёный; ручные приёмки (см. ниже): (1) новая отправка → запись с properties, рестарт → выбор подставляет оба; (2) правки черновика до Send → mtime неизменен; (3) повторный Send без изменений → файл байт-в-байт; (4) legacy-файл → все тела в порядке, props пустые, `.bak` создан и удалён, второй запуск без записи; (5) лимит 10 + eviction oldest-first на каждой из 4 страниц; (6) битый JSON → «Message history unavailable, starting fresh.», файл цел.
+
+**Заметки по реализации:**
+- **Что сделано:** Все 4 страницы (`EventHub`, `ServiceBus`, `RabbitMq`, `StorageQueue`) переведены на `List<MessageHistoryRecord>` + `selectedMessageId: Guid?` с инъекцией `IMessageHistoryService`; `SelectMessage(Guid)` подставляет тело и копию properties; `SendMessage` после продюсера вызывает `PersistHistoryAfterSendAsync` (резолв FR-022: выбранная → совпавшая по телу → новая, in-memory сравнение перед вызовом сервиса, дедуп прочих записей с тем же телом, eviction-предчек 10); `Toggle` lazy-load с friendly-тостом при битом JSON; `RemoveFromHistory(Guid)` + сброс `selectedMessageId`; `DisposeAsync` чистит выбор; добавлен `[SHOULD]`-хинт «Properties are saved on Send.»; хинт StorageQueue про игнор properties сохранён; `Configuration.razor` — только смена типа инъекции на `IMessageHistoryService` (`RemoveAllAsync` без изменений). `dotnet build EventHubExplorer.sln` — 0 warnings/errors.
+- **Отклонения от плана:** Три мелких. (1) Ветка «выбранная» применяется только при `selected.Body == messageToSend` — иначе отредактированное тело молча терялось бы (запись получала бы чужие properties, а новое тело не сохранялось); при изменённом теле работает ветка 2/3. (2) Ошибки истории обёрнуты во вложенный try/catch с дружелюбными тостами без тел/сырых деталей (`DisplayHistoryError`: «Message history unavailable, starting fresh.» / «Could not save message history.» / «Could not remove message from history.») — иначе сбой истории после успешной отправки показывался бы как «Error sending message». (3) При `MessagesHistoryService is null` — локальный fallback (`AddLocalHistoryRecord` с тем же дедупом/eviction), как раньше страницы работали без сервиса.
+- **Ключевые места:** `PersistHistoryAfterSendAsync/PersistServiceRecordAsync/SyncAndDedupAsync/SyncRecordPropertiesAsync/RemoveDuplicatesExceptAsync` + хелперы `FindRecord/PropertiesEqual/SnapshotProperties/DisplayHistoryError` одинаково в 4 файлах `src/WebUI/Components/Pages/{EventHub,ServiceBus,RabbitMq,StorageQueue}.razor`; инъекция `Configuration.razor:8`
+- **Важно знать:** Ручные приёмки (6 сценариев из шага) не выполнялись — только сборка; копипаст 4 страниц оставлен сознательно (Non-Goal).
 
 ---
 
