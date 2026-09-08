@@ -59,9 +59,12 @@
                             ? message.Item.Message[..20] + "..."
                             : message.Item.Message;
                         <li class=@($"list-group-item{ activeClass }")>
-                            <button type="button" class="message-list-item-button" @onclick="() => OnEventSelected(message.Index)">
-                                @($"{receivedMessages.GetVirtualIndex(message.Index) + 1} -> partition {message.Item.PartitionId}, sequenceNumber {message.Item.SequenceNumber}, enqueued {message.Item.EnqueuedTime.ToString("yyyyMMdd HH:mm:ss")}, message: {messageString}")
-                            </button>
+                            <div class="message-row">
+                                <button type="button" class="message-list-item-button message-text" @onclick="() => OnEventSelected(message.Index)">
+                                    @($"{receivedMessages.GetVirtualIndex(message.Index) + 1} -> partition {message.Item.PartitionId}, sequenceNumber {message.Item.SequenceNumber}, enqueued {message.Item.EnqueuedTime.ToString("yyyyMMdd HH:mm:ss")}, message: {messageString}")
+                                </button>
+                                <MessagePropertiesBadge Properties="@message.Item.Properties" OnSelect="() => OnEventSelected(message.Index)" />
+                            </div>
                         </li>
                     }
                 </ul>
@@ -69,7 +72,7 @@
         </MessageReceivePanel>
     </ReceiveArea>
     <BodyArea>
-        <MessageBodyPanel Content="@receivedMessage" />
+        <MessageBodyPanel Content="@receivedMessage" Properties="@selectedProperties" />
     </BodyArea>
 </MessagePageLayout>
 
@@ -102,6 +105,7 @@
     private Guid? selectedMessageId;
     private const byte MAX_HISTORY_MESSAGES = 10;
     private string? receivedMessage;
+    private IReadOnlyDictionary<string, object>? selectedProperties;
     private bool isProcessing;
     private int? selectedIndex;
     private MessagePageLayoutPreset currentLayoutPreset;
@@ -453,6 +457,7 @@
                     
                     receivedMessages.Add(message);
                     receivedMessage = receivedMessages[^1].Message;
+                    selectedProperties = receivedMessages[^1].Properties;
                     
                     await InvokeAsync(StateHasChanged);
                     
@@ -485,6 +490,9 @@
     private void ClearMessages()
     {
         receivedMessages.Clear();
+        selectedIndex = null;
+        receivedMessage = null;
+        selectedProperties = null;
     }
     
     private async Task ScrollToBottom()
@@ -495,7 +503,9 @@
     private void OnEventSelected(int index)
     {
         selectedIndex = index;
-        receivedMessage = receivedMessages[index].Message;
+        var selectedMessage = receivedMessages[index];
+        receivedMessage = selectedMessage.Message;
+        selectedProperties = selectedMessage.Properties;
     }
 
     private void DisplayErrorMessage(Exception ex, string infoMessage)
@@ -526,6 +536,7 @@
         receivedMessages.Clear();
         messagesHistoryList.Clear();
         selectedMessageId = null;
+        selectedProperties = null;
         
         GC.SuppressFinalize(this);
     }
