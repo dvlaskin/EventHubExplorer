@@ -13,8 +13,8 @@ public sealed class MessageConsumerService : IMessageConsumerService
     private readonly IMessageConsumerProvider messageConsumerProvider;
     private readonly ITextProcessingPipeline textProcessingPipeline;
 
-    private readonly Channel<MessageRecord> channel = Channel
-        .CreateBounded<MessageRecord>(
+    private readonly Channel<IncomingMessage> channel = Channel
+        .CreateBounded<IncomingMessage>(
             new BoundedChannelOptions(100) { FullMode = BoundedChannelFullMode.Wait }
         );
     private bool isProcessing;
@@ -32,7 +32,7 @@ public sealed class MessageConsumerService : IMessageConsumerService
     }
 
 
-    public async IAsyncEnumerable<MessageRecord> StartReceiveMessageAsync(
+    public async IAsyncEnumerable<IncomingMessage> StartReceiveMessageAsync(
         [EnumeratorCancellation] CancellationToken cancellationToken = default
     )
     {

@@ -39,7 +39,7 @@
                           OnSend="SendMessage"
                           OnToggleHistory="ToggleMessageHistory"
                           OnSelectMessage="SelectMessage"
-                           OnRemoveFromHistory="RemoveFromHistory" />
+                          OnRemoveFromHistory="RemoveFromHistory" />
         <MessagePropertiesEditor @bind-Value="messageProperties" />
         <div class="form-text">Storage Queue does not support properties — they will be ignored.</div>
     </SendArea>
@@ -106,7 +106,7 @@
     private int? selectedIndex;
     private MessagePageLayoutPreset currentLayoutPreset;
     private readonly List<MessageHistoryRecord> messagesHistoryList = [];
-    private readonly CircularBuffer<MessageRecord> receivedMessages = new(50);
+    private readonly CircularBuffer<IncomingMessage> receivedMessages = new(50);
     private readonly ResettableCts receiverCts = new();
     private readonly ResettableCts delayedSenderCts = new();
 
