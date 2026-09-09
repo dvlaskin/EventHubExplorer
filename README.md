@@ -84,6 +84,7 @@ Use it against **production Azure** or fully **offline with emulators** (`eventh
 | **Send batch** | Push N messages at once                                                                                                                                   |
 | **Send batch with delay** | Push N messages with a configurable interval between each                                                                                                 |
 | **Auto-format JSON** | Pretty-prints payload on receive if it is valid JSON                                                                                                      |
+| **Custom properties** | Add and read custom key-value properties                                                                                                                 |
 
 ### 4.2 Service-Specific Differences
 
@@ -92,6 +93,7 @@ Use it against **production Azure** or fully **offline with emulators** (`eventh
 | **Send to** | Event Hub (partitioned stream) | Queue | Queue **or** Topic | Queue **or** Exchange (`direct` / `fanout` / `topic`) |
 | **Receive from** | Event Hub — with or without checkpoints* | Queue (polling) | Queue **or** Topic Subscription | Queue **or** Queue bound to Exchange (routing key) |
 | **Checkpoint / offset tracking** | ✅ Without checkpoints (always newest) / With checkpoints via Blob storage (Azurite / Azure Blob) | — | — | — |
+| **Custom properties** | ✅ | — | ✅ | ✅ |
 
 > **\*** Event Hubs uses the `$Default` consumer group by default. Checkpoints require an external Blob storage — Azurite locally or Azure Blob in production.
 
