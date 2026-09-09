@@ -1,0 +1,33 @@
+/* Small quiet indicator, rendered only when the message has properties. */
+.props-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.75rem;
+    height: 1.75rem;
+    margin-left: auto;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--color-muted);
+    cursor: pointer;
+    transition: color var(--transition), background var(--transition);
+}
+
+.props-trigger:hover {
+    color: var(--color-primary);
+    background: rgba(102, 16, 242, 0.1);
+}
+
+.props-trigger:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    color: var(--color-primary);
+}
+
+.props-trigger .bi {
+    font-size: 1rem;
+    line-height: 1;
+    pointer-events: none;
+}

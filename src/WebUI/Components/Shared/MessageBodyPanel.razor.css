@@ -10,3 +10,85 @@
     resize: none;
     min-height: 200px;
 }
+
+.received-properties {
+    margin-top: 0.75rem;
+    min-height: 0;
+}
+
+.received-properties-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-primary);
+    transition: color var(--transition);
+}
+
+.received-properties-toggle:hover {
+    color: var(--color-secondary);
+}
+
+.received-properties-toggle:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-btn);
+}
+
+.received-properties-toggle .bi {
+    font-size: 0.75rem;
+}
+
+.received-properties-count {
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--color-muted);
+}
+
+.received-properties-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    max-height: 12rem;
+    overflow-y: auto;
+    margin: 0.35rem 0 0;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-btn);
+    background: rgba(255, 255, 255, 0.7);
+    font-size: 0.82rem;
+}
+
+.received-properties-row {
+    display: grid;
+    grid-template-columns: minmax(0, 12rem) minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: baseline;
+    margin: 0;
+    min-width: 0;
+}
+
+.received-properties-key,
+.received-properties-value {
+    margin: 0;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.received-properties-key {
+    font-weight: 600;
+}
+
+.received-properties-value {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}

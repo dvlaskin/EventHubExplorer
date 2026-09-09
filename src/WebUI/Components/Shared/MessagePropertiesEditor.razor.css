@@ -1,0 +1,91 @@
+.message-properties-editor {
+    min-width: 0;
+}
+
+/* Toggle в стилистике label-section остальных панелей (Send / Received / Payload). */
+.properties-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-primary);
+    transition: color var(--transition), opacity var(--transition);
+}
+
+.properties-toggle:hover {
+    color: var(--color-secondary);
+}
+
+.properties-toggle:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-btn);
+}
+
+.properties-toggle .bi {
+    font-size: 0.75rem;
+}
+
+.properties-count {
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--color-muted);
+}
+
+.properties-body {
+    margin-top: 0.5rem;
+}
+
+.properties-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Единая сетка 50/50 для существующих и новой строк: ключ | значение | кнопка. */
+.properties-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    gap: 0.5rem;
+    align-items: center;
+    min-width: 0;
+}
+
+/* Длинные значения обрезаются многоточием, поле не растягивается и не переносится. */
+.properties-input {
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.properties-add {
+    white-space: nowrap;
+}
+
+.properties-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    text-decoration: none;
+}
+
+.properties-remove:hover {
+    color: var(--color-danger);
+}
+
+.properties-remove:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}

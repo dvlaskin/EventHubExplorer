@@ -1,0 +1,172 @@
+@using Domain.Models
+
+<div class="message-properties-editor mb-3">
+    <button type="button"
+            class="properties-toggle"
+            aria-expanded="@IsExpanded"
+            aria-controls="@editorId"
+            @onclick="ToggleExpandedAsync">
+        <i class="bi @(IsExpanded ? "bi-chevron-up" : "bi-chevron-down")" aria-hidden="true"></i>
+        <span>@(IsExpanded ? "Hide Send properties" : "Send properties")</span>
+        <span class="properties-count">(@EntryCount)</span>
+    </button>
+
+    @if (IsExpanded)
+    {
+        <div id="@editorId" class="properties-body">
+            @if (Entries.Count > 0)
+            {
+                <ul class="list-unstyled properties-list">
+                    @foreach (var key in Entries.Keys.ToList())
+                    {
+                        <li class="properties-row" @key="key">
+                            <input class="form-control form-control-sm properties-input"
+                                   value="@key"
+                                   title="@key"
+                                   aria-label="Key for property @key"
+                                   maxlength="@MessagePropertiesLimits.MaxKeyLength"
+                                   @onchange="(ChangeEventArgs e) => RenameAsync(key, e.Value?.ToString())" />
+                            <input class="form-control form-control-sm properties-input"
+                                   value="@GetValue(key)"
+                                   title="@GetValue(key)"
+                                   aria-label="Value for property @key"
+                                   maxlength="@MessagePropertiesLimits.MaxValueLength"
+                                   @onchange="(ChangeEventArgs e) => UpdateValueAsync(key, e.Value?.ToString())" />
+                            <button type="button"
+                                    class="btn btn-link btn-sm text-danger properties-remove"
+                                    title="Remove property @key"
+                                    aria-label="Remove property @key"
+                                    @onclick="() => RemoveAsync(key)">
+                                <i class="bi bi-trash" aria-hidden="true"></i>
+                            </button>
+                        </li>
+                    }
+                </ul>
+            }
+
+            <div class="properties-row properties-add-row">
+                <input class="form-control form-control-sm properties-input"
+                       placeholder="Key"
+                       aria-label="New property key"
+                       maxlength="@MessagePropertiesLimits.MaxKeyLength"
+                       @bind="newKey" />
+                <input class="form-control form-control-sm properties-input"
+                       placeholder="Value"
+                       aria-label="New property value"
+                       maxlength="@MessagePropertiesLimits.MaxValueLength"
+                       @bind="newValue" />
+                <button type="button"
+                        class="btn btn-primary btn-sm properties-add"
+                        @onclick="AddAsync">
+                    Add
+                </button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="validation-message mt-1" role="alert">@errorMessage</div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private readonly string editorId = $"message-properties-{Guid.NewGuid():N}";
+    private string newKey = string.Empty;
+    private string newValue = string.Empty;
+    private string? errorMessage;
+
+    [Parameter] public IDictionary<string, string> Value { get; set; } = new Dictionary<string, string>();
+    [Parameter] public EventCallback<IDictionary<string, string>> ValueChanged { get; set; }
+    [Parameter] public bool IsExpanded { get; set; }
+    [Parameter] public EventCallback<bool> IsExpandedChanged { get; set; }
+
+    private IDictionary<string, string> Entries => Value;
+    private int EntryCount => Value.Count;
+
+    private string GetValue(string key)
+        => Entries.TryGetValue(key, out var value) ? value : string.Empty;
+
+    private Task ToggleExpandedAsync()
+    {
+        IsExpanded = !IsExpanded;
+        return IsExpandedChanged.InvokeAsync(IsExpanded);
+    }
+
+    private async Task AddAsync()
+    {
+        errorMessage = ValidateNewEntry(newKey, newValue);
+        if (errorMessage is not null)
+            return;
+
+        Entries[newKey.Trim()] = newValue;
+        newKey = string.Empty;
+        newValue = string.Empty;
+        await ValueChanged.InvokeAsync(Value);
+    }
+
+    private async Task RenameAsync(string oldKey, string? rawKey)
+    {
+        errorMessage = ValidateKey(rawKey, oldKey);
+        if (errorMessage is not null)
+            return;
+
+        var trimmedKey = rawKey!.Trim();
+        if (trimmedKey == oldKey)
+            return;
+
+        var currentValue = Entries[oldKey];
+        Entries.Remove(oldKey);
+        Entries[trimmedKey] = currentValue;
+        await ValueChanged.InvokeAsync(Value);
+    }
+
+    private async Task UpdateValueAsync(string key, string? value)
+    {
+        errorMessage = ValidateValue(value ?? string.Empty);
+        if (errorMessage is not null)
+            return;
+
+        Entries[key] = value ?? string.Empty;
+        await ValueChanged.InvokeAsync(Value);
+    }
+
+    private Task RemoveAsync(string key)
+    {
+        errorMessage = null;
+        Entries.Remove(key);
+        return ValueChanged.InvokeAsync(Value);
+    }
+
+    private string? ValidateNewEntry(string key, string value)
+    {
+        if (Entries.Count >= MessagePropertiesLimits.MaxPairs)
+            return $"Too many properties (max {MessagePropertiesLimits.MaxPairs}).";
+
+        return ValidateKey(key) ?? ValidateValue(value);
+    }
+
+    private string? ValidateKey(string? rawKey, string? currentKey = null)
+    {
+        if (string.IsNullOrWhiteSpace(rawKey))
+            return "Key must be a non-empty string.";
+
+        var trimmedKey = rawKey.Trim();
+
+        if (trimmedKey != currentKey && Entries.ContainsKey(trimmedKey))
+            return $"Duplicate key '{trimmedKey}'.";
+
+        if (trimmedKey.Length > MessagePropertiesLimits.MaxKeyLength)
+            return $"Key exceeds {MessagePropertiesLimits.MaxKeyLength} characters.";
+
+        return null;
+    }
+
+    private static string? ValidateValue(string value)
+    {
+        if (value.Length > MessagePropertiesLimits.MaxValueLength)
+            return $"Value exceeds {MessagePropertiesLimits.MaxValueLength} characters.";
+
+        return null;
+    }
+}

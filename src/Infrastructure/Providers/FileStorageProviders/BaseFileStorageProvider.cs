@@ -7,9 +7,9 @@ public abstract class BaseFileStorageProvider<T> : IFileStorageProvider<T>, IDis
 {
     private bool disposed;
     protected abstract string DataFilePath { get; }
-    private readonly JsonSerializerOptions jsSerializerOptions = new() { WriteIndented = true };
     private readonly SemaphoreSlim semaphore = new(1, 1);
     private string? dataDirectoryPath = null;
+
 
     public async Task<T?> GetDataAsync()
     {
@@ -20,7 +20,7 @@ public abstract class BaseFileStorageProvider<T> : IFileStorageProvider<T>, IDis
                 return default;
 
             var json = await File.ReadAllTextAsync(DataFilePath);
-            return JsonSerializer.Deserialize<T>(json);
+            return JsonSerializer.Deserialize<T>(json, GetReadOptions());
         }
         finally
         {
@@ -30,7 +30,7 @@ public abstract class BaseFileStorageProvider<T> : IFileStorageProvider<T>, IDis
 
     public async Task SaveDataAsync(T data)
     {
-        var json = JsonSerializer.Serialize(data, jsSerializerOptions);
+        var json = JsonSerializer.Serialize(data, GetWriteOptions());
 
         await semaphore.WaitAsync();
 
@@ -54,6 +54,10 @@ public abstract class BaseFileStorageProvider<T> : IFileStorageProvider<T>, IDis
         dataDirectoryPath ??= Path.GetDirectoryName(DataFilePath) ?? string.Empty;
         return dataDirectoryPath;
     }
+
+
+    protected virtual JsonSerializerOptions GetReadOptions() => new();
+    protected virtual JsonSerializerOptions GetWriteOptions() => new() { WriteIndented = true };
 
 
     protected virtual void Dispose(bool disposing)

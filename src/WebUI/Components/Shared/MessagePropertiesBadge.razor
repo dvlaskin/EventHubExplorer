@@ -1,0 +1,23 @@
+@* Indicator that the message carries application properties.
+   Full values are shown in the Message Payload details panel. *@
+@if (HasProperties)
+{
+    <button type="button"
+            class="props-trigger"
+            title="@TriggerTitle"
+            aria-label="@TriggerTitle"
+            @onclick="OnSelect">
+        <i class="bi bi-info-circle" aria-hidden="true"></i>
+    </button>
+}
+
+@code {
+    [Parameter] public IReadOnlyDictionary<string, object>? Properties { get; set; }
+    [Parameter] public EventCallback OnSelect { get; set; }
+
+    private bool HasProperties => Properties is { Count: > 0 };
+
+    private int PropertyCount => Properties?.Count ?? 0;
+
+    private string TriggerTitle => $"Has {PropertyCount} properties. Select the message to view them.";
+}
