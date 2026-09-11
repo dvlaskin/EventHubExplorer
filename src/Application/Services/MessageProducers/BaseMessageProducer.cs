@@ -22,30 +22,34 @@ public abstract class BaseMessageProducer<T> : IMessageProducerService
 
 
     public async Task SendMessagesAsync(
-        string? messageText, uint numberOfMessages = 1, TimeSpan? delayToSend = null, CancellationToken cancellationToken = default
+        string? messageText,
+        uint numberOfMessages = 1,
+        TimeSpan? delayToSend = null,
+        IReadOnlyDictionary<string, object>? properties = null,
+        CancellationToken cancellationToken = default
     )
     {
         if (string.IsNullOrWhiteSpace(messageText))
             return;
 
-        var messageModifier = CreateMessageModifier();
+        var outgoingMessage = new OutgoingMessage(messageText, CreateMessageModifier(), properties);
 
         if (numberOfMessages <= 1)
         {
             await messageProducerProvider
-                .SendMessageAsync(messageText, messageModifier, cancellationToken)
+                .SendMessageAsync(outgoingMessage, cancellationToken)
                 .ConfigureAwait(false);
         }
         else if (delayToSend is null || delayToSend.Value <= TimeSpan.Zero)
         {
             await messageProducerProvider
-                .SendMessagesAsync(messageText, messageModifier, numberOfMessages, cancellationToken)
+                .SendMessagesAsync(outgoingMessage, numberOfMessages, cancellationToken)
                 .ConfigureAwait(false);
         }
         else
         {
             await messageProducerProvider.SendMessagesWithDelayAsync(
-                messageText, messageModifier, numberOfMessages, delayToSend.Value, cancellationToken
+                outgoingMessage, numberOfMessages, delayToSend.Value, cancellationToken
             ).ConfigureAwait(false);
         }
     }

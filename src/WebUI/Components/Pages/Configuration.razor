@@ -5,7 +5,7 @@
 @using Domain.Interfaces.Services
 
 @inject IFileStorageProvider<AppConfiguration> ConfigurationProvider
-@inject IMessageHistory<Guid, List<string>> MessagesHistoryService
+@inject IMessageHistoryService MessagesHistoryService
 
 @rendermode InteractiveServer
 

@@ -50,6 +50,8 @@
                           OnToggleHistory="ToggleMessageHistory"
                           OnSelectMessage="SelectMessage"
                           OnRemoveFromHistory="RemoveFromHistory" />
+        <MessagePropertiesEditor @bind-Value="messageProperties" />
+        <div class="form-text">Properties are saved on Send.</div>
     </SendArea>
     <ReceiveArea>
         <MessageReceivePanel IsProcessing="@isProcessing"
@@ -67,9 +69,12 @@
                             ? message.Item.Message[..20] + "..."
                             : message.Item.Message;
                         <li class=@($"list-group-item{ activeClass }")>
-                            <button type="button" class="message-list-item-button" @onclick="() => OnMessageSelected(message.Index)">
-                                @($"{receivedMessages.GetVirtualIndex(message.Index) + 1} -> sn {message.Item.SequenceNumber}, enqueued {message.Item.EnqueuedTime.ToString("yyyyMMdd HH:mm:ss")}, message: {messageString}")
-                            </button>
+                            <div class="message-row">
+                                <button type="button" class="message-list-item-button message-text" @onclick="() => OnMessageSelected(message.Index)">
+                                    @($"{receivedMessages.GetVirtualIndex(message.Index) + 1} -> sn {message.Item.SequenceNumber}, enqueued {message.Item.EnqueuedTime.ToString("yyyyMMdd HH:mm:ss")}, message: {messageString}")
+                                </button>
+                                <MessagePropertiesBadge Properties="@message.Item.Properties" OnSelect="() => OnMessageSelected(message.Index)" />
+                            </div>
                         </li>
                     }
                 </ul>
@@ -77,7 +82,7 @@
         </MessageReceivePanel>
     </ReceiveArea>
     <BodyArea>
-        <MessageBodyPanel Content="@receivedMessage" />
+        <MessageBodyPanel Content="@receivedMessage" Properties="@selectedProperties" />
     </BodyArea>
 </MessagePageLayout>
 
@@ -90,7 +95,7 @@
     [Inject] private IOptionsMonitor<AppConfiguration>? Config { get; set; }
     [Inject(Key = MessageBusType.ServiceBus)] private IMessageProducerFactory? MessageProducerFactory { get; set; }
     [Inject(Key = MessageBusType.ServiceBus)] private IMessageConsumerFactory? MessageConsumerFactory { get; set; }
-    [Inject] private IMessageHistory<Guid, List<string>>? MessagesHistoryService { get; set; }
+    [Inject] private IMessageHistoryService? MessagesHistoryService { get; set; }
     
     [Parameter] public Guid Id { get; set; }
     
@@ -102,17 +107,20 @@
     private ServiceBusConfig? config;
     private string? title;
     private string? messageToSend;
+    private IDictionary<string, string> messageProperties = new Dictionary<string, string>();
     private uint numberMessagesToSend = 1;
     private int delayToSend;
     private string delayTimeUnit = DelayTimeUnit.Second;
     private bool showMessageHistory;
-    private List<string> messagesHistoryList = [];
+    private Guid? selectedMessageId;
     private const byte MAX_HISTORY_MESSAGES = 10;
     private string? receivedMessage;
+    private IReadOnlyDictionary<string, object>? selectedProperties;
     private bool isProcessing;
     private int? selectedIndex;
     private MessagePageLayoutPreset currentLayoutPreset;
-    private readonly CircularBuffer<MessageRecord> receivedMessages = new(50);
+    private readonly List<MessageHistoryRecord> messagesHistoryList = [];
+    private readonly CircularBuffer<IncomingMessage> receivedMessages = new(50);
     private readonly ResettableCts receiverCts = new();
     private readonly ResettableCts delayedSenderCts = new();
 
@@ -181,28 +189,20 @@
                 ? TimeSpan.FromMilliseconds(delayToSend) 
                 : TimeSpan.FromSeconds(delayToSend);
             
+            IReadOnlyDictionary<string, object>? props = messageProperties.Count == 0
+                ? null
+                : messageProperties.ToDictionary(kv => kv.Key, kv => (object)kv.Value);
+
             await messageProducer
                 .SendMessagesAsync(
                     messageToSend, 
                     numberMessagesToSend, 
                     delayTimeSpan,
+                    props,
                     delayedSenderCts.Token
                 ); 
             
-            if (!string.IsNullOrWhiteSpace(messageToSend) && !messagesHistoryList.Contains(messageToSend))
-            {
-                if (MAX_HISTORY_MESSAGES > 0)
-                {
-                    while (messagesHistoryList.Count >= MAX_HISTORY_MESSAGES)
-                    {
-                        await RemoveFromHistory(messagesHistoryList[0]);
-                    }
-                }
-                
-                messagesHistoryList.Add(messageToSend);
-                if (MessagesHistoryService is not null) 
-                    await MessagesHistoryService.AddMessageAsync(Id, messageToSend).ConfigureAwait(false);
-            }
+            await PersistHistoryAfterSendAsync().ConfigureAwait(false);
             
             _ = toast?.ShowToast("Messages sent successfully").ConfigureAwait(false);
         }
@@ -221,9 +221,19 @@
 
         if (showMessageHistory && messagesHistoryList.Count == 0 && MessagesHistoryService is not null)
         {
-            var history = await MessagesHistoryService.GetHistoryAsync(Id).ConfigureAwait(false);
-            messagesHistoryList.Clear();
-            messagesHistoryList.AddRange(history);
+            try
+            {
+                var history = await MessagesHistoryService.GetHistoryAsync(Id).ConfigureAwait(false);
+                messagesHistoryList.Clear();
+                messagesHistoryList.AddRange(history);
+            }
+            catch (Exception ex)
+            {
+                DisplayHistoryError(ex, "Message history unavailable, starting fresh.");
+                showMessageHistory = false;
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
         }
         
         if (showMessageHistory && messagesHistoryList.Count == 0)
@@ -232,22 +242,202 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    private void SelectMessage(string message)
+    private void SelectMessage(Guid messageId)
     {
-        messageToSend = message;
+        var record = FindRecord(messageId);
+        if (record is null)
+            return;
+
+        messageToSend = record.Body;
+        messageProperties = new Dictionary<string, string>(record.Properties);
+        selectedMessageId = messageId;
         showMessageHistory = false;
     }
 
-    private async Task RemoveFromHistory(string message)
+    private async Task RemoveFromHistory(Guid messageId)
     {
-        messagesHistoryList.Remove(message);
+        messagesHistoryList.RemoveAll(r => r.Id == messageId);
+
         if (MessagesHistoryService is not null)
-            await MessagesHistoryService.RemoveMessageAsync(Id, message);
-        
+        {
+            try
+            {
+                await MessagesHistoryService.RemoveMessageAsync(Id, messageId).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                DisplayHistoryError(ex, "Could not remove message from history.");
+            }
+        }
+
+        if (selectedMessageId == messageId)
+            selectedMessageId = null;
+
         if (!messagesHistoryList.Any())
         {
             showMessageHistory = false;
         }
+    }
+
+    private async Task PersistHistoryAfterSendAsync()
+    {
+        if (string.IsNullOrWhiteSpace(messageToSend))
+            return;
+
+        var snapshot = SnapshotProperties();
+
+        if (MessagesHistoryService is null)
+        {
+            AddLocalHistoryRecord(messageToSend, snapshot);
+            return;
+        }
+
+        try
+        {
+            await PersistServiceRecordAsync(messageToSend, snapshot).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            DisplayHistoryError(ex, "Could not save message history.");
+        }
+    }
+
+    private async Task PersistServiceRecordAsync(string body, Dictionary<string, string> snapshot)
+    {
+        var selected = FindRecord(selectedMessageId);
+
+        if (selected is not null && selected.Body == body)
+        {
+            await SyncAndDedupAsync(selected, snapshot).ConfigureAwait(false);
+            return;
+        }
+
+        var byBody = messagesHistoryList.FirstOrDefault(r => r.Body == body);
+
+        if (byBody is not null)
+        {
+            await SyncAndDedupAsync(byBody, snapshot).ConfigureAwait(false);
+            return;
+        }
+
+        await PersistNewRecordAsync(body, snapshot).ConfigureAwait(false);
+    }
+
+    private async Task SyncAndDedupAsync(MessageHistoryRecord target, Dictionary<string, string> snapshot)
+    {
+        await SyncRecordPropertiesAsync(target, snapshot).ConfigureAwait(false);
+        await RemoveDuplicatesExceptAsync(target.Id, target.Body).ConfigureAwait(false);
+        selectedMessageId = target.Id;
+    }
+
+    private async Task PersistNewRecordAsync(string body, Dictionary<string, string> snapshot)
+    {
+        if (MessagesHistoryService is null)
+        {
+            AddLocalHistoryRecord(body, snapshot);
+            return;
+        }
+
+        while (messagesHistoryList.Count >= MAX_HISTORY_MESSAGES)
+        {
+            await RemoveFromHistory(messagesHistoryList[0].Id).ConfigureAwait(false);
+        }
+
+        var created = await MessagesHistoryService.AddMessageAsync(Id, body, snapshot).ConfigureAwait(false);
+
+        if (created is not null)
+        {
+            messagesHistoryList.Add(created);
+            selectedMessageId = created.Id;
+        }
+    }
+
+    private async Task SyncRecordPropertiesAsync(MessageHistoryRecord record, Dictionary<string, string> snapshot)
+    {
+        if (PropertiesEqual(record.Properties, snapshot))
+            return;
+
+        if (MessagesHistoryService is not null)
+            await MessagesHistoryService.UpdatePropertiesAsync(Id, record.Id, snapshot).ConfigureAwait(false);
+
+        record.Properties = new Dictionary<string, string>(snapshot);
+    }
+
+    private async Task RemoveDuplicatesExceptAsync(Guid keepId, string body)
+    {
+        var duplicates = messagesHistoryList
+            .Where(r => r.Id != keepId && r.Body == body)
+            .Select(r => r.Id)
+            .ToList();
+
+        foreach (var duplicateId in duplicates)
+        {
+            await RemoveFromHistory(duplicateId).ConfigureAwait(false);
+        }
+    }
+
+    private void AddLocalHistoryRecord(string body, Dictionary<string, string> snapshot)
+    {
+        var existing = messagesHistoryList.FirstOrDefault(r => r.Body == body);
+
+        if (existing is not null)
+        {
+            existing.Properties = new Dictionary<string, string>(snapshot);
+            selectedMessageId = existing.Id;
+            return;
+        }
+
+        while (messagesHistoryList.Count >= MAX_HISTORY_MESSAGES)
+        {
+            var evicted = messagesHistoryList[0];
+            messagesHistoryList.RemoveAt(0);
+            if (selectedMessageId == evicted.Id)
+                selectedMessageId = null;
+        }
+
+        var record = new MessageHistoryRecord
+        {
+            Id = Guid.NewGuid(),
+            Body = body,
+            Properties = new Dictionary<string, string>(snapshot),
+            CreatedAt = DateTimeOffset.UtcNow,
+        };
+        messagesHistoryList.Add(record);
+        selectedMessageId = record.Id;
+    }
+
+    private MessageHistoryRecord? FindRecord(Guid? messageId)
+    {
+        if (messageId is null)
+            return null;
+
+        return messagesHistoryList.FirstOrDefault(r => r.Id == messageId);
+    }
+
+    private static bool PropertiesEqual(IReadOnlyDictionary<string, string> first, IReadOnlyDictionary<string, string> second)
+    {
+        if (ReferenceEquals(first, second))
+            return true;
+
+        if (first.Count != second.Count)
+            return false;
+
+        foreach (var pair in first)
+        {
+            if (!second.TryGetValue(pair.Key, out var value) || value != pair.Value)
+                return false;
+        }
+
+        return true;
+    }
+
+    private Dictionary<string, string> SnapshotProperties()
+        => new(messageProperties);
+
+    private void DisplayHistoryError(Exception ex, string infoMessage)
+    {
+        Logger?.LogError(ex, "{InfoMessage}", infoMessage);
+        _ = toast?.ShowToast(infoMessage, ToastType.Error, TimeSpan.FromSeconds(5));
     }
     
     
@@ -277,6 +467,7 @@
                     
                     receivedMessages.Add(message);
                     receivedMessage = receivedMessages[^1].Message;
+                    selectedProperties = receivedMessages[^1].Properties;
                     
                     await InvokeAsync(StateHasChanged);
                     
@@ -309,6 +500,9 @@
     private void ClearMessages()
     {
         receivedMessages.Clear();
+        selectedIndex = null;
+        receivedMessage = null;
+        selectedProperties = null;
     }
     
     private async Task ScrollToBottom()
@@ -319,7 +513,9 @@
     private void OnMessageSelected(int index)
     {
         selectedIndex = index;
-        receivedMessage = receivedMessages[index].Message;
+        var selectedMessage = receivedMessages[index];
+        receivedMessage = selectedMessage.Message;
+        selectedProperties = selectedMessage.Properties;
     }
 
     private void DisplayErrorMessage(Exception ex, string infoMessage)
@@ -349,6 +545,8 @@
         // Clear collections
         receivedMessages.Clear();
         messagesHistoryList.Clear();
+        selectedMessageId = null;
+        selectedProperties = null;
         
         GC.SuppressFinalize(this);
     }

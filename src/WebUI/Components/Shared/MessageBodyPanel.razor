@@ -1,10 +1,60 @@
 <div class="message-body-panel d-flex flex-column h-100">
     <label class="form-label label-section" for="@messagePayloadId">Message Payload</label>
     <textarea id="@messagePayloadId" class="form-control flex-grow-1 message-body-input" readonly>@Content</textarea>
+
+    @if (HasProperties)
+    {
+        <div class="received-properties">
+            <button type="button"
+                    class="received-properties-toggle"
+                    aria-expanded="@isExpanded"
+                    aria-controls="@receivedPropertiesId"
+                    @onclick="ToggleExpanded">
+                <i class="bi @(isExpanded ? "bi-chevron-up" : "bi-chevron-down")" aria-hidden="true"></i>
+                <span>@(isExpanded ? "Hide received properties" : "Received properties")</span>
+                <span class="received-properties-count">(@PropertyCount)</span>
+            </button>
+
+            @if (isExpanded)
+            {
+                <dl id="@receivedPropertiesId" class="received-properties-list">
+                    @foreach (var pair in Properties!)
+                    {
+                        var displayValue = FormatValue(pair.Value);
+                        <div class="received-properties-row" @key="pair.Key">
+                            <dt class="received-properties-key" title="@pair.Key">@pair.Key</dt>
+                            <dd class="received-properties-value" title="@displayValue">@displayValue</dd>
+                        </div>
+                    }
+                </dl>
+            }
+        </div>
+    }
 </div>
 
 @code {
     private readonly string messagePayloadId = $"message-payload-{Guid.NewGuid():N}";
+    private readonly string receivedPropertiesId = $"received-properties-{Guid.NewGuid():N}";
+    private bool isExpanded;
 
     [Parameter] public string? Content { get; set; }
+    [Parameter] public IReadOnlyDictionary<string, object>? Properties { get; set; }
+
+    private bool HasProperties => Properties is { Count: > 0 };
+
+    private int PropertyCount => Properties?.Count ?? 0;
+
+    private void ToggleExpanded()
+    {
+        isExpanded = !isExpanded;
+    }
+
+    private static string FormatValue(object? value)
+        => value switch
+        {
+            null => "(null)",
+            string { Length: 0 } => "(empty)",
+            string text => text,
+            _ => value.ToString() ?? "(null)",
+        };
 }

@@ -17,7 +17,7 @@ public sealed class RabbitMqConsumerProvider : IMessageConsumerProvider
     private readonly Lazy<Task<IChannel>> channel;
     private readonly Lock lifecycleLock = new();
 
-    private Func<MessageRecord, Task>? runMessageProcessing;
+    private Func<IncomingMessage, Task>? runMessageProcessing;
     private RabbitMqAsyncConsumer? consumer;
     private string? consumerTag;
     private TaskCompletionSource<bool> stopSignal = CreateStopSignal();
@@ -35,7 +35,7 @@ public sealed class RabbitMqConsumerProvider : IMessageConsumerProvider
 
 
     public async Task StartReceiveMessageAsync(
-        Func<MessageRecord, Task> onMessageReceived, CancellationToken cancellationToken
+        Func<IncomingMessage, Task> onMessageReceived, CancellationToken cancellationToken
     )
     {
         ArgumentNullException.ThrowIfNull(onMessageReceived);
@@ -214,12 +214,18 @@ public sealed class RabbitMqConsumerProvider : IMessageConsumerProvider
         {
             try
             {
-                var message = new MessageRecord
+                var message = new IncomingMessage
                 {
                     Message = CompressingEncoding.DecodeMessage(body, owner.config),
                     EnqueuedTime = DateTimeOffset.UtcNow,
                     SequenceNumber = unchecked((long)deliveryTag),
-                    PartitionId = routingKey
+                    PartitionId = routingKey,
+                    Properties = properties.Headers?.ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value is byte[] bytes 
+                            ? System.Text.Encoding.UTF8.GetString(bytes) 
+                            : kvp.Value ?? ""
+                    ).AsReadOnly()
                 };
 
                 if (owner.runMessageProcessing is not null)

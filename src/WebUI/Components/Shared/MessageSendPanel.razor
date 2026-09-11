@@ -1,3 +1,4 @@
+@using Domain.Models
 <div class="message-send-panel d-flex flex-column @(StretchMessageInput ? "layout-stretched" : string.Empty)">
     <div class="mb-3 message-input-section">
         <label for="@messageInputId" class="form-label label-section">@SendLabel</label>
@@ -21,18 +22,18 @@
             {
                 <div id="@historyDropdownId" class="message-history-dropdown">
                     <ul class="list-group list-unstyled mb-0">
-                        @foreach (var message in MessagesHistory)
+                        @foreach (var record in MessagesHistory)
                         {
-                            <li class="list-group-item d-flex align-items-center">
+                            <li @key="record.Id" class="list-group-item d-flex align-items-center">
                                 <button type="button"
                                         class="flex-grow-1 message-text"
-                                        @onclick="() => OnSelectMessage.InvokeAsync(message)">
-                                    @TrimHistoryMessage(message)
+                                        @onclick="() => OnSelectMessage.InvokeAsync(record.Id)">
+                                    @TrimHistoryMessage(record)
                                 </button>
                                 <button type="button"
                                         class="btn btn-link btn-sm text-danger p-0 ms-2 delete-button"
                                         aria-label="Remove message from history"
-                                        @onclick="() => OnRemoveFromHistory.InvokeAsync(message)"
+                                        @onclick="() => OnRemoveFromHistory.InvokeAsync(record.Id)"
                                         @onclick:stopPropagation>
                                     <i class="bi bi-trash" aria-hidden="true"></i>
                                 </button>
@@ -84,7 +85,7 @@
     [Parameter] public string? MessageToSend { get; set; }
     [Parameter] public EventCallback<string?> MessageToSendChanged { get; set; }
 
-    [Parameter] public List<string> MessagesHistory { get; set; } = [];
+    [Parameter] public IReadOnlyList<MessageHistoryRecord> MessagesHistory { get; set; } = [];
 
     [Parameter] public bool ShowHistory { get; set; }
     [Parameter] public EventCallback<bool> ShowHistoryChanged { get; set; }
@@ -103,8 +104,8 @@
 
     [Parameter] public EventCallback OnSend { get; set; }
     [Parameter] public EventCallback OnToggleHistory { get; set; }
-    [Parameter] public EventCallback<string> OnSelectMessage { get; set; }
-    [Parameter] public EventCallback<string> OnRemoveFromHistory { get; set; }
+    [Parameter] public EventCallback<Guid> OnSelectMessage { get; set; }
+    [Parameter] public EventCallback<Guid> OnRemoveFromHistory { get; set; }
 
     private Task SetMessageToSendAsync(string? value)
     {
@@ -150,6 +151,11 @@
         return ShowHistoryChanged.InvokeAsync(!ShowHistory);
     }
 
-    private static string TrimHistoryMessage(string message)
-        => message.Length > 50 ? $"{message[..45]}..." : message;
+    private static string TrimHistoryMessage(MessageHistoryRecord? record)
+    {
+        if (string.IsNullOrEmpty(record?.Body))
+            return "(empty)";
+
+        return record.Body.Length > 50 ? $"{record.Body[..45]}..." : record.Body;
+    }
 }
