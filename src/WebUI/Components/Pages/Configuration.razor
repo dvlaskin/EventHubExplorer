@@ -99,7 +99,9 @@
                 {
                     var index = i;
                     var eventHub = appConfiguration.EventHubsConfigs[i];
-                    var isEmpty = string.IsNullOrWhiteSpace(eventHub.ConnectionString) || string.IsNullOrWhiteSpace(eventHub.Name);
+                    var isExpanded = IsEventHubExpanded(eventHub.Id);
+                    var collapseId = $"collapse-eh-{eventHub.Id:N}";
+                    var headingId = $"heading-eh-{eventHub.Id:N}";
                     var titleInputId = $"eh-title-{i}";
                     var connectionStringInputId = $"eh-connection-string-{i}";
                     var eventHubNameInputId = $"eh-name-{i}";
@@ -111,13 +113,14 @@
                     var blobContainerNameInputId = $"eh-blob-container-name-{i}";
 
                     <div class="accordion-item">
-                        <h2 class="accordion-header" id="heading-eh-@i">
-                            <button class="accordion-button @(isEmpty ? "" : "collapsed")" type="button" data-bs-toggle="collapse"
-                                    data-bs-target="#collapse-eh-@i" aria-expanded="@(isEmpty ? "true" : "false")" aria-controls="collapse-eh-@i">
+                        <h2 class="accordion-header" id="@headingId">
+                            <button class="accordion-button @(isExpanded ? "" : "collapsed")" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#@collapseId" aria-expanded="@(isExpanded ? "true" : "false")" aria-controls="@collapseId"
+                                    @onclick="() => ToggleEventHub(eventHub.Id)">
                                 @eventHub.Title
                             </button>
                         </h2>
-                        <div id="collapse-eh-@i" class="accordion-collapse collapse @(isEmpty ? "show" : "")" aria-labelledby="heading-eh-@i"
+                        <div id="@collapseId" class="accordion-collapse collapse @(isExpanded ? "show" : "")" aria-labelledby="@headingId"
                              data-bs-parent="#eventHubAccordion">
                             <div class="accordion-body">
                                 <div class="mb-3">
@@ -215,7 +218,9 @@
                 {
                     var index = i;
                     var queueConfig = appConfiguration.StorageQueuesConfigs[i];
-                    var isEmpty = string.IsNullOrWhiteSpace(queueConfig.ConnectionString) || string.IsNullOrWhiteSpace(queueConfig.QueueName);
+                    var isExpanded = IsStorageQueueExpanded(queueConfig.Id);
+                    var collapseId = $"collapse-sq-{queueConfig.Id:N}";
+                    var headingId = $"heading-sq-{queueConfig.Id:N}";
                     var titleInputId = $"sq-title-{i}";
                     var connectionStringInputId = $"sq-connection-string-{i}";
                     var queueNameInputId = $"sq-name-{i}";
@@ -224,13 +229,14 @@
                     var layoutPresetInputId = $"sq-layout-preset-{i}";
 
                     <div class="accordion-item">
-                        <h2 class="accordion-header" id="heading-sq-@i">
-                            <button class="accordion-button @(isEmpty ? "" : "collapsed")" type="button" data-bs-toggle="collapse"
-                                    data-bs-target="#collapse-sq-@i" aria-expanded="@(isEmpty ? "true" : "false")" aria-controls="collapse-sq-@i">
+                        <h2 class="accordion-header" id="@headingId">
+                            <button class="accordion-button @(isExpanded ? "" : "collapsed")" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#@collapseId" aria-expanded="@(isExpanded ? "true" : "false")" aria-controls="@collapseId"
+                                    @onclick="() => ToggleStorageQueue(queueConfig.Id)">
                                 @queueConfig.Title
                             </button>
                         </h2>
-                        <div id="collapse-sq-@i" class="accordion-collapse collapse @(isEmpty ? "show" : "")" aria-labelledby="heading-sq-@i"
+                        <div id="@collapseId" class="accordion-collapse collapse @(isExpanded ? "show" : "")" aria-labelledby="@headingId"
                              data-bs-parent="#storageQueueAccordion">
                             <div class="accordion-body">
                                 <div class="mb-3">
@@ -309,7 +315,9 @@
                 {
                     var index = i;
                     var sbConfig = appConfiguration.ServiceBusConfigs[i];
-                    var isEmpty = string.IsNullOrWhiteSpace(sbConfig.ConnectionString) || string.IsNullOrWhiteSpace(sbConfig.EntityName);
+                    var isExpanded = IsServiceBusExpanded(sbConfig.Id);
+                    var collapseId = $"collapse-sb-{sbConfig.Id:N}";
+                    var headingId = $"heading-sb-{sbConfig.Id:N}";
                     var titleInputId = $"sb-title-{i}";
                     var connectionStringInputId = $"sb-connection-string-{i}";
                     var entityNameInputId = $"sb-entity-name-{i}";
@@ -320,13 +328,14 @@
                     var layoutPresetInputId = $"sb-layout-preset-{i}";
 
                     <div class="accordion-item">
-                        <h2 class="accordion-header" id="heading-sb-@i">
-                            <button class="accordion-button @(isEmpty ? "" : "collapsed")" type="button" data-bs-toggle="collapse"
-                                    data-bs-target="#collapse-sb-@i" aria-expanded="@(isEmpty ? "true" : "false")" aria-controls="collapse-sb-@i">
+                        <h2 class="accordion-header" id="@headingId">
+                            <button class="accordion-button @(isExpanded ? "" : "collapsed")" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#@collapseId" aria-expanded="@(isExpanded ? "true" : "false")" aria-controls="@collapseId"
+                                    @onclick="() => ToggleServiceBus(sbConfig.Id)">
                                 @sbConfig.Title
                             </button>
                         </h2>
-                        <div id="collapse-sb-@i" class="accordion-collapse collapse @(isEmpty ? "show" : "")" aria-labelledby="heading-sb-@i"
+                        <div id="@collapseId" class="accordion-collapse collapse @(isExpanded ? "show" : "")" aria-labelledby="@headingId"
                              data-bs-parent="#serviceBusAccordion">
                             <div class="accordion-body">
                                 <div class="mb-3">
@@ -421,7 +430,9 @@
                 {
                     var index = i;
                     var rbConfig = appConfiguration.RabbitMqConfigs[i];
-                    var isEmpty = string.IsNullOrWhiteSpace(rbConfig.ConnectionString) || string.IsNullOrWhiteSpace(rbConfig.EntityName);
+                    var isExpanded = IsRabbitMqExpanded(rbConfig.Id);
+                    var collapseId = $"collapse-rmq-{rbConfig.Id:N}";
+                    var headingId = $"heading-rmq-{rbConfig.Id:N}";
                     var titleInputId = $"rmq-title-{i}";
                     var connectionStringInputId = $"rmq-connection-string-{i}";
                     var entityNameInputId = $"rmq-entity-name-{i}";
@@ -434,13 +445,14 @@
                     var layoutPresetInputId = $"rmq-layout-preset-{i}";
 
                     <div class="accordion-item">
-                        <h2 class="accordion-header" id="heading-rmq-@i">
-                            <button class="accordion-button @(isEmpty ? "" : "collapsed")" type="button" data-bs-toggle="collapse"
-                                    data-bs-target="#collapse-rmq-@i" aria-expanded="@(isEmpty ? "true" : "false")" aria-controls="collapse-rmq-@i">
+                        <h2 class="accordion-header" id="@headingId">
+                            <button class="accordion-button @(isExpanded ? "" : "collapsed")" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#@collapseId" aria-expanded="@(isExpanded ? "true" : "false")" aria-controls="@collapseId"
+                                    @onclick="() => ToggleRabbitMq(rbConfig.Id)">
                                 @rbConfig.Title
                             </button>
                         </h2>
-                        <div id="collapse-rmq-@i" class="accordion-collapse collapse @(isEmpty ? "show" : "")" aria-labelledby="heading-rmq-@i"
+                        <div id="@collapseId" class="accordion-collapse collapse @(isExpanded ? "show" : "")" aria-labelledby="@headingId"
                              data-bs-parent="#rabbitMqAccordion">
                             <div class="accordion-body">
                                 <div class="mb-3">
@@ -545,7 +557,24 @@
 
     private string activeTab = "eventhubs";
 
+    // Expanded accordion item per tab. Null by default => all collapsed on page open.
+    // Single expanded item per tab: expanding one collapses the previous.
+    private Guid? expandedEventHubId;
+    private Guid? expandedStorageQueueId;
+    private Guid? expandedServiceBusId;
+    private Guid? expandedRabbitMqId;
+
     private void SetActiveTab(string tab) => activeTab = tab;
+
+    private bool IsEventHubExpanded(Guid id) => expandedEventHubId == id;
+    private bool IsStorageQueueExpanded(Guid id) => expandedStorageQueueId == id;
+    private bool IsServiceBusExpanded(Guid id) => expandedServiceBusId == id;
+    private bool IsRabbitMqExpanded(Guid id) => expandedRabbitMqId == id;
+
+    private void ToggleEventHub(Guid id) => expandedEventHubId = expandedEventHubId == id ? null : id;
+    private void ToggleStorageQueue(Guid id) => expandedStorageQueueId = expandedStorageQueueId == id ? null : id;
+    private void ToggleServiceBus(Guid id) => expandedServiceBusId = expandedServiceBusId == id ? null : id;
+    private void ToggleRabbitMq(Guid id) => expandedRabbitMqId = expandedRabbitMqId == id ? null : id;
 
     protected override async Task OnInitializedAsync()
     {
@@ -612,7 +641,7 @@
     
     private void AddNewEventHubConfig()
     {
-        appConfiguration?.EventHubsConfigs.Add(new EventHubConfig
+        var newConfig = new EventHubConfig
         {
             Title = "New Event Hub",
             ConnectionString = "",
@@ -621,24 +650,30 @@
             MessageFormatters = MessageFormatters?.ToDictionary(k => k.Name, v => false) ?? new Dictionary<string, bool>(),
             UseCheckpoints = false,
             StorageConfig = new BlobConfig { ConnectionString = "", BlobContainerName = "" }
-        });
+        };
+        appConfiguration?.EventHubsConfigs.Add(newConfig);
+        // New configs are expanded by default.
+        expandedEventHubId = newConfig.Id;
     }
 
     private void AddNewStorageQueueConfig()
     {
-        appConfiguration?.StorageQueuesConfigs.Add(new StorageQueueConfig
+        var newConfig = new StorageQueueConfig
         {
             Title = "New Storage Queue",
             ConnectionString = "",
             QueueName = "",
             MessagePageLayout = MessagePageLayoutPreset.TopSendReceiveBottomPayload,
             MessageFormatters = MessageFormatters?.ToDictionary(k => k.Name, v => false) ?? new Dictionary<string, bool>()
-        });
+        };
+        appConfiguration?.StorageQueuesConfigs.Add(newConfig);
+        // New configs are expanded by default.
+        expandedStorageQueueId = newConfig.Id;
     }
 
     private void AddNewServiceBusConfig()
     {
-        appConfiguration?.ServiceBusConfigs.Add(new ServiceBusConfig
+        var newConfig = new ServiceBusConfig
         {
             Title = "New Service Bus",
             ConnectionString = "",
@@ -646,12 +681,15 @@
             EntityType = ServiceBusEntityType.Queue,
             MessagePageLayout = MessagePageLayoutPreset.TopSendReceiveBottomPayload,
             MessageFormatters = MessageFormatters?.ToDictionary(k => k.Name, v => false) ?? new Dictionary<string, bool>()
-        });
+        };
+        appConfiguration?.ServiceBusConfigs.Add(newConfig);
+        // New configs are expanded by default.
+        expandedServiceBusId = newConfig.Id;
     }
-    
+
     private void AddNewRabbitMqConfig()
     {
-        appConfiguration?.RabbitMqConfigs.Add(new RabbitMqConfig
+        var newConfig = new RabbitMqConfig
         {
             Title = "New RabbitMQ",
             ConnectionString = "amqp://guest:guest@localhost:5672",
@@ -660,15 +698,21 @@
             ExchangeType = RabbitMqExchangeType.Direct,
             MessagePageLayout = MessagePageLayoutPreset.TopSendReceiveBottomPayload,
             MessageFormatters = MessageFormatters?.ToDictionary(k => k.Name, v => false) ?? new Dictionary<string, bool>()
-        });
+        };
+        appConfiguration?.RabbitMqConfigs.Add(newConfig);
+        // New configs are expanded by default.
+        expandedRabbitMqId = newConfig.Id;
     }
 
-    
+
     private void RemoveEventHubConfig(int index)
     {
         var configId = appConfiguration?.EventHubsConfigs[index].Id;
         if (configId is not null)
             MessagesHistoryService.RemoveAllAsync(configId.Value);
+
+        if (expandedEventHubId == configId)
+            expandedEventHubId = null;
 
         appConfiguration?.EventHubsConfigs.RemoveAt(index);
     }
@@ -679,6 +723,9 @@
         if (configId is not null)
             MessagesHistoryService.RemoveAllAsync(configId.Value);
 
+        if (expandedStorageQueueId == configId)
+            expandedStorageQueueId = null;
+
         appConfiguration?.StorageQueuesConfigs.RemoveAt(index);
     }
 
@@ -688,6 +735,9 @@
         if (configId is not null)
             MessagesHistoryService.RemoveAllAsync(configId.Value);
 
+        if (expandedServiceBusId == configId)
+            expandedServiceBusId = null;
+
         appConfiguration?.ServiceBusConfigs.RemoveAt(index);
     }
 
@@ -696,6 +746,9 @@
         var configId = appConfiguration?.RabbitMqConfigs[index].Id;
         if (configId is not null)
             MessagesHistoryService.RemoveAllAsync(configId.Value);
+
+        if (expandedRabbitMqId == configId)
+            expandedRabbitMqId = null;
 
         appConfiguration?.RabbitMqConfigs.RemoveAt(index);
     }
